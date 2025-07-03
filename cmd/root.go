@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gibgibik/go-lineage2-macros/internal/core"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -40,6 +41,10 @@ func Execute() error {
 	)
 	logger := zap.New(cZ)
 	logger.Info("start")
+	cnf, err := core.InitConfig()
+	if err != nil {
+		return err
+	}
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL)
 	defer cancel()
 	rootCmd := &cobra.Command{
@@ -53,7 +58,7 @@ func Execute() error {
 	rootCmd.AddCommand(createWebServerCommand(logger))
 	go func() {
 		defer cancel()
-		err = rootCmd.ExecuteContext(ctx)
+		err = rootCmd.ExecuteContext(context.WithValue(ctx, "cnf", cnf))
 	}()
 	<-ctx.Done()
 	logger.Info("shutdown start")
