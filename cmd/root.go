@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 )
 
 var rootCmd = &cobra.Command{
@@ -13,7 +14,7 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func Execute() error {
+func Execute(logger *zap.Logger) error {
 	rootCmd := &cobra.Command{
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return nil
@@ -22,6 +23,6 @@ func Execute() error {
 			return cmd.Usage()
 		},
 	}
-	rootCmd.AddCommand(testCmd)
+	rootCmd.AddCommand(createWebServerCommand(logger))
 	return rootCmd.Execute()
 }
