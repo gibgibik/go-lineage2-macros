@@ -1,2 +1,2 @@
-web_server:
+web:
   port: 8088

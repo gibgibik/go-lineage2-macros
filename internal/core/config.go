@@ -4,11 +4,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-type WebServer struct {
+type Web struct {
 	Port string
 }
 type Config struct {
-	WebServer WebServer `mapstructure:"web_server"`
+	WebServer Web `mapstructure:"web"`
 }
 
 func InitConfig() (*Config, error) {
