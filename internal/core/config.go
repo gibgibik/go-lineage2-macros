@@ -4,17 +4,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-type Telegram struct {
-	AppId    int
-	AppHash  string
-	Phone    string
-	BotToken string
-	ChatId   int64
-}
-type Google struct {
-	ApiKey string
+type WebServer struct {
+	Port string
 }
 type Config struct {
+	WebServer WebServer `mapstructure:"web_server"`
 }
 
 func InitConfig() (*Config, error) {

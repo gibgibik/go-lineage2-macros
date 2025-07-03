@@ -55,7 +55,7 @@ func Execute() error {
 			return cmd.Usage()
 		},
 	}
-	rootCmd.AddCommand(createWebServerCommand(logger))
+	rootCmd.AddCommand(createWebServerCommand(logger.Sugar()))
 	go func() {
 		defer cancel()
 		err = rootCmd.ExecuteContext(context.WithValue(ctx, "cnf", cnf))
