@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -37,7 +39,7 @@ func createWebServerCommand(logger *zap.SugaredLogger) *cobra.Command {
 			cnf := cmd.Context().Value("cnf").(*core.Config)
 			handle := httpServerStart(cmd.Context(), cnf, logger)
 			http.HandleFunc("/ws", wsHandler)
-			http.HandleFunc("/api/profile/", getTemplateHandler)
+			http.HandleFunc("/api/profile/", templateHandler)
 			fmt.Println("started")
 			for {
 				select {
@@ -113,21 +115,44 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	return handle
 }
 
-func getTemplateHandler(w http.ResponseWriter, r *http.Request) {
+func templateHandler(w http.ResponseWriter, r *http.Request) {
 	logger := r.Context().Value("logger").(*zap.SugaredLogger)
+	if r.Method == "GET" {
+		getTemplateHandler(w, r, logger)
+		return
+	}
+	if r.Method == "POST" {
+		postTemplateHandler(w, r, logger)
+		return
+	}
+}
+
+func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
+	logger.Info("@todo execute post")
+}
+func getTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
 	path := strings.Trim(r.RequestURI, "/")
 	pathPieces := strings.SplitN(path, "/", 4)
 	if len(pathPieces) < 3 {
 		logger.Infof("invalid request", path)
-		createRequestError(w, "invalid request")
+		createRequestError(w, "invalid request", http.StatusBadRequest)
 		return
 	}
 	reg := regexp.MustCompile("\\W")
-	fileName := reg.ReplaceAllString(pathPieces[2], "") + ".yaml"
-	logger.Infof("template get", fileName)
+	fileName := "var/profiles/" + reg.ReplaceAllString(pathPieces[2], "") + ".json" //@todo move to config
+	fh, err := os.OpenFile(fileName, os.O_RDWR, 0600)
+	if errors.Is(err, os.ErrNotExist) {
+		createRequestError(w, "file does not exist", http.StatusNotFound)
+		return
+	}
+	buf, err := io.ReadAll(fh)
+	if err != nil {
+		createRequestError(w, "file read error", http.StatusInternalServerError)
+	}
+	w.Write(buf)
 }
 
-func createRequestError(w http.ResponseWriter, err string) {
-	w.WriteHeader(http.StatusBadRequest)
+func createRequestError(w http.ResponseWriter, err string, code int) {
+	w.WriteHeader(code)
 	_, _ = w.Write([]byte(err))
 }
