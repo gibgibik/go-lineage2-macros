@@ -54,6 +54,7 @@ func createWebServerCommand(logger *zap.SugaredLogger) *cobra.Command {
 func wsHandler(logger *zap.SugaredLogger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Upgrade HTTP connection to WebSocket
+		//r.Header.Add("Upgrade", "websocket")
 		wsConn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			logger.Errorf("Upgrade error:", err)
@@ -66,16 +67,21 @@ func wsHandler(logger *zap.SugaredLogger) func(w http.ResponseWriter, r *http.Re
 
 		// Simple echo loop
 		for {
-			mt, message, err := wsConn.ReadMessage()
-			if err != nil {
-				logger.Errorf("Read error:", err)
-				break
-			}
-			log.Printf("Received: %s", message)
-			if err := wsConn.WriteMessage(mt, message); err != nil {
+			if err := wsConn.WriteMessage(1, []byte(time.Now().UTC().Format(time.DateTime))); err != nil {
 				logger.Errorf("Write error:", err)
 				break
 			}
+			time.Sleep(time.Second)
+			//mt, message, err := wsConn.ReadMessage()
+			//if err != nil {
+			//	logger.Errorf("Read error:", err)
+			//	break
+			//}
+			//log.Printf("Received: %s", message)
+			//if err := wsConn.WriteMessage(mt, message); err != nil {
+			//	logger.Errorf("Write error:", err)
+			//	break
+			//}
 		}
 	}
 }
