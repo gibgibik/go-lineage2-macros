@@ -1,4 +1,4 @@
-import {Box, Container, TextField} from "@mui/material";
+import {Box, Button, ButtonGroup, Container, TextField} from "@mui/material";
 import {MacrosAction} from "./MacrosAction.jsx";
 
 const items = []
@@ -13,6 +13,9 @@ for (let i = 0; i < INPUT_COUNT; i++) {
 export const Macros = () => {
     return (<Container>
         {items}
+        <ButtonGroup variant="contained" sx={{gap: 4, display: 'flex', justifyContent: 'center'}}>
+            <Button>Save</Button>
+        </ButtonGroup>
     </Container>)
         ;
 }
