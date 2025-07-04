@@ -38,9 +38,6 @@ func createWebServerCommand(logger *zap.SugaredLogger) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cnf := cmd.Context().Value("cnf").(*core.Config)
 			handle := httpServerStart(cmd.Context(), cnf, logger)
-			http.HandleFunc("/ws", wsHandler)
-			http.HandleFunc("/api/profile/", templateHandler)
-			fmt.Println("started")
 			for {
 				select {
 				case <-cmd.Context().Done():
@@ -92,6 +89,22 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func withCORS(next http.Handler, logger *zap.SugaredLogger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*") // ✅ дозволяє всі домени (НЕБЕЗПЕЧНО для production!)
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		// Обробка preflight-запиту
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredLogger) *http.Server {
 	fmt.Println(cnf.WebServer.Port)
 	handle := &http.Server{
@@ -103,6 +116,10 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 			return context.WithValue(ctx, "logger", logger)
 		},
 	}
+	mux := http.NewServeMux() // Create
+	mux.HandleFunc("/ws", wsHandler)
+	mux.HandleFunc("/api/profile/", templateHandler)
+	handle.Handler = withCORS(mux, logger)
 	go func() {
 		if err := handle.ListenAndServe(); err != nil {
 			if !errors.Is(err, http.ErrServerClosed) {
@@ -128,6 +145,9 @@ func templateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
+	w.Header().Set("Access-Control-Allow-Origin", "*") // ✅ дозволяє всі домени (НЕБЕЗПЕЧНО для production!)
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	logger.Info("@todo execute post")
 }
 func getTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {

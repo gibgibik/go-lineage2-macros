@@ -9,3 +9,9 @@ export const getProfile = (profileName) => {
         console.log(response)
     })
 }
+
+export const saveProfile = (profileName, formData) => {
+    return api.post('/profile/' + profileName, formData).then((response) => {
+        console.log(response)
+    })
+}
