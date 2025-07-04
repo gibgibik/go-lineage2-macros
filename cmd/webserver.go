@@ -1,10 +1,14 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
@@ -31,8 +35,9 @@ func createWebServerCommand(logger *zap.SugaredLogger) *cobra.Command {
 		Use: "web-server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cnf := cmd.Context().Value("cnf").(*core.Config)
-			handle := httpServerStart(cnf, logger)
-			http.HandleFunc("/ws", wsHandler(logger))
+			handle := httpServerStart(cmd.Context(), cnf, logger)
+			http.HandleFunc("/ws", wsHandler)
+			http.HandleFunc("/api/profile/", getTemplateHandler)
 			fmt.Println("started")
 			for {
 				select {
@@ -51,48 +56,50 @@ func createWebServerCommand(logger *zap.SugaredLogger) *cobra.Command {
 	return webServer
 }
 
-func wsHandler(logger *zap.SugaredLogger) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// Upgrade HTTP connection to WebSocket
-		//r.Header.Add("Upgrade", "websocket")
-		wsConn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			logger.Errorf("Upgrade error:", err)
-			return
-		}
-		defer wsConn.Close()
+func wsHandler(w http.ResponseWriter, r *http.Request) {
+	logger := r.Context().Value("logger").(*zap.SugaredLogger)
+	// Upgrade HTTP connection to WebSocket
+	//r.Header.Add("Upgrade", "websocket")
+	wsConn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		logger.Errorf("Upgrade error:", err)
+		return
+	}
+	defer wsConn.Close()
 
-		// Set custom read deadline
-		wsConn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	// Set custom read deadline
+	wsConn.SetReadDeadline(time.Now().Add(60 * time.Second))
 
-		// Simple echo loop
-		for {
-			if err := wsConn.WriteMessage(1, []byte(time.Now().UTC().Format(time.DateTime))); err != nil {
-				logger.Errorf("Write error:", err)
-				break
-			}
-			time.Sleep(time.Second)
-			//mt, message, err := wsConn.ReadMessage()
-			//if err != nil {
-			//	logger.Errorf("Read error:", err)
-			//	break
-			//}
-			//log.Printf("Received: %s", message)
-			//if err := wsConn.WriteMessage(mt, message); err != nil {
-			//	logger.Errorf("Write error:", err)
-			//	break
-			//}
+	// Simple echo loop
+	for {
+		if err := wsConn.WriteMessage(1, []byte(time.Now().UTC().Format(time.DateTime))); err != nil {
+			logger.Errorf("Write error:", err)
+			break
 		}
+		time.Sleep(time.Second)
+		//mt, message, err := wsConn.ReadMessage()
+		//if err != nil {
+		//	logger.Errorf("Read error:", err)
+		//	break
+		//}
+		//log.Printf("Received: %s", message)
+		//if err := wsConn.WriteMessage(mt, message); err != nil {
+		//	logger.Errorf("Write error:", err)
+		//	break
+		//}
 	}
 }
 
-func httpServerStart(cnf *core.Config, logger *zap.SugaredLogger) *http.Server {
+func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredLogger) *http.Server {
 	fmt.Println(cnf.WebServer.Port)
 	handle := &http.Server{
 		Addr:         ":" + cnf.WebServer.Port,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		ErrorLog:     log.New(&core.FwdToZapWriter{logger}, "", 0),
+		BaseContext: func(listener net.Listener) context.Context {
+			return context.WithValue(ctx, "logger", logger)
+		},
 	}
 	go func() {
 		if err := handle.ListenAndServe(); err != nil {
@@ -104,4 +111,23 @@ func httpServerStart(cnf *core.Config, logger *zap.SugaredLogger) *http.Server {
 	}()
 
 	return handle
+}
+
+func getTemplateHandler(w http.ResponseWriter, r *http.Request) {
+	logger := r.Context().Value("logger").(*zap.SugaredLogger)
+	path := strings.Trim(r.RequestURI, "/")
+	pathPieces := strings.SplitN(path, "/", 4)
+	if len(pathPieces) < 3 {
+		logger.Infof("invalid request", path)
+		createRequestError(w, "invalid request")
+		return
+	}
+	reg := regexp.MustCompile("\\W")
+	fileName := reg.ReplaceAllString(pathPieces[2], "") + ".yaml"
+	logger.Infof("template get", fileName)
+}
+
+func createRequestError(w http.ResponseWriter, err string) {
+	w.WriteHeader(http.StatusBadRequest)
+	_, _ = w.Write([]byte(err))
 }

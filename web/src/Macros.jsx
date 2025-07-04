@@ -1,8 +1,10 @@
 import {Box, Button, ButtonGroup, Container, TextField} from "@mui/material";
 import {MacrosAction} from "./MacrosAction.jsx";
+import {getProfile} from "./api.js";
 
 const items = []
 const INPUT_COUNT = 10;
+const PROFILE_NAME = 'static_profile';//@make few profiles?
 for (let i = 0; i < INPUT_COUNT; i++) {
     items.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
         <MacrosAction name={'action' + i}/>
@@ -10,6 +12,7 @@ for (let i = 0; i < INPUT_COUNT; i++) {
         <TextField variant={"outlined"} fullWidth={true} name={'period_seconds' + i} label={'Period Seconds'}/>
     </Box>);
 }
+getProfile(PROFILE_NAME);
 export const Macros = () => {
     return (<Container>
         {items}
