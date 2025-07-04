@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -144,11 +146,80 @@ func templateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+var templateBody struct {
+	Action         []string
+	Details        []string
+	Period_seconds []string
+	Profile        string
+}
+
 func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
-	w.Header().Set("Access-Control-Allow-Origin", "*") // ✅ дозволяє всі домени (НЕБЕЗПЕЧНО для production!)
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	logger.Info("@todo execute post")
+	availableActions := map[string]interface{}{
+		"/assist":   nil,
+		"/attack":   nil,
+		"/target":   nil,
+		"/delay":    nil,
+		"/useskill": nil,
+		"/press":    nil,
+	}
+	inputBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		logger.Error(err.Error())
+		createRequestError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = json.Unmarshal(inputBody, &templateBody)
+	if err != nil {
+		logger.Error(err.Error())
+		createRequestError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	reg := regexp.MustCompile("\\w ")
+	for idx, action := range templateBody.Action {
+		if action == "" {
+			continue
+		}
+		if _, ok := availableActions[action]; !ok {
+			logger.Error(fmt.Sprintf("action %s not found, idx: %d", action, idx))
+			createRequestError(w, fmt.Sprintf("action '%s' not found", action), http.StatusBadRequest)
+			return
+		}
+		if idx > len(templateBody.Details) {
+			logger.Error(fmt.Sprintf("detail %s not found, idx: %d", action, idx))
+			createRequestError(w, fmt.Sprintf("detail '%s' not found", action), http.StatusBadRequest)
+			return
+		}
+		if idx > len(templateBody.Period_seconds) {
+			logger.Error(fmt.Sprintf("period seconds %s not found, idx: %d", action, idx))
+			createRequestError(w, fmt.Sprintf("period seconds '%s' not found", action), http.StatusBadRequest)
+			return
+		}
+		if (action == "/target" || action == "/delay" || action == "/useskill" || action == "/press") && len(templateBody.Details[idx]) == 0 {
+			logger.Error(fmt.Sprintf("empty details: %s, idx: %d", action, idx))
+			createRequestError(w, fmt.Sprintf("empty details %s", action), http.StatusBadRequest)
+			return
+		}
+		templateBody.Action[idx] = reg.FindStringSubmatch(action)[0]
+		templateBody.Details[idx] = reg.FindStringSubmatch(templateBody.Details[idx])[0]
+		templateBody.Period_seconds[idx] = reg.FindStringSubmatch(templateBody.Period_seconds[idx])[0]
+	}
+	fileName := getProfilePath(templateBody.Profile)
+	if err != nil {
+		logger.Error(err.Error())
+		createRequestError(w, err.Error(), http.StatusInternalServerError)
+	}
+	tb, err := json.Marshal(templateBody)
+	if err != nil {
+		logger.Error(err.Error())
+		createRequestError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = os.WriteFile(fileName, tb, 0600)
+	if err != nil {
+		logger.Error(err.Error())
+		createRequestError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 func getTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
 	path := strings.Trim(r.RequestURI, "/")
@@ -158,8 +229,7 @@ func getTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Suga
 		createRequestError(w, "invalid request", http.StatusBadRequest)
 		return
 	}
-	reg := regexp.MustCompile("\\W")
-	fileName := "var/profiles/" + reg.ReplaceAllString(pathPieces[2], "") + ".json" //@todo move to config
+	fileName := getProfilePath(pathPieces[2])
 	fh, err := os.OpenFile(fileName, os.O_RDWR, 0600)
 	if errors.Is(err, os.ErrNotExist) {
 		createRequestError(w, "file does not exist", http.StatusNotFound)
@@ -170,6 +240,12 @@ func getTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Suga
 		createRequestError(w, "file read error", http.StatusInternalServerError)
 	}
 	w.Write(buf)
+}
+
+func getProfilePath(profileName string) string {
+	reg := regexp.MustCompile("\\W")
+	fileName := "var/profiles/" + reg.ReplaceAllString(profileName, "") + ".json" //@todo move to config
+	return fileName
 }
 
 func createRequestError(w http.ResponseWriter, err string, code int) {
