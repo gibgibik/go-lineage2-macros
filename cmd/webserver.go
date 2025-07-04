@@ -174,7 +174,7 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 		createRequestError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	reg := regexp.MustCompile("\\w ")
+	reg := regexp.MustCompile("[^\\w /]")
 	for idx, action := range templateBody.Action {
 		if action == "" {
 			continue
@@ -199,9 +199,9 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 			createRequestError(w, fmt.Sprintf("empty details %s", action), http.StatusBadRequest)
 			return
 		}
-		templateBody.Action[idx] = reg.FindStringSubmatch(action)[0]
-		templateBody.Details[idx] = reg.FindStringSubmatch(templateBody.Details[idx])[0]
-		templateBody.Period_seconds[idx] = reg.FindStringSubmatch(templateBody.Period_seconds[idx])[0]
+		templateBody.Action[idx] = reg.ReplaceAllString(action, "")
+		templateBody.Details[idx] = reg.ReplaceAllString(templateBody.Details[idx], "")
+		templateBody.Period_seconds[idx] = reg.ReplaceAllString(templateBody.Period_seconds[idx], "")
 	}
 	fileName := getProfilePath(templateBody.Profile)
 	if err != nil {
