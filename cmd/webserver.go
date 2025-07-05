@@ -197,6 +197,7 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	mux.HandleFunc("/ws", wsHandler)
 	mux.HandleFunc("/api/profile/", templateHandler)
 	mux.HandleFunc("/api/start/", startHandler)
+	mux.Handle("/", http.FileServer(http.Dir("./web/dist")))
 	handle.Handler = withCORS(mux, logger)
 	go func() {
 		if err := handle.ListenAndServe(); err != nil {
