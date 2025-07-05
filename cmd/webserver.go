@@ -366,7 +366,6 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 func getTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
 	buf, err := getProfileData(w, r, logger)
 	if err != nil {
-		createRequestError(w, "file read error", http.StatusInternalServerError)
 		return
 	}
 	data, _ := json.Marshal(buf)
