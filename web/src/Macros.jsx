@@ -2,15 +2,30 @@ import {Box, Button, ButtonGroup, Container, TextField} from "@mui/material";
 import {MacrosAction} from "./MacrosAction.jsx";
 import {getProfile, saveProfile} from "./api.js";
 import {useEffect, useState} from "react";
+import {isHotkeyPressed, useHotkeys} from "react-hotkeys-hook";
 
 const INPUT_COUNT = 10;
 const PROFILE_NAME = 'static_profile';//@make few profiles?
+const onChangeBinding = (event) => {
+    let combo = '';
+    if (event.ctrlKey) combo += 'ctrl+';
+    if (event.shiftKey) combo += 'shift+';
+    if (event.altKey) combo += 'alt+';
+    if (event.metaKey) combo += 'meta+';
+    combo += event.key.toLowerCase();
+    if (combo === 'escape') {
+        return true;
+    }
+    event.target.value = combo;
+    event.preventDefault();
+    return false;
+}
 const renderItems = ({'Actions': actions = [], 'Bindings': bindings = [], 'Period_seconds': periodSeconds = []}) => {
     const items = []
     for (let i = 0; i < INPUT_COUNT; i++) {
         items.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
             <MacrosAction name={'actions[]'} initValue={actions[i] || ''}/>
-            <TextField variant={"outlined"} fullWidth={true} name={'bindings[]'} defaultValue={bindings[i] || ''}
+            <TextField variant={"outlined"} fullWidth={true} name={'bindings[]'} onKeyDown={onChangeBinding} defaultValue={bindings[i] || ''}
             />
             <TextField variant={"outlined"} fullWidth={true} name={'period_seconds[]'}
                        defaultValue={periodSeconds[i] || ''}
