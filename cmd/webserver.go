@@ -338,6 +338,7 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 	if err != nil {
 		logger.Error(err.Error())
 		createRequestError(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	tb, err := json.Marshal(templateBody)
 	if err != nil {
@@ -366,6 +367,7 @@ func getTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Suga
 	buf, err := getProfileData(w, r, logger)
 	if err != nil {
 		createRequestError(w, "file read error", http.StatusInternalServerError)
+		return
 	}
 	data, _ := json.Marshal(buf)
 	w.Write(data)
