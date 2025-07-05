@@ -26,6 +26,10 @@ func Execute() error {
 	pe := zap.NewProductionEncoderConfig()
 	pe.EncodeTime = zapcore.ISO8601TimeEncoder
 	consoleEncoder := zapcore.NewConsoleEncoder(pe)
+
+	wsEncoded := zap.NewDevelopmentEncoderConfig()
+	wsEncoded.EncodeTime = zapcore.RFC3339TimeEncoder
+
 	f, err := os.OpenFile(fmt.Sprintf("var/log/app.log"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
 		panic(err)
@@ -38,6 +42,7 @@ func Execute() error {
 			zap.InfoLevel,
 		),
 		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), zapcore.DebugLevel),
+		zapcore.NewCore(zapcore.NewConsoleEncoder(wsEncoded), zapcore.AddSync(BaseWsSender{}), zapcore.WarnLevel),
 	)
 	logger := zap.New(cZ)
 	logger.Info("start")

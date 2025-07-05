@@ -1,1 +1,1 @@
-{"Actions":["/assist","/attack","/target","","","","","","",""],"Bindings":["f1","f2","f3","","","","","","",""],"Period_seconds":[0,0,0,0,0,0,0,0,0,0],"Profile":"static_profile"}
+{"Actions":["/assist","/attack","/target","","","","","","","/useskill"],"Bindings":["f1","f2","f3","","","","","","","f5"],"Period_seconds":[0,0,0,0,0,0,0,0,0,1200],"Profile":"static_profile"}

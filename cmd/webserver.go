@@ -52,6 +52,21 @@ var (
 	messagesStackMutex sync.Mutex
 )
 
+type WsSender interface {
+	io.Writer
+	Sync() error
+}
+
+type BaseWsSender struct{}
+
+func (ws BaseWsSender) Sync() error {
+	return nil
+}
+func (ws BaseWsSender) Write(p []byte) (n int, err error) {
+	sendMessage(string(p))
+	return 0, nil
+}
+
 func initStacks(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) error {
 	profileData, err := getProfileData(w, r, logger)
 	if err != nil {
@@ -147,7 +162,9 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 			poppedElement := messagesStack[len(messagesStack)-1] // Get the last element
 			messagesStack = messagesStack[:len(messagesStack)-1] // Re-slice to exclude the last element
 			messagesStackMutex.Unlock()
-			if err := wsConn.WriteMessage(1, []byte(fmt.Sprintf("[%s]: %s", time.Now().UTC().Format(time.DateTime), poppedElement))); err != nil {
+			//message := []byte(fmt.Sprintf("[%s]: %s", time.Now().UTC().Format(time.DateTime), poppedElement))
+			message := []byte(poppedElement)
+			if err := wsConn.WriteMessage(1, message); err != nil {
 				logger.Errorf("Write error:", err)
 				break
 			}
@@ -237,17 +254,20 @@ func startHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				for idx, delayedAction := range delayStack {
 					if delayedAction.lastRun.IsZero() || delayedAction.lastRun.Unix() <= time.Now().Unix() {
-						sendMessage(fmt.Sprintf("[delayed] [%s] %s", delayedAction.action, delayedAction.binding))
+						message := fmt.Sprintf("[delayed] [%s] %s", delayedAction.action, delayedAction.binding)
+						logger.Warn(message)
+						//sendMessage(message) //@todo send key
 						delayStack[idx].lastRun = time.Now().Add(time.Duration(delayedAction.delaySeconds) * time.Second)
 					}
 				}
-				for idx, runAction := range runStack {
-					sendMessage(fmt.Sprintf("call [%s] %s", runAction.action, runAction.binding))
-					runStack = append(runStack[:idx], runStack[idx+1:]...)
+				for _, runAction := range runStack {
+					message := fmt.Sprintf("call [%s] %s", runAction.action, runAction.binding)
+					logger.Info(message) //@todo send key
+					//sendMessage(message)
 				}
 				stackLock.Unlock()
 				//run stack
-				time.Sleep(time.Millisecond * time.Duration(randNum(500, 800)))
+				time.Sleep(time.Millisecond * time.Duration(randNum(100, 400)))
 			}
 		}
 	}()
