@@ -235,13 +235,8 @@ func startHandler(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				for idx, delayedAction := range delayStack {
-					if delayedAction.lastRun.IsZero() {
-						sendMessage(fmt.Sprintf("call delayed [%s] %s", delayedAction.action, delayedAction.binding))
-						delayStack[idx].lastRun = time.Now().Add(time.Duration(delayedAction.delaySeconds) * time.Second)
-						continue
-					}
-					if delayedAction.lastRun.Unix() <= time.Now().Unix() {
-						sendMessage(fmt.Sprintf("call delayed [%s] %s", delayedAction.action, delayedAction.binding))
+					if delayedAction.lastRun.IsZero() || delayedAction.lastRun.Unix() <= time.Now().Unix() {
+						sendMessage(fmt.Sprintf("[delayed] [%s] %s", delayedAction.action, delayedAction.binding))
 						delayStack[idx].lastRun = time.Now().Add(time.Duration(delayedAction.delaySeconds) * time.Second)
 					}
 				}
