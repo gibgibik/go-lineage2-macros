@@ -17,3 +17,15 @@ export const saveProfile = (profileName, formData) => {
         console.log(response)
     })
 }
+
+export const startMacros = (profileName) => {
+    return api.post('/start/' + profileName).then((response) => {
+        console.log(response)
+    })
+}
+
+export const stopMacros = () => {
+    return api.post('/stop').then((response) => {
+        console.log(response)
+    })
+}

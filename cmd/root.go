@@ -42,7 +42,7 @@ func Execute() error {
 			zap.InfoLevel,
 		),
 		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), zapcore.DebugLevel),
-		zapcore.NewCore(zapcore.NewConsoleEncoder(wsEncoded), zapcore.AddSync(BaseWsSender{}), zapcore.WarnLevel),
+		zapcore.NewCore(zapcore.NewConsoleEncoder(wsEncoded), zapcore.AddSync(BaseWsSender{}), zapcore.InfoLevel),
 	)
 	logger := zap.New(cZ)
 	logger.Info("start")

@@ -34,7 +34,6 @@ var (
 			return true
 		},
 	}
-	wsConn         *websocket.Conn
 	runMutex       sync.Mutex
 	stopRunChannel = make(chan interface{}, 1)
 	stackLock      sync.Mutex
@@ -214,6 +213,9 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	mux.HandleFunc("/ws", wsHandler)
 	mux.HandleFunc("/api/profile/", templateHandler)
 	mux.HandleFunc("/api/start/", startHandler)
+	mux.HandleFunc("/api/stop", func(writer http.ResponseWriter, request *http.Request) {
+		stopRunChannel <- struct{}{}
+	})
 	mux.Handle("/", http.FileServer(http.Dir("./web/dist")))
 	handle.Handler = withCORS(mux, logger)
 	go func() {
@@ -237,11 +239,22 @@ func startHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	go func() {
 		defer runMutex.Unlock()
-		logger.Info("starting run")
 		for {
 			select {
 			case <-stopRunChannel:
-				logger.Info("stopping run")
+				logger.Warn("macros stopped")
+				stackLock.Lock()
+				runStack = []struct {
+					action  string
+					binding string
+				}{}
+				delayStack = []struct {
+					action       string
+					binding      string
+					delaySeconds int
+					lastRun      time.Time
+				}{}
+				stackLock.Unlock()
 				return
 			default:
 				stackLock.Lock()
@@ -262,7 +275,7 @@ func startHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				for _, runAction := range runStack {
 					message := fmt.Sprintf("call [%s] %s", runAction.action, runAction.binding)
-					logger.Info(message) //@todo send key
+					logger.Debug(message) //@todo send key
 					//sendMessage(message)
 				}
 				stackLock.Unlock()

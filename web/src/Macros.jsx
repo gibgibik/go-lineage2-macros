@@ -5,7 +5,6 @@ import {useEffect, useState} from "react";
 import {isHotkeyPressed, useHotkeys} from "react-hotkeys-hook";
 
 const INPUT_COUNT = 10;
-const PROFILE_NAME = 'static_profile';//@make few profiles?
 const onChangeBinding = (event) => {
     let combo = '';
     if (event.ctrlKey) combo += 'ctrl+';
@@ -32,11 +31,10 @@ const renderItems = ({'Actions': actions = [], 'Bindings': bindings = [], 'Perio
             />
         </Box>);
     }
-    console.log('render');
 
     return items;
 }
-export const Macros = () => {
+export const Macros = ({profileName}) => {
     const [submitDisabled, disableSubmit] = useState(false);
     const [formItemsData, setFormItemsData] = useState({Actions: [], Bindings: [], Period_seconds: []});
     const [formItems, setFormItems] = useState([]);
@@ -46,7 +44,7 @@ export const Macros = () => {
     useEffect(() => {
         async function initProfile() {
             try {
-                const data = await getProfile(PROFILE_NAME);
+                const data = await getProfile(profileName);
                 if (data) {
                     setFormItemsData(data);
                 }
@@ -80,10 +78,10 @@ export const Macros = () => {
                 obj[key] = value;
             }
         }
-        obj['profile'] = PROFILE_NAME
+        obj['profile'] = profileName
 
         disableSubmit(true);
-        await saveProfile(PROFILE_NAME, obj);
+        await saveProfile(profileName, obj);
         disableSubmit(false);
     }
     return (<Container>

@@ -2,7 +2,7 @@ import {useEffect, useRef, useState} from "react";
 import {Paper, Typography} from "@mui/material";
 import useWebSocket, {ReadyState} from "react-use-websocket";
 
-export const Log = () => {
+export const Log = ({profileName}) => {
     const {readyState} = useWebSocket(`ws://${import.meta.env.VITE_SERVER_DOMAIN}:${import.meta.env.VITE_SERVER_PORT}/ws`, {
         onOpen: () => console.log('Connected!'),
         onClose: () => console.log('Disconnected!'),
