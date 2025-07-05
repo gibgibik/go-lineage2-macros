@@ -8,6 +8,7 @@ const rawActions = [
     '/delay',
     '/useskill',
     '/press',
+    '/ping',
 ];
 export const MacrosAction = ({name, initValue}) => {
     const [value, setValue] = useState(null);

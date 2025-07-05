@@ -242,7 +242,7 @@ func startHandler(w http.ResponseWriter, r *http.Request) {
 		for {
 			select {
 			case <-stopRunChannel:
-				logger.Warn("macros stopped")
+				logger.Info("macros stopped")
 				stackLock.Lock()
 				runStack = []struct {
 					action  string
@@ -268,7 +268,7 @@ func startHandler(w http.ResponseWriter, r *http.Request) {
 				for idx, delayedAction := range delayStack {
 					if delayedAction.lastRun.IsZero() || delayedAction.lastRun.Unix() <= time.Now().Unix() {
 						message := fmt.Sprintf("[delayed] [%s] %s", delayedAction.action, delayedAction.binding)
-						logger.Warn(message)
+						logger.Info(message)
 						//sendMessage(message) //@todo send key
 						delayStack[idx].lastRun = time.Now().Add(time.Duration(delayedAction.delaySeconds) * time.Second)
 					}
@@ -325,6 +325,7 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 		"/delay":    nil,
 		"/useskill": nil,
 		"/press":    nil,
+		"/ping":     nil,
 	}
 	inputBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {

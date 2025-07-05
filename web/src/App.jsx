@@ -49,9 +49,9 @@ function App() {
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline/>
-            <Grid container spacing={0} alignContent={'flex-start'} sx={{width: '100vw', height: '100vh'}}>
-                <Grid size={6}><Macros profileName={PROFILE_NAME}/></Grid>
-                <Grid size={6}><Log profileName={PROFILE_NAME}/>
+            <Grid  container spacing={0} sx={{width: '100vw'}}>
+                <Grid md={6} xs={12} ><Macros profileName={PROFILE_NAME}/></Grid>
+                <Grid md={6} xs={12} sx={{mb: 22}}><Log profileName={PROFILE_NAME}/>
                     <ButtonGroup variant="contained" sx={{gap: 4, display: 'flex', justifyContent: 'center'}}>
                         <Button color={'error'} onClick={stopMacrosAction} disabled={disabledStop}>Stop</Button>
                         <Button onClick={startMacrosAction} disabled={disabledStart}>Start</Button>
