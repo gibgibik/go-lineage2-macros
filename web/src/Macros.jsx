@@ -1,21 +1,46 @@
 import {Box, Button, ButtonGroup, Container, TextField} from "@mui/material";
 import {MacrosAction} from "./MacrosAction.jsx";
 import {getProfile, saveProfile} from "./api.js";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 
-const items = []
 const INPUT_COUNT = 10;
 const PROFILE_NAME = 'static_profile';//@make few profiles?
-for (let i = 0; i < INPUT_COUNT; i++) {
-    items.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
-        <MacrosAction name={'action[]'}/>
-        <TextField variant={"outlined"} fullWidth={true} name={'details[]'} label={'Details'}/>
-        <TextField variant={"outlined"} fullWidth={true} name={'period_seconds[]'} label={'Period Seconds'}/>
-    </Box>);
+const renderItems = ({'Actions': actions = [], 'Bindings': bindings = [], 'Period_seconds': periodSeconds = []}) => {
+    const items = []
+    for (let i = 0; i < INPUT_COUNT; i++) {
+        items.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
+            <MacrosAction name={'actions[]'} initValue={actions[i] || ''}/>
+            <TextField variant={"outlined"} fullWidth={true} name={'bindings[]'} defaultValue={bindings[i] || ''}
+                       />
+            <TextField variant={"outlined"} fullWidth={true} name={'period_seconds[]'} defaultValue={periodSeconds[i] || ''}
+                       />
+        </Box>);
+    }
+    console.log('render');
+
+    return items;
 }
-getProfile(PROFILE_NAME);
 export const Macros = () => {
     const [submitDisabled, disableSubmit] = useState(false);
+    const [formItemsData, setFormItemsData] = useState({});
+    const [formItems, setFormItems] = useState([]);
+    useEffect(() => {
+        setFormItems(renderItems(formItemsData));
+    }, [formItemsData]);
+    useEffect(() => {
+        async function initProfile() {
+            const data = await getProfile(PROFILE_NAME);
+            setFormItemsData(data);
+        }
+
+        initProfile();
+    }, []);
+    useEffect(() => {
+        if (!formItemsData || !Object.keys(formItemsData).length) {
+            return;
+        }
+        console.log(formItemsData);
+    }, [formItemsData])
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -39,7 +64,7 @@ export const Macros = () => {
     }
     return (<Container>
         <form onSubmit={handleSubmit}>
-            {items}
+            {formItems}
             <ButtonGroup variant="contained" sx={{gap: 4, display: 'flex', justifyContent: 'center'}}>
                 <Button type={"submit"} disabled={submitDisabled}>Save</Button>
             </ButtonGroup>

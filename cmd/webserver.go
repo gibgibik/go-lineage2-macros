@@ -147,8 +147,8 @@ func templateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 var templateBody struct {
-	Action         []string
-	Details        []string
+	Actions        []string
+	Bindings       []string
 	Period_seconds []string
 	Profile        string
 }
@@ -175,7 +175,7 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 		return
 	}
 	reg := regexp.MustCompile("[^\\w /]")
-	for idx, action := range templateBody.Action {
+	for idx, action := range templateBody.Actions {
 		if action == "" {
 			continue
 		}
@@ -184,9 +184,9 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 			createRequestError(w, fmt.Sprintf("action '%s' not found", action), http.StatusBadRequest)
 			return
 		}
-		if idx > len(templateBody.Details) {
-			logger.Error(fmt.Sprintf("detail %s not found, idx: %d", action, idx))
-			createRequestError(w, fmt.Sprintf("detail '%s' not found", action), http.StatusBadRequest)
+		if idx > len(templateBody.Bindings) {
+			logger.Error(fmt.Sprintf("binding %s not found, idx: %d", action, idx))
+			createRequestError(w, fmt.Sprintf("binding '%s' not found", action), http.StatusBadRequest)
 			return
 		}
 		if idx > len(templateBody.Period_seconds) {
@@ -194,13 +194,13 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 			createRequestError(w, fmt.Sprintf("period seconds '%s' not found", action), http.StatusBadRequest)
 			return
 		}
-		if (action == "/target" || action == "/delay" || action == "/useskill" || action == "/press") && len(templateBody.Details[idx]) == 0 {
+		if (action == "/target" || action == "/delay" || action == "/useskill" || action == "/press") && len(templateBody.Bindings[idx]) == 0 {
 			logger.Error(fmt.Sprintf("empty details: %s, idx: %d", action, idx))
 			createRequestError(w, fmt.Sprintf("empty details %s", action), http.StatusBadRequest)
 			return
 		}
-		templateBody.Action[idx] = reg.ReplaceAllString(action, "")
-		templateBody.Details[idx] = reg.ReplaceAllString(templateBody.Details[idx], "")
+		templateBody.Actions[idx] = reg.ReplaceAllString(action, "")
+		templateBody.Bindings[idx] = reg.ReplaceAllString(templateBody.Bindings[idx], "")
 		templateBody.Period_seconds[idx] = reg.ReplaceAllString(templateBody.Period_seconds[idx], "")
 	}
 	fileName := getProfilePath(templateBody.Profile)

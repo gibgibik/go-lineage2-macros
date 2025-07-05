@@ -6,7 +6,7 @@ const api = axios.create({
 
 export const getProfile = (profileName) => {
     return api.get('/profile/' + profileName).then((response) => {
-        console.log(response)
+        return response.data;
     }).catch((error) => {
         console.log(error);
     })
