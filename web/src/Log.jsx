@@ -3,7 +3,7 @@ import {Paper, Typography} from "@mui/material";
 import useWebSocket, {ReadyState} from "react-use-websocket";
 
 export const Log = () => {
-    const {readyState} = useWebSocket('ws://localhost:8088/ws', {
+    const {readyState} = useWebSocket(`ws://localhost:${import.meta.env.VITE_SERVER_PORT}/ws`, {
         onOpen: () => console.log('Connected!'),
         onClose: () => console.log('Disconnected!'),
         shouldReconnect: () => true,
@@ -39,7 +39,8 @@ export const Log = () => {
         }}
     >
         {messages.map((msg, idx) => (
-            <Typography key={idx}>
+            <Typography
+                ography key={idx}>
                 {msg}
             </Typography>
         ))}

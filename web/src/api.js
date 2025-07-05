@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:8088/api',
+    baseURL: `http://localhost:${import.meta.env.VITE_SERVER_PORT}/api`,
 });
 
 export const getProfile = (profileName) => {
