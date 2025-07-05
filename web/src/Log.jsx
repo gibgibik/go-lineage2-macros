@@ -40,7 +40,7 @@ export const Log = () => {
     >
         {messages.map((msg, idx) => (
             <Typography key={idx}>
-                [10:10] {msg}
+                {msg}
             </Typography>
         ))}
         <div ref={messageEndRef}/>

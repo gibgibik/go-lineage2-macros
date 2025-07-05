@@ -11,9 +11,10 @@ const renderItems = ({'Actions': actions = [], 'Bindings': bindings = [], 'Perio
         items.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
             <MacrosAction name={'actions[]'} initValue={actions[i] || ''}/>
             <TextField variant={"outlined"} fullWidth={true} name={'bindings[]'} defaultValue={bindings[i] || ''}
-                       />
-            <TextField variant={"outlined"} fullWidth={true} name={'period_seconds[]'} defaultValue={periodSeconds[i] || ''}
-                       />
+            />
+            <TextField variant={"outlined"} fullWidth={true} name={'period_seconds[]'}
+                       defaultValue={periodSeconds[i] || ''}
+            />
         </Box>);
     }
     console.log('render');
@@ -22,15 +23,20 @@ const renderItems = ({'Actions': actions = [], 'Bindings': bindings = [], 'Perio
 }
 export const Macros = () => {
     const [submitDisabled, disableSubmit] = useState(false);
-    const [formItemsData, setFormItemsData] = useState({});
+    const [formItemsData, setFormItemsData] = useState({Actions: [], Bindings: [], Period_seconds: []});
     const [formItems, setFormItems] = useState([]);
     useEffect(() => {
         setFormItems(renderItems(formItemsData));
     }, [formItemsData]);
     useEffect(() => {
         async function initProfile() {
-            const data = await getProfile(PROFILE_NAME);
-            setFormItemsData(data);
+            try {
+                const data = await getProfile(PROFILE_NAME);
+                if (data) {
+                    setFormItemsData(data);
+                }
+            } catch (error) {
+            }
         }
 
         initProfile();
@@ -47,7 +53,10 @@ export const Macros = () => {
         // const data = Object.fromEntries(formData.entries());
         // console.log(Object.fromEntries(formData.entries()))
         const obj = {};
-        for (const [key, value] of formData.entries()) {
+        for (let [key, value] of formData.entries()) {
+            if (key === 'period_seconds[]') {
+                value = parseInt(value);
+            }
             if (key.endsWith('[]')) {
                 const cleanKey = key.slice(0, -2);
                 if (!obj[cleanKey]) obj[cleanKey] = [];
