@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
-	"github.com/gibgibik/go-lineage2-macros/internal/core/entity"
 	"github.com/gibgibik/go-lineage2-macros/internal/core/service"
 	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
@@ -27,7 +26,6 @@ import (
 )
 
 var (
-	playerStat  *entity.PlayerStat
 	startResult = make(chan error, 1)
 	upgrader    = websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -79,7 +77,7 @@ func initStacks(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogge
 			if val == "" {
 				continue
 			}
-			if profileData.Period_seconds[idx] > 0 {
+			if profileData.PeriodSeconds[idx] > 0 {
 				continue
 			}
 			runStack = slices.Insert(runStack, 0, struct {
@@ -97,7 +95,7 @@ func initStacks(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogge
 			if val == "" {
 				continue
 			}
-			if profileData.Period_seconds[idx] == 0 {
+			if profileData.PeriodSeconds[idx] == 0 {
 				continue
 			}
 
@@ -109,7 +107,7 @@ func initStacks(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogge
 			}{
 				action:       val,
 				binding:      profileData.Bindings[idx],
-				delaySeconds: profileData.Period_seconds[idx],
+				delaySeconds: profileData.PeriodSeconds[idx],
 				lastRun:      time.Time{},
 			})
 		}
@@ -312,24 +310,28 @@ func templateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type templateBodyStruct struct {
-	Actions        []string
-	Bindings       []string
-	Period_seconds []int
-	Profile        string
+type profileBodyStruct struct {
+	Actions              []string
+	Bindings             []string
+	PeriodSeconds        []int    `json:"Period_seconds"`
+	StartTargetCondition []string `json:"Start_target_condition"`
+	EndTargetCondition   []string `json:"End_target_condition"`
+	UseCondition         []string `json:"Use_condition"`
+	Profile              string
 }
 
 func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
 	stackLock.Lock()
 	stackLock.Unlock()
 	availableActions := map[string]interface{}{
-		"/assist":   nil,
-		"/attack":   nil,
-		"/target":   nil,
-		"/delay":    nil,
-		"/useskill": nil,
-		"/press":    nil,
-		"/ping":     nil,
+		"/assist":     nil,
+		"/targetnext": nil,
+		"/attack":     nil,
+		"/target":     nil,
+		"/delay":      nil,
+		"/useskill":   nil,
+		"/press":      nil,
+		"/ping":       nil,
 	}
 	inputBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -337,7 +339,7 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 		createRequestError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	var templateBody templateBodyStruct
+	var templateBody profileBodyStruct
 	err = json.Unmarshal(inputBody, &templateBody)
 	if err != nil {
 		logger.Error(err.Error())
@@ -359,7 +361,7 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 			createRequestError(w, fmt.Sprintf("binding '%s' not found", action), http.StatusBadRequest)
 			return
 		}
-		if idx > len(templateBody.Period_seconds) {
+		if idx > len(templateBody.PeriodSeconds) {
 			logger.Error(fmt.Sprintf("period seconds %s not found, idx: %d", action, idx))
 			createRequestError(w, fmt.Sprintf("period seconds '%s' not found", action), http.StatusBadRequest)
 			return
@@ -371,7 +373,7 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 		}
 		templateBody.Actions[idx] = reg.ReplaceAllString(action, "")
 		templateBody.Bindings[idx] = reg.ReplaceAllString(templateBody.Bindings[idx], "")
-		templateBody.Period_seconds[idx] = templateBody.Period_seconds[idx]
+		templateBody.PeriodSeconds[idx] = templateBody.PeriodSeconds[idx]
 	}
 	fileName := getProfilePath(templateBody.Profile)
 	if err != nil {
@@ -411,7 +413,7 @@ func getTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Suga
 	w.Write(data)
 }
 
-func getProfileData(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) (*templateBodyStruct, error) {
+func getProfileData(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) (*profileBodyStruct, error) {
 	path := strings.Trim(r.RequestURI, "/")
 	pathPieces := strings.SplitN(path, "/", 4)
 	if len(pathPieces) < 3 {
@@ -426,7 +428,7 @@ func getProfileData(w http.ResponseWriter, r *http.Request, logger *zap.SugaredL
 		return nil, errors.New("file does not exist")
 	}
 	buf, err := io.ReadAll(fh)
-	var templateBody *templateBodyStruct
+	var templateBody *profileBodyStruct
 	err = json.Unmarshal(buf, &templateBody)
 	if err != nil {
 		return nil, err

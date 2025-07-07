@@ -1,8 +1,8 @@
 import {Box, Button, ButtonGroup, Container, TextField} from "@mui/material";
 import {MacrosAction} from "./MacrosAction.jsx";
 import {getProfile, saveProfile} from "./api.js";
-import {useEffect, useState} from "react";
-import {isHotkeyPressed, useHotkeys} from "react-hotkeys-hook";
+import React, {useEffect, useState} from "react";
+import {IMaskInput} from "react-imask";
 
 const INPUT_COUNT = 10;
 const onChangeBinding = (event) => {
@@ -19,15 +19,64 @@ const onChangeBinding = (event) => {
     event.preventDefault();
     return false;
 }
-const renderItems = ({'Actions': actions = [], 'Bindings': bindings = [], 'Period_seconds': periodSeconds = []}) => {
+
+const ConditionMask = React.forwardRef(
+    function TextMaskCustom(props, ref) {
+        const {onChange, ...other} = props;
+        return (
+            <IMaskInput
+                {...other}
+                mask="P\P S ##%"
+                definitions={{
+                    '#': /[0-9]/,
+                    'P': /H|M/,
+                    'S': />|<|=/,
+                }}
+                inputRef={ref}
+                onAccept={(value) => onChange({target: {name: props.name, value}})}
+                overwrite
+            />
+        );
+    },
+);
+
+const renderItems = ({
+                         'Actions': actions = [],
+                         'Bindings': bindings = [],
+                         'Period_seconds': periodSeconds = [],
+                         'Start_target_condition': startTargetCondition = [],
+                         'End_target_condition': endTargetCondition = [],
+    'Use_condition': useCondition = [],
+                     }) => {
+    console.log(startTargetCondition, endTargetCondition);
     const items = []
     for (let i = 0; i < INPUT_COUNT; i++) {
         items.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
             <MacrosAction name={'actions[]'} initValue={actions[i] || ''}/>
-            <TextField variant={"outlined"} fullWidth={true} name={'bindings[]'} onKeyDown={onChangeBinding} defaultValue={bindings[i] || ''}
+            <TextField variant={"outlined"} fullWidth={true} name={'bindings[]'} label="Binding"
+                       slotProps={{inputLabel: {shrink: true}}}
+                       onKeyDown={onChangeBinding} defaultValue={bindings[i] || ''}
             />
-            <TextField variant={"outlined"} fullWidth={true} name={'period_seconds[]'}
+            <TextField variant={"outlined"} fullWidth={true} name={'period_seconds[]'} label={"Interval Seconds"}
+                       slotProps={{inputLabel: {shrink: true}}}
                        defaultValue={periodSeconds[i] || ''}
+            />
+            <TextField variant={"outlined"} fullWidth={true} name={'start_target_condition[]'} label={"Start Target Condition"}
+                       slotProps={{inputLabel: {shrink: true}}}
+                       defaultValue={startTargetCondition[i] || ''}
+                       InputProps={{inputComponent:ConditionMask }}
+            />
+            <TextField variant={"outlined"} fullWidth={true} name={'end_target_condition[]'} label={"End Target Condition"}
+                       slotProps={{inputLabel: {shrink: true}}}
+                       defaultValue={endTargetCondition[i] || ''}
+                       InputProps={{inputComponent:ConditionMask }}
+
+            />
+            <TextField variant={"outlined"} fullWidth={true} name={'use_condition[]'} label={"Use Condition"}
+                       slotProps={{inputLabel: {shrink: true}}}
+                       defaultValue={useCondition[i] || ''}
+                       InputProps={{inputComponent:ConditionMask }}
+
             />
         </Box>);
     }

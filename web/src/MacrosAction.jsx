@@ -5,6 +5,7 @@ const rawActions = [
     '/assist',
     '/attack',
     '/target',
+    '/targetnext',
     '/delay',
     '/useskill',
     '/press',
