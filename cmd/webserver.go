@@ -19,12 +19,15 @@ import (
 	"time"
 
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
+	"github.com/gibgibik/go-lineage2-macros/internal/core/entity"
+	"github.com/gibgibik/go-lineage2-macros/internal/core/service"
 	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
 
 var (
+	playerStat  *entity.PlayerStat
 	startResult = make(chan error, 1)
 	upgrader    = websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -123,6 +126,7 @@ func createWebServerCommand(logger *zap.SugaredLogger) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cnf := cmd.Context().Value("cnf").(*core.Config)
 			handle := httpServerStart(cmd.Context(), cnf, logger)
+			go service.StartPlayerStatUpdate(cmd.Context(), cnf.PlayerStatUrl, logger)
 			for {
 				select {
 				case <-cmd.Context().Done():
@@ -199,7 +203,7 @@ func withCORS(next http.Handler, logger *zap.SugaredLogger) http.Handler {
 }
 
 func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredLogger) *http.Server {
-	fmt.Println(cnf.WebServer.Port)
+	logger.Debug("starting webserver on port :", cnf.WebServer.Port)
 	handle := &http.Server{
 		Addr:         ":" + cnf.WebServer.Port,
 		ReadTimeout:  10 * time.Second,

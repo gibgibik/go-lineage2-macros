@@ -8,7 +8,8 @@ type Web struct {
 	Port string
 }
 type Config struct {
-	WebServer Web `mapstructure:"web"`
+	WebServer     Web    `mapstructure:"web"`
+	PlayerStatUrl string `mapstructure:"player_stat_url"`
 }
 
 func InitConfig() (*Config, error) {

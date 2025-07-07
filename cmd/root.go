@@ -45,7 +45,6 @@ func Execute() error {
 		zapcore.NewCore(zapcore.NewConsoleEncoder(wsEncoded), zapcore.AddSync(BaseWsSender{}), zapcore.InfoLevel),
 	)
 	logger := zap.New(cZ)
-	logger.Info("start")
 	cnf, err := core.InitConfig()
 	if err != nil {
 		return err
