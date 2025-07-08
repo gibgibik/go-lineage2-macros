@@ -255,6 +255,19 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	mux.HandleFunc("/api/stop", func(writer http.ResponseWriter, request *http.Request) {
 		stopRunChannel <- struct{}{}
 	})
+	mux.HandleFunc("/api/init", func(writer http.ResponseWriter, request *http.Request) {
+		lockResult := runMutex.TryLock()
+		if lockResult {
+			defer runMutex.Unlock()
+		}
+		response := struct {
+			IsMacrosRunning bool `json:"isMacrosRunning"`
+		}{
+			IsMacrosRunning: !lockResult,
+		}
+		res, _ := json.Marshal(response)
+		writer.Write(res)
+	})
 	mux.Handle("/", http.FileServer(http.Dir("./web/dist")))
 	handle.Handler = withCORS(mux, logger)
 	go func() {
