@@ -42,7 +42,7 @@ func (cl *httpClient) Get(url string) (playerStat *entity.PlayerStat, err error)
 			resp.Body.Close()
 		}
 
-		time.Sleep(time.Second)
+		time.Sleep(time.Second / 2)
 	}
 
 	return nil, fmt.Errorf("failed after %d retries: %v", maxRetries, err)

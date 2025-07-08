@@ -2,19 +2,19 @@ package entity
 
 type PlayerStat struct {
 	CP struct {
-		Value      string
+		Percent    float64
 		LastUpdate int64
 	}
 	HP struct {
-		Value      string
+		Percent    float64
 		LastUpdate int64
 	}
 	MP struct {
-		Value      string
+		Percent    float64
 		LastUpdate int64
 	}
 	EXP struct {
-		Value      string
+		Percent    float64
 		LastUpdate int64
 	}
 	Target struct {
@@ -22,3 +22,8 @@ type PlayerStat struct {
 		LastUpdate int64
 	}
 }
+
+const (
+	Hp = "HP"
+	Mp = "MP"
+)

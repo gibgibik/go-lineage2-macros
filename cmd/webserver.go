@@ -14,16 +14,26 @@ import (
 	"os"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
+	"github.com/gibgibik/go-lineage2-macros/internal/core/entity"
 	"github.com/gibgibik/go-lineage2-macros/internal/core/service"
 	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
+
+type runStackStruct struct {
+	action               string
+	binding              string
+	startTargetCondition *Condition
+	endTargetCondition   *Condition
+	useCondition         *Condition
+}
 
 var (
 	startResult = make(chan error, 1)
@@ -38,11 +48,8 @@ var (
 	runMutex       sync.Mutex
 	stopRunChannel = make(chan interface{}, 1)
 	stackLock      sync.Mutex
-	runStack       []struct {
-		action  string
-		binding string
-	}
-	delayStack []struct {
+	runStack       []runStackStruct
+	delayStack     []struct {
 		action       string
 		binding      string
 		delaySeconds int
@@ -52,11 +59,26 @@ var (
 	messagesStackMutex sync.Mutex
 )
 
+type profileBodyStruct struct {
+	Actions              []string
+	Bindings             []string
+	PeriodSeconds        []int    `json:"Period_seconds"`
+	StartTargetCondition []string `json:"Start_target_condition"`
+	EndTargetCondition   []string `json:"End_target_condition"`
+	UseCondition         []string `json:"Use_condition"`
+	Profile              string
+}
+
 type WsSender interface {
 	io.Writer
 	Sync() error
 }
 
+type Condition struct {
+	attr  string
+	sign  string
+	value float64
+}
 type BaseWsSender struct{}
 
 func (ws BaseWsSender) Sync() error {
@@ -65,6 +87,21 @@ func (ws BaseWsSender) Sync() error {
 func (ws BaseWsSender) Write(p []byte) (n int, err error) {
 	sendMessage(string(p))
 	return 0, nil
+}
+
+func parseCondition(s string) *Condition {
+	s = strings.ReplaceAll(s, "%", "")
+	reg := regexp.MustCompile("(HP|MP)\\s(>|<|=)\\s(\\d+)")
+	matches := reg.FindSubmatch([]byte(s))
+	if len(matches) != 4 {
+		return &Condition{}
+	}
+	value, _ := strconv.ParseFloat(string(matches[3]), 64)
+	return &Condition{
+		attr:  string(matches[1]),
+		sign:  string(matches[2]),
+		value: value,
+	}
 }
 
 func initStacks(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) error {
@@ -80,12 +117,14 @@ func initStacks(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogge
 			if profileData.PeriodSeconds[idx] > 0 {
 				continue
 			}
-			runStack = slices.Insert(runStack, 0, struct {
-				action  string
-				binding string
-			}{
+			runStack = slices.Insert(runStack, 0, runStackStruct{
 				action:  val,
 				binding: profileData.Bindings[idx],
+				startTargetCondition: &Condition{
+					attr:  "",
+					sign:  "",
+					value: 0,
+				},
 			})
 		}
 
@@ -246,10 +285,7 @@ func startHandler(w http.ResponseWriter, r *http.Request) {
 			case <-stopRunChannel:
 				logger.Info("macros stopped")
 				stackLock.Lock()
-				runStack = []struct {
-					action  string
-					binding string
-				}{}
+				runStack = []runStackStruct{}
 				delayStack = []struct {
 					action       string
 					binding      string
@@ -276,6 +312,16 @@ func startHandler(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 				for _, runAction := range runStack {
+					if !checkUseCondition(runAction.startTargetCondition) {
+						continue
+					}
+
+					if !checkTargetCondition(runAction.startTargetCondition) {
+						continue
+					}
+					if !checkTargetCondition(runAction.endTargetCondition) {
+						continue
+					}
 					message := fmt.Sprintf("call [%s] %s", runAction.action, runAction.binding)
 					logger.Debug(message) //@todo send key
 					//sendMessage(message)
@@ -286,6 +332,92 @@ func startHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}()
+}
+
+func checkUseCondition(condition *Condition) bool {
+	if condition.attr != "" {
+		switch condition.attr {
+		case entity.Hp:
+			switch condition.sign {
+			case ">":
+				if condition.value > service.PlayerStat.HP.Percent {
+					return true
+				}
+				return false
+			case "=":
+				if condition.value == service.PlayerStat.HP.Percent {
+					return true
+				}
+				return false
+			case "<":
+				if condition.value < service.PlayerStat.HP.Percent {
+					return true
+				}
+			}
+		case entity.Mp:
+			switch condition.sign {
+			case ">":
+				if condition.value > service.PlayerStat.MP.Percent {
+					return true
+				}
+				return false
+			case "=":
+				if condition.value == service.PlayerStat.MP.Percent {
+					return true
+				}
+				return false
+			case "<":
+				if condition.value < service.PlayerStat.MP.Percent {
+					return true
+				}
+			}
+		}
+	}
+
+	return true
+}
+
+func checkTargetCondition(condition *Condition) bool {
+	if condition.attr != "" {
+		switch condition.attr {
+		case entity.Hp:
+			switch condition.sign {
+			case ">":
+				if condition.value > service.PlayerStat.Target.HpPercent {
+					return true
+				}
+				return false
+			case "=":
+				if condition.value == service.PlayerStat.Target.HpPercent {
+					return true
+				}
+				return false
+			case "<":
+				if condition.value < service.PlayerStat.Target.HpPercent {
+					return true
+				}
+			}
+		case entity.Mp:
+			switch condition.sign {
+			case ">":
+				if condition.value > service.PlayerStat.MP.Percent {
+					return true
+				}
+				return false
+			case "=":
+				if condition.value == service.PlayerStat.MP.Percent {
+					return true
+				}
+				return false
+			case "<":
+				if condition.value < service.PlayerStat.MP.Percent {
+					return true
+				}
+			}
+		}
+	}
+
+	return true
 }
 
 func sendMessage(message string) {
@@ -308,16 +440,6 @@ func templateHandler(w http.ResponseWriter, r *http.Request) {
 		postTemplateHandler(w, r, logger)
 		return
 	}
-}
-
-type profileBodyStruct struct {
-	Actions              []string
-	Bindings             []string
-	PeriodSeconds        []int    `json:"Period_seconds"`
-	StartTargetCondition []string `json:"Start_target_condition"`
-	EndTargetCondition   []string `json:"End_target_condition"`
-	UseCondition         []string `json:"Use_condition"`
-	Profile              string
 }
 
 func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
@@ -393,10 +515,7 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 		createRequestError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	runStack = []struct {
-		action  string
-		binding string
-	}{}
+	runStack = []runStackStruct{}
 	delayStack = []struct {
 		action       string
 		binding      string
