@@ -118,13 +118,11 @@ func initStacks(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogge
 				continue
 			}
 			runStack = slices.Insert(runStack, 0, runStackStruct{
-				action:  val,
-				binding: profileData.Bindings[idx],
-				startTargetCondition: &Condition{
-					attr:  "",
-					sign:  "",
-					value: 0,
-				},
+				action:               val,
+				binding:              profileData.Bindings[idx],
+				startTargetCondition: parseCondition(profileData.StartTargetCondition[idx]),
+				endTargetCondition:   parseCondition(profileData.EndTargetCondition[idx]),
+				useCondition:         parseCondition(profileData.UseCondition[idx]),
 			})
 		}
 
@@ -253,7 +251,7 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	mux := http.NewServeMux() // Create
 	mux.HandleFunc("/ws", wsHandler)
 	mux.HandleFunc("/api/profile/", templateHandler)
-	mux.HandleFunc("/api/start/", startHandler)
+	mux.HandleFunc("/api/start/", startHandler(ctx))
 	mux.HandleFunc("/api/stop", func(writer http.ResponseWriter, request *http.Request) {
 		stopRunChannel <- struct{}{}
 	})
@@ -271,70 +269,76 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	return handle
 }
 
-func startHandler(w http.ResponseWriter, r *http.Request) {
-	logger := r.Context().Value("logger").(*zap.SugaredLogger)
-	if !runMutex.TryLock() {
-		logger.Error("already running")
-		createRequestError(w, "already running", http.StatusServiceUnavailable)
-		return
-	}
-	go func() {
-		defer runMutex.Unlock()
-		for {
-			select {
-			case <-stopRunChannel:
-				logger.Info("macros stopped")
-				stackLock.Lock()
-				runStack = []runStackStruct{}
-				delayStack = []struct {
-					action       string
-					binding      string
-					delaySeconds int
-					lastRun      time.Time
-				}{}
-				stackLock.Unlock()
-				return
-			default:
-				stackLock.Lock()
-				err := initStacks(w, r, logger)
-				if err != nil {
-					logger.Error("init stacks error: " + err.Error())
-					sendMessage("init stacks error: " + err.Error())
+func startHandler(ctx context.Context) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		logger := r.Context().Value("logger").(*zap.SugaredLogger)
+		if !runMutex.TryLock() {
+			logger.Error("already running")
+			createRequestError(w, "already running", http.StatusServiceUnavailable)
+			return
+		}
+		go func() {
+			defer runMutex.Unlock()
+			for {
+				select {
+				case <-ctx.Done():
+					stopRunChannel <- struct{}{}
+				case <-stopRunChannel:
+					logger.Debug("macros stopped")
+					stackLock.Lock()
+					runStack = []runStackStruct{}
+					delayStack = []struct {
+						action       string
+						binding      string
+						delaySeconds int
+						lastRun      time.Time
+					}{}
 					stackLock.Unlock()
 					return
+				default:
+					stackLock.Lock()
+					err := initStacks(w, r, logger)
+					if err != nil {
+						logger.Error("init stacks error: " + err.Error())
+						sendMessage("init stacks error: " + err.Error())
+						stackLock.Unlock()
+						return
+					}
+					for idx, delayedAction := range delayStack {
+						if delayedAction.lastRun.IsZero() || delayedAction.lastRun.Unix() <= time.Now().Unix() {
+							message := fmt.Sprintf("[delayed] [%s] %s", delayedAction.action, delayedAction.binding)
+							logger.Info(message)
+							//sendMessage(message) //@todo send key
+							delayStack[idx].lastRun = time.Now().Add(time.Duration(delayedAction.delaySeconds) * time.Second)
+						}
+					}
+					for _, runAction := range runStack {
+						if !checkUseCondition(runAction.startTargetCondition) {
+							continue
+						}
+						if !checkTargetCondition(runAction.startTargetCondition, logger) {
+							continue
+						}
+						//if !checkTargetCondition(runAction.endTargetCondition, logger) {
+						//	continue
+						//}
+						message := fmt.Sprintf("%s %s", runAction.action, runAction.binding)
+						logger.Info(message) //@todo send key
+						//sendMessage(message)
+					}
+					stackLock.Unlock()
+					//run stack
+					time.Sleep(time.Millisecond * time.Duration(randNum(100, 400)))
 				}
-				for idx, delayedAction := range delayStack {
-					if delayedAction.lastRun.IsZero() || delayedAction.lastRun.Unix() <= time.Now().Unix() {
-						message := fmt.Sprintf("[delayed] [%s] %s", delayedAction.action, delayedAction.binding)
-						logger.Info(message)
-						//sendMessage(message) //@todo send key
-						delayStack[idx].lastRun = time.Now().Add(time.Duration(delayedAction.delaySeconds) * time.Second)
-					}
-				}
-				for _, runAction := range runStack {
-					if !checkUseCondition(runAction.startTargetCondition) {
-						continue
-					}
-
-					if !checkTargetCondition(runAction.startTargetCondition) {
-						continue
-					}
-					if !checkTargetCondition(runAction.endTargetCondition) {
-						continue
-					}
-					message := fmt.Sprintf("call [%s] %s", runAction.action, runAction.binding)
-					logger.Debug(message) //@todo send key
-					//sendMessage(message)
-				}
-				stackLock.Unlock()
-				//run stack
-				time.Sleep(time.Millisecond * time.Duration(randNum(100, 400)))
 			}
-		}
-	}()
+		}()
+	}
 }
 
 func checkUseCondition(condition *Condition) bool {
+	if service.PlayerStat == nil {
+		return false
+	}
 	if condition.attr != "" {
 		switch condition.attr {
 		case entity.Hp:
@@ -374,43 +378,46 @@ func checkUseCondition(condition *Condition) bool {
 		}
 	}
 
-	return true
+	return false
 }
 
-func checkTargetCondition(condition *Condition) bool {
+func checkTargetCondition(condition *Condition, logger *zap.SugaredLogger) bool {
+	if service.PlayerStat == nil {
+		return false
+	}
 	if condition.attr != "" {
 		switch condition.attr {
 		case entity.Hp:
 			switch condition.sign {
 			case ">":
-				if condition.value > service.PlayerStat.Target.HpPercent {
+				if service.PlayerStat.Target.HpPercent > condition.value {
 					return true
 				}
 				return false
 			case "=":
-				if condition.value == service.PlayerStat.Target.HpPercent {
+				if service.PlayerStat.Target.HpPercent == condition.value {
 					return true
 				}
 				return false
 			case "<":
-				if condition.value < service.PlayerStat.Target.HpPercent {
+				if service.PlayerStat.Target.HpPercent < condition.value {
 					return true
 				}
 			}
 		case entity.Mp:
 			switch condition.sign {
 			case ">":
-				if condition.value > service.PlayerStat.MP.Percent {
+				if service.PlayerStat.MP.Percent > condition.value {
 					return true
 				}
 				return false
 			case "=":
-				if condition.value == service.PlayerStat.MP.Percent {
+				if service.PlayerStat.MP.Percent == condition.value {
 					return true
 				}
 				return false
 			case "<":
-				if condition.value < service.PlayerStat.MP.Percent {
+				if service.PlayerStat.MP.Percent < condition.value {
 					return true
 				}
 			}
