@@ -30,6 +30,12 @@ func Execute() error {
 	wsEncoded := zap.NewDevelopmentEncoderConfig()
 	wsEncoded.EncodeTime = zapcore.RFC3339TimeEncoder
 
+	webEncoder := zap.NewDevelopmentEncoderConfig()
+	webEncoder.EncodeLevel = func(l zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
+		l.Set("")
+	}
+	webEncoder.EncodeTime = zapcore.TimeEncoderOfLayout("15:04:05")
+
 	f, err := os.OpenFile(fmt.Sprintf("var/log/app.log"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
 		panic(err)
@@ -42,7 +48,7 @@ func Execute() error {
 			zap.InfoLevel,
 		),
 		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), zapcore.DebugLevel),
-		zapcore.NewCore(zapcore.NewConsoleEncoder(wsEncoded), zapcore.AddSync(BaseWsSender{}), zapcore.InfoLevel),
+		zapcore.NewCore(zapcore.NewConsoleEncoder(webEncoder), zapcore.AddSync(BaseWsSender{}), zapcore.InfoLevel),
 	)
 	logger := zap.New(cZ)
 	cnf, err := core.InitConfig()

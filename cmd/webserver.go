@@ -335,7 +335,7 @@ func startHandler(ctx context.Context) func(w http.ResponseWriter, r *http.Reque
 						//if !checkTargetCondition(runAction.endTargetCondition, logger) {
 						//	continue
 						//}
-						message := fmt.Sprintf("%s %s", runAction.action, runAction.binding)
+						message := fmt.Sprintf("%s %s <span style='color:red'>test</span>", runAction.action, runAction.binding)
 						logger.Info(message) //@todo send key
 						//sendMessage(message)
 					}

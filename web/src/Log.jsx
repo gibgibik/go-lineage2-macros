@@ -40,9 +40,7 @@ export const Log = ({profileName}) => {
     >
         {messages.map((msg, idx) => (
             <Typography
-                ography key={idx}>
-                {msg}
-            </Typography>
+                 key={idx} dangerouslySetInnerHTML={{ __html: msg }} />
         ))}
         <div ref={messageEndRef}/>
     </Paper>;
