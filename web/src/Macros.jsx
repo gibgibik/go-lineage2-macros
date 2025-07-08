@@ -48,7 +48,6 @@ const renderItems = ({
                          'End_target_condition': endTargetCondition = [],
     'Use_condition': useCondition = [],
                      }) => {
-    console.log(startTargetCondition, endTargetCondition);
     const items = []
     for (let i = 0; i < INPUT_COUNT; i++) {
         items.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
@@ -107,7 +106,6 @@ export const Macros = ({profileName}) => {
         if (!formItemsData || !Object.keys(formItemsData).length) {
             return;
         }
-        console.log(formItemsData);
     }, [formItemsData])
     const handleSubmit = async (e) => {
         e.preventDefault();

@@ -7,8 +7,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import {Button, ButtonGroup, createTheme, Grid, ThemeProvider} from "@mui/material";
 import {Log} from "./Log.jsx";
 import {Macros} from "./Macros.jsx";
-import {useState} from "react";
-import {startMacros, stopMacros} from "./api.js";
+import {useEffect, useState} from "react";
+import {init, startMacros, stopMacros} from "./api.js";
 
 const theme = createTheme({
     palette: {
@@ -46,11 +46,21 @@ function App() {
             setDisabledStart(false);
         }
     }
+    useEffect(() => {
+        init().then(({data: {isMacrosRunning}}) => {
+            setDisabledStop(!isMacrosRunning);
+            setDisabledStart(isMacrosRunning);
+        }).catch(e => {
+            console.log('init failed', e);
+            setDisabledStart(true);
+            setDisabledStop(true);
+        })
+    }, []);
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline/>
-            <Grid  container spacing={0} sx={{flexDirection:'column', width: '100vw'}}>
-                <Grid md={6} xs={12} ><Macros profileName={PROFILE_NAME}/></Grid>
+            <Grid container spacing={0} sx={{flexDirection: 'column', width: '100vw'}}>
+                <Grid md={6} xs={12}><Macros profileName={PROFILE_NAME}/></Grid>
                 <Grid md={6} xs={12} sx={{mb: 22}}><Log profileName={PROFILE_NAME}/>
                     <ButtonGroup variant="contained" sx={{gap: 4, display: 'flex', justifyContent: 'center'}}>
                         <Button color={'error'} onClick={stopMacrosAction} disabled={disabledStop}>Stop</Button>
