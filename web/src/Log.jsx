@@ -30,7 +30,7 @@ export const Log = ({profileName}) => {
         elevation={3}
         sx={{
             flexGrow: 1,
-            maxHeight: '50vh',
+            maxHeight: '100vh',
             overflowY: 'auto',
             p: 2,
             m: 2,

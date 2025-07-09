@@ -60,8 +60,8 @@ function App() {
         <ThemeProvider theme={theme}>
             <CssBaseline/>
             <Grid container spacing={0} sx={{flexDirection: 'column', width: '100vw'}}>
-                <Grid md={6} xs={12}><Macros profileName={PROFILE_NAME}/></Grid>
-                <Grid md={6} xs={12} sx={{mb: 22}}><Log profileName={PROFILE_NAME}/>
+                <Grid md={6} xs={12} sx={{maxWidth: '100vw'}}><Macros profileName={PROFILE_NAME}/></Grid>
+                <Grid md={6} xs={12} sx={{mb: 2 }}><Log profileName={PROFILE_NAME}/>
                     <ButtonGroup variant="contained" sx={{gap: 4, display: 'flex', justifyContent: 'center'}}>
                         <Button color={'error'} onClick={stopMacrosAction} disabled={disabledStop}>Stop</Button>
                         <Button onClick={startMacrosAction} disabled={disabledStart}>Start</Button>

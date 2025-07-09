@@ -21,7 +21,7 @@ import (
 
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
 	"github.com/gibgibik/go-lineage2-macros/internal/core/entity"
-	"github.com/gibgibik/go-lineage2-macros/internal/core/service"
+	"github.com/gibgibik/go-lineage2-macros/internal/service"
 	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -251,7 +251,7 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	mux := http.NewServeMux() // Create
 	mux.HandleFunc("/ws", wsHandler)
 	mux.HandleFunc("/api/profile/", templateHandler)
-	mux.HandleFunc("/api/start/", startHandler(ctx))
+	mux.HandleFunc("/api/start/", startHandler(ctx, cnf))
 	mux.HandleFunc("/api/stop", func(writer http.ResponseWriter, request *http.Request) {
 		stopRunChannel <- struct{}{}
 	})
@@ -282,7 +282,7 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	return handle
 }
 
-func startHandler(ctx context.Context) func(w http.ResponseWriter, r *http.Request) {
+func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger := r.Context().Value("logger").(*zap.SugaredLogger)
 		if !runMutex.TryLock() {
@@ -290,8 +290,13 @@ func startHandler(ctx context.Context) func(w http.ResponseWriter, r *http.Reque
 			createRequestError(w, "already running", http.StatusServiceUnavailable)
 			return
 		}
+		defer runMutex.Unlock()
+		controlCl, err := service.NewControl(cnf.Control)
+		if err != nil {
+			logger.Errorf("control create failed: %v", err)
+			return
+		}
 		go func() {
-			defer runMutex.Unlock()
 			for {
 				select {
 				case <-ctx.Done():
@@ -321,7 +326,8 @@ func startHandler(ctx context.Context) func(w http.ResponseWriter, r *http.Reque
 						if delayedAction.lastRun.IsZero() || delayedAction.lastRun.Unix() <= time.Now().Unix() {
 							message := fmt.Sprintf("[delayed] [%s] %s", delayedAction.action, delayedAction.binding)
 							logger.Info(message)
-							//sendMessage(message) //@todo send key
+							controlCl.Cl.SendKey(0, delayedAction.binding)
+							controlCl.Cl.EndKey()
 							delayStack[idx].lastRun = time.Now().Add(time.Duration(delayedAction.delaySeconds) * time.Second)
 						}
 					}
@@ -336,6 +342,8 @@ func startHandler(ctx context.Context) func(w http.ResponseWriter, r *http.Reque
 						//	continue
 						//}
 						message := fmt.Sprintf("%s %s <span style='color:red'>test</span>", runAction.action, runAction.binding)
+						controlCl.Cl.SendKey(0, runAction.binding)
+						controlCl.Cl.EndKey()
 						logger.Info(message) //@todo send key
 						//sendMessage(message)
 					}

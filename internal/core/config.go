@@ -7,9 +7,15 @@ import (
 type Web struct {
 	Port string
 }
+type Control struct {
+	Port       string
+	BaudRate   int   `mapstructure:"baud_rate"`
+	Resolution []int `mapstructure:"resolution"`
+}
 type Config struct {
 	WebServer     Web    `mapstructure:"web"`
 	PlayerStatUrl string `mapstructure:"player_stat_url"`
+	Control
 }
 
 func InitConfig() (*Config, error) {
