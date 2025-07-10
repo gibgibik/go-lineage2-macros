@@ -342,9 +342,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						runAction := runStack[i]
 						logger.Debug("run action: " + runAction.action)
 						if !checkUseCondition(runAction.startTargetCondition) {
+							i += 1
 							continue
 						}
 						if !checkTargetCondition(runAction.startTargetCondition, logger) {
+							i += 1
 							continue
 						}
 						message := fmt.Sprintf("%s %s <span style='color:red'>test</span>", runAction.action, runAction.binding)
