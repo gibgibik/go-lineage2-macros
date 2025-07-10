@@ -354,7 +354,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						}
 						runAction := runStack[i]
 						//logger.Debug("run action: "+runAction.action, " ", i)
-						if !checkUseCondition(runAction.startTargetCondition) {
+						if !checkUseCondition(runAction.useCondition) {
 							i += 1
 							continue
 						}
