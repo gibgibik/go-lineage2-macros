@@ -403,9 +403,11 @@ func checkUseCondition(condition *Condition) bool {
 		return false
 	}
 	if condition.attr != "" {
-		fmt.Println(condition)
 		switch condition.attr {
 		case entity.Hp:
+			if service.PlayerStat.HP.Percent == 0 {
+				return true
+			}
 			switch condition.sign {
 			case ">":
 				if service.PlayerStat.HP.Percent > condition.value {
@@ -425,6 +427,9 @@ func checkUseCondition(condition *Condition) bool {
 				return false
 			}
 		case entity.Mp:
+			if service.PlayerStat.MP.Percent == 0 {
+				return true
+			}
 			switch condition.sign {
 			case ">":
 				if service.PlayerStat.MP.Percent > condition.value {
