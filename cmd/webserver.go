@@ -372,7 +372,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										controlCl.Cl.SendKey(0, runAction.binding)
 										controlCl.Cl.EndKey()
 									}
-									logger.Info(message) //@todo send key
+									logger.Info(message)
 									time.Sleep(time.Millisecond * time.Duration(200))
 								}
 							}
@@ -381,10 +381,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						} else {
 							message := fmt.Sprintf("%s %s <span style='color:red'>THP: [%.2f%%]</span>", runAction.action, runAction.binding, service.PlayerStat.Target.HpPercent)
 							if controlErr == nil {
+								logger.Info("PRESS ", runAction.binding)
 								controlCl.Cl.SendKey(0, runAction.binding)
 								controlCl.Cl.EndKey()
 							}
-							logger.Info(message) //@todo send key
+							logger.Info(message)
 						}
 
 						if !checkTargetCondition(runAction.endTargetCondition, logger) {
