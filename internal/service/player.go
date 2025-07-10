@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/gibgibik/go-lineage2-macros/internal/core/entity"
@@ -25,6 +26,7 @@ func StartPlayerStatUpdate(ctx context.Context, url string, logger *zap.SugaredL
 		default:
 			PlayerStat, err = httpCl.Get(url)
 			if PlayerStat.Target.HpPercent > 0 {
+				fmt.Println("HP", PlayerStat.Target.HpPercent)
 				PlayerStat.Target.HpWasPresentAt = time.Now().Unix()
 			}
 			if err != nil {
