@@ -359,7 +359,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							i += 1
 							continue
 						}
-						message := fmt.Sprintf("%s %s <span style='color:red'>test</span>", runAction.action, runAction.binding)
+						message := fmt.Sprintf("%s %s <span style='color:red'>THP: [%f]</span>", runAction.action, runAction.binding, service.PlayerStat.Target.HpPercent)
 						controlCl.Cl.SendKey(0, runAction.binding)
 						controlCl.Cl.EndKey()
 						if runAction.waitSeconds > 0 {
