@@ -407,7 +407,7 @@ func checkUseCondition(condition *Condition) bool {
 		case entity.Hp:
 			switch condition.sign {
 			case ">":
-				if condition.value > service.PlayerStat.HP.Percent {
+				if service.PlayerStat.HP.Percent > condition.value {
 					return true
 				}
 				return false
@@ -417,14 +417,14 @@ func checkUseCondition(condition *Condition) bool {
 				}
 				return false
 			case "<":
-				if condition.value < service.PlayerStat.HP.Percent {
+				if service.PlayerStat.HP.Percent < condition.value {
 					return true
 				}
 			}
 		case entity.Mp:
 			switch condition.sign {
 			case ">":
-				if condition.value > service.PlayerStat.MP.Percent {
+				if service.PlayerStat.MP.Percent > condition.value {
 					return true
 				}
 				return false
@@ -434,7 +434,7 @@ func checkUseCondition(condition *Condition) bool {
 				}
 				return false
 			case "<":
-				if condition.value < service.PlayerStat.MP.Percent {
+				if service.PlayerStat.MP.Percent < condition.value {
 					return true
 				}
 			}
