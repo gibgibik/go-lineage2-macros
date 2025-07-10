@@ -405,6 +405,7 @@ func checkUseCondition(condition *Condition) bool {
 	if condition.attr != "" {
 		switch condition.attr {
 		case entity.Hp:
+			fmt.Println(service.PlayerStat.HP.Percent)
 			if service.PlayerStat.HP.Percent == 0 {
 				return false
 			}
