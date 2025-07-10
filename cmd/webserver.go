@@ -124,7 +124,15 @@ func initStacks(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogge
 			if profileData.PeriodSeconds[idx] > 0 {
 				continue
 			}
-			runStack = slices.Insert(runStack, 0, runStackStruct{
+			//runStack = slices.Insert(runStack, 0, runStackStruct{
+			//	action:               val,
+			//	binding:              profileData.Bindings[idx],
+			//	startTargetCondition: parseCondition(profileData.StartTargetCondition[idx]),
+			//	endTargetCondition:   parseCondition(profileData.EndTargetCondition[idx]),
+			//	useCondition:         parseCondition(profileData.UseCondition[idx]),
+			//	waitSeconds:          profileData.WaitSeconds[idx],
+			//})
+			runStack = append(runStack, runStackStruct{
 				action:               val,
 				binding:              profileData.Bindings[idx],
 				startTargetCondition: parseCondition(profileData.StartTargetCondition[idx]),
