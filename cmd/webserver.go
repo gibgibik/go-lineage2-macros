@@ -348,14 +348,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						}
 						runAction := runStack[i]
 						logger.Debug("run action: " + runAction.action)
-						if runAction.action == "/attack" && runAction.endTargetCondition.attr != "" {
-							la = lastAction{
-								action:             runAction.action,
-								endTargetCondition: runAction.endTargetCondition,
-							}
-						} else {
-							la = lastAction{}
-						}
 						if !checkUseCondition(runAction.startTargetCondition) {
 							i += 1
 							continue
@@ -364,7 +356,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							i += 1
 							continue
 						}
-						if runAction.action == "/pickup" && la.action == "/attack" {
+						if runAction.action == "/pickup" && service.PlayerStat.Target.HpPercent == 0 && service.PlayerStat.Target.LastUpdate < (time.Now().Unix()-3) {
 							for i = 0; i < 2; i++ {
 								message := fmt.Sprintf("%s %s <span style='color:red'>THP: [%.2f%%]</span>", runAction.action, runAction.binding, service.PlayerStat.Target.HpPercent)
 								controlCl.Cl.SendKey(0, runAction.binding)
