@@ -418,6 +418,7 @@ func checkUseCondition(condition *Condition) bool {
 				return false
 			case "<":
 				if service.PlayerStat.HP.Percent < condition.value {
+					fmt.Println(service.PlayerStat.HP.Percent, condition.value)
 					return true
 				}
 			}
