@@ -334,16 +334,18 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							delayStack[idx].lastRun = time.Now().Add(time.Duration(delayedAction.delaySeconds) * time.Second)
 						}
 					}
-					for _, runAction := range runStack {
+					var i int
+					for {
+						if i >= len(runStack) {
+							break
+						}
+						runAction := runStack[i]
 						if !checkUseCondition(runAction.startTargetCondition) {
 							continue
 						}
 						if !checkTargetCondition(runAction.startTargetCondition, logger) {
 							continue
 						}
-						//if !checkTargetCondition(runAction.endTargetCondition, logger) {
-						//	continue
-						//}
 						message := fmt.Sprintf("%s %s <span style='color:red'>test</span>", runAction.action, runAction.binding)
 						controlCl.Cl.SendKey(0, runAction.binding)
 						controlCl.Cl.EndKey()
@@ -351,7 +353,13 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							time.Sleep(time.Second * time.Duration(runAction.waitSeconds))
 						}
 						logger.Info(message) //@todo send key
-						//sendMessage(message)
+
+						if !checkTargetCondition(runAction.endTargetCondition, logger) {
+							logger.Debug("wait end condition")
+							continue
+						} else {
+							i += 1
+						}
 					}
 					stackLock.Unlock()
 					//run stack
