@@ -304,7 +304,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 			logger.Errorf("control create failed: %v", err)
 		}
 		go func() {
-			var la lastAction
 			for {
 				select {
 				case <-ctx.Done():
