@@ -23,7 +23,6 @@ const PROFILE_NAME = 'static_profile'
 
 function App() {
     const [disabledStart, setDisabledStart] = useState(false);
-    const [disabledStop, setDisabledStop] = useState(true);
     const startMacrosAction = () => {
         setDisabledStart(true);
         const stFunc = async () => {
@@ -32,7 +31,6 @@ function App() {
         try {
             stFunc();
         } finally {
-            setDisabledStop(false);
         }
     }
     const stopMacrosAction = () => {
@@ -42,19 +40,16 @@ function App() {
         try {
             stFunc();
         } finally {
-            setDisabledStop(true);
             setDisabledStart(false);
         }
     }
     useEffect(() => {
         init().then(({data: {isMacrosRunning}}) => {
             console.log('isMacrosRunning', isMacrosRunning);
-            setDisabledStop(!isMacrosRunning);
             setDisabledStart(isMacrosRunning);
         }).catch(e => {
             console.log('init failed', e);
             setDisabledStart(true);
-            setDisabledStop(true);
         })
     }, []);
     return (
@@ -64,7 +59,7 @@ function App() {
                 <Grid md={6} xs={12} sx={{maxWidth: '100vw'}}><Macros profileName={PROFILE_NAME}/></Grid>
                 <Grid md={6} xs={12} sx={{mb: 2 }}><Log profileName={PROFILE_NAME}/>
                     <ButtonGroup variant="contained" sx={{gap: 4, display: 'flex', justifyContent: 'center'}}>
-                        <Button color={'error'} onClick={stopMacrosAction} disabled={disabledStop}>Stop</Button>
+                        <Button color={'error'} onClick={stopMacrosAction} disabled={!disabledStart}>Stop</Button>
                         <Button onClick={startMacrosAction} disabled={disabledStart}>Start</Button>
                     </ButtonGroup>
                 </Grid>

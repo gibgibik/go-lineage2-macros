@@ -1,23 +1,22 @@
 import {useEffect, useRef, useState} from "react";
 import {Paper, Typography} from "@mui/material";
 import useWebSocket, {ReadyState} from "react-use-websocket";
-import {throttle} from "lodash/function.js";
 
 export const Log = ({profileName}) => {
     const {readyState} = useWebSocket(`ws://${import.meta.env.VITE_SERVER_DOMAIN}:${import.meta.env.VITE_SERVER_PORT}/ws`, {
         onOpen: () => console.log('Connected!'),
         onClose: () => console.log('Disconnected!'),
         shouldReconnect: () => true,
-        disableJson: true,
-        onMessage: (message) => setMessages((prev) => [...prev, message.data])
+        // disableJson: false,
+        onMessage: (message) => {
+            setMessages((prev) => [...prev, ...JSON.parse(message.data)])
+        }
     });
     const messageEndRef = useRef(null);
     const [messages, setMessages] = useState([]);
 
     useEffect(() => {
-        throttle(() => {
-            messageEndRef.current?.scrollIntoView({behavior: 'instant'});
-        }, 100000)
+        messageEndRef.current?.scrollIntoView({behavior: 'instant'});
     }, [messages]);
     const connectionStatus = {
         [ReadyState.CONNECTING]: 'Connecting',

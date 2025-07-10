@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math"
 	"math/rand/v2"
 	"net"
 	"net/http"
@@ -211,19 +212,20 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Simple echo loop
 	for {
+		l := int(math.Min(30, float64(len(messagesStack))))
 		if len(messagesStack) > 0 {
 			messagesStackMutex.Lock()
-			poppedElement := messagesStack[len(messagesStack)-1] // Get the last element
-			messagesStack = messagesStack[:len(messagesStack)-1] // Re-slice to exclude the last element
+			poppedElements := messagesStack[:l] // Get the last element
+			messagesStack = messagesStack[l:]   // Re-slice to exclude the last element
 			messagesStackMutex.Unlock()
 			//message := []byte(fmt.Sprintf("[%s]: %s", time.Now().UTC().Format(time.DateTime), poppedElement))
-			message := []byte(poppedElement)
-			if err := wsConn.WriteMessage(1, message); err != nil {
+			data, _ := json.Marshal(poppedElements)
+			if err := wsConn.WriteMessage(1, data); err != nil {
 				logger.Errorf("Write error:", err)
 				break
 			}
 		}
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Second)
 		//mt, message, err := wsConn.ReadMessage()
 		//if err != nil {
 		//	logger.Errorf("Read error:", err)
@@ -307,9 +309,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 			return
 		}
 		defer runMutex.Unlock()
-		controlCl, err := service.NewControl(cnf.Control)
-		if err != nil {
-			logger.Errorf("control create failed: %v", err)
+		controlCl, controlErr := service.NewControl(cnf.Control)
+		if controlErr != nil {
+			logger.Errorf("control create failed: %v", controlErr)
+		} else {
+			defer controlCl.Cl.Port.Close()
 		}
 		go func() {
 			for {
@@ -326,7 +330,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						delaySeconds int
 						lastRun      time.Time
 					}{}
-					_ = controlCl.Cl.Port.Close()
 					stackLock.Unlock()
 					return
 				default:
@@ -342,8 +345,10 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						if delayedAction.lastRun.IsZero() || delayedAction.lastRun.Unix() <= time.Now().Unix() {
 							message := fmt.Sprintf("[delayed] [%s] %s", delayedAction.action, delayedAction.binding)
 							logger.Info(message)
-							controlCl.Cl.SendKey(0, delayedAction.binding)
-							controlCl.Cl.EndKey()
+							if controlErr == nil {
+								controlCl.Cl.SendKey(0, delayedAction.binding)
+								controlCl.Cl.EndKey()
+							}
 							delayStack[idx].lastRun = time.Now().Add(time.Duration(delayedAction.delaySeconds) * time.Second)
 						}
 					}
@@ -366,8 +371,10 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							if service.PlayerStat.Target.HpWasPresentAt > (time.Now().Unix() - 2) {
 								for i = 0; i < 2; i++ {
 									message := fmt.Sprintf("%s %s <span style='color:red'>THP: [%.2f%%]</span>", runAction.action, runAction.binding, service.PlayerStat.Target.HpPercent)
-									controlCl.Cl.SendKey(0, runAction.binding)
-									controlCl.Cl.EndKey()
+									if controlErr == nil {
+										controlCl.Cl.SendKey(0, runAction.binding)
+										controlCl.Cl.EndKey()
+									}
 									logger.Info(message) //@todo send key
 									time.Sleep(time.Millisecond * time.Duration(200))
 								}
@@ -376,8 +383,10 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							continue
 						} else {
 							message := fmt.Sprintf("%s %s <span style='color:red'>THP: [%.2f%%]</span>", runAction.action, runAction.binding, service.PlayerStat.Target.HpPercent)
-							controlCl.Cl.SendKey(0, runAction.binding)
-							controlCl.Cl.EndKey()
+							if controlErr == nil {
+								controlCl.Cl.SendKey(0, runAction.binding)
+								controlCl.Cl.EndKey()
+							}
 							logger.Info(message) //@todo send key
 						}
 
