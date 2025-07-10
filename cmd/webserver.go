@@ -297,7 +297,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		controlCl, err := service.NewControl(cnf.Control)
 		if err != nil {
 			logger.Errorf("control create failed: %v", err)
-			return
 		}
 		go func() {
 			for {
@@ -314,6 +313,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						delaySeconds int
 						lastRun      time.Time
 					}{}
+					_ = controlCl.Cl.Port.Close()
 					stackLock.Unlock()
 					return
 				default:
@@ -405,7 +405,7 @@ func checkUseCondition(condition *Condition) bool {
 		}
 	}
 
-	return false
+	return true
 }
 
 func checkTargetCondition(condition *Condition, logger *zap.SugaredLogger) bool {

@@ -17,10 +17,7 @@ func NewControl(cnf core.Control) (*Control, error) {
 		BaudRate: cnf.BaudRate,
 	}
 	port, err := serial.Open(cnf.Port, mode)
-	if err != nil {
-		return nil, err
-	}
 	return &Control{
 		Cl: ch9329.NewClient(port, image.Rect(0, 0, cnf.Resolution[0], cnf.Resolution[1])),
-	}, nil
+	}, err
 }
