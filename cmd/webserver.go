@@ -319,6 +319,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						delaySeconds int
 						lastRun      time.Time
 					}{}
+					la = lastAction{}
 					_ = controlCl.Cl.Port.Close()
 					stackLock.Unlock()
 					return
@@ -355,25 +356,34 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							i += 1
 							continue
 						}
-						if runAction.waitSeconds > 0 && la.endTargetCondition.attr != "" { //@todo start or use condition
+						if runAction.action == "/pickup" && la.action == "/attack" {
+							for i = 0; i < 2; i++ {
+								message := fmt.Sprintf("%s %s <span style='color:red'>THP: [%.2f%%]</span>", runAction.action, runAction.binding, service.PlayerStat.Target.HpPercent)
+								controlCl.Cl.SendKey(0, runAction.binding)
+								controlCl.Cl.EndKey()
+								logger.Info(message) //@todo send key
+								time.Sleep(time.Second)
+							}
 							i += 1
 							continue
+						} else {
+							message := fmt.Sprintf("%s %s <span style='color:red'>THP: [%.2f%%]</span>", runAction.action, runAction.binding, service.PlayerStat.Target.HpPercent)
+							controlCl.Cl.SendKey(0, runAction.binding)
+							controlCl.Cl.EndKey()
+							logger.Info(message) //@todo send key
+							if runAction.action == "/attack" && runAction.endTargetCondition.attr != "" {
+								la = lastAction{
+									action:             runAction.action,
+									endTargetCondition: runAction.endTargetCondition,
+								}
+							} else {
+								la = lastAction{}
+							}
 						}
-						message := fmt.Sprintf("%s %s <span style='color:red'>THP: [%.2f%%]</span>", runAction.action, runAction.binding, service.PlayerStat.Target.HpPercent)
-						controlCl.Cl.SendKey(0, runAction.binding)
-						controlCl.Cl.EndKey()
-						if runAction.waitSeconds > 0 {
-							time.Sleep(time.Second * time.Duration(runAction.waitSeconds))
-						}
-						logger.Info(message) //@todo send key
 
 						if !checkTargetCondition(runAction.endTargetCondition, logger) {
 							time.Sleep(time.Millisecond * time.Duration(randNum(200, 300)))
 							logger.Debug("wait end condition")
-							la = lastAction{
-								action:             runAction.action,
-								endTargetCondition: runAction.endTargetCondition,
-							}
 							continue
 						} else {
 							i += 1
