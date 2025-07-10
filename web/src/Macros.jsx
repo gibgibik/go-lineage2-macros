@@ -46,7 +46,8 @@ const renderItems = ({
                          'Period_seconds': periodSeconds = [],
                          'Start_target_condition': startTargetCondition = [],
                          'End_target_condition': endTargetCondition = [],
-    'Use_condition': useCondition = [],
+                         'Use_condition': useCondition = [],
+                         'Wait_seconds': waitSeconds = [],
                      }) => {
     const items = []
     for (let i = 0; i < INPUT_COUNT; i++) {
@@ -60,21 +61,27 @@ const renderItems = ({
                        slotProps={{inputLabel: {shrink: true}}}
                        defaultValue={periodSeconds[i] || ''}
             />
-            <TextField variant={"outlined"} fullWidth={true} name={'start_target_condition[]'} label={"Start Target Condition"}
+            <TextField variant={"outlined"} fullWidth={true} name={'wait_seconds[]'} label={"Wait Seconds"}
+                       slotProps={{inputLabel: {shrink: true}}}
+                       defaultValue={waitSeconds[i] || ''}
+            />
+            <TextField variant={"outlined"} fullWidth={true} name={'start_target_condition[]'}
+                       label={"Start Target Condition"}
                        slotProps={{inputLabel: {shrink: true}}}
                        defaultValue={startTargetCondition[i] || ''}
-                       InputProps={{inputComponent:ConditionMask }}
+                       InputProps={{inputComponent: ConditionMask}}
             />
-            <TextField variant={"outlined"} fullWidth={true} name={'end_target_condition[]'} label={"End Target Condition"}
+            <TextField variant={"outlined"} fullWidth={true} name={'end_target_condition[]'}
+                       label={"End Target Condition"}
                        slotProps={{inputLabel: {shrink: true}}}
                        defaultValue={endTargetCondition[i] || ''}
-                       InputProps={{inputComponent:ConditionMask }}
+                       InputProps={{inputComponent: ConditionMask}}
 
             />
             <TextField variant={"outlined"} fullWidth={true} name={'use_condition[]'} label={"Use Condition"}
                        slotProps={{inputLabel: {shrink: true}}}
                        defaultValue={useCondition[i] || ''}
-                       InputProps={{inputComponent:ConditionMask }}
+                       InputProps={{inputComponent: ConditionMask}}
 
             />
         </Box>);

@@ -30,6 +30,7 @@ import (
 type runStackStruct struct {
 	action               string
 	binding              string
+	waitSeconds          int
 	startTargetCondition *Condition
 	endTargetCondition   *Condition
 	useCondition         *Condition
@@ -63,6 +64,7 @@ type profileBodyStruct struct {
 	Actions              []string
 	Bindings             []string
 	PeriodSeconds        []int    `json:"Period_seconds"`
+	WaitSeconds          []int    `json:"Wait_seconds"`
 	StartTargetCondition []string `json:"Start_target_condition"`
 	EndTargetCondition   []string `json:"End_target_condition"`
 	UseCondition         []string `json:"Use_condition"`
@@ -123,6 +125,7 @@ func initStacks(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogge
 				startTargetCondition: parseCondition(profileData.StartTargetCondition[idx]),
 				endTargetCondition:   parseCondition(profileData.EndTargetCondition[idx]),
 				useCondition:         parseCondition(profileData.UseCondition[idx]),
+				waitSeconds:          profileData.WaitSeconds[idx],
 			})
 		}
 
@@ -344,6 +347,9 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						message := fmt.Sprintf("%s %s <span style='color:red'>test</span>", runAction.action, runAction.binding)
 						controlCl.Cl.SendKey(0, runAction.binding)
 						controlCl.Cl.EndKey()
+						if runAction.waitSeconds > 0 {
+							time.Sleep(time.Second * time.Duration(runAction.waitSeconds))
+						}
 						logger.Info(message) //@todo send key
 						//sendMessage(message)
 					}
