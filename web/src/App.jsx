@@ -48,6 +48,7 @@ function App() {
     }
     useEffect(() => {
         init().then(({data: {isMacrosRunning}}) => {
+            console.log('isMacrosRunning', isMacrosRunning);
             setDisabledStop(!isMacrosRunning);
             setDisabledStart(isMacrosRunning);
         }).catch(e => {
