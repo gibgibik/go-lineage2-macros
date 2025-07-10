@@ -310,7 +310,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		if controlErr != nil {
 			logger.Errorf("control create failed: %v", controlErr)
 		} else {
-			defer controlCl.Cl.Port.Close()
+			//defer controlCl.Cl.Port.Close()
 		}
 		go func() {
 			for {
