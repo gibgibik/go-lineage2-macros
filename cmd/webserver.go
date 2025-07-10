@@ -633,6 +633,7 @@ func getProfileData(w http.ResponseWriter, r *http.Request, logger *zap.SugaredL
 		createRequestError(w, "file does not exist", http.StatusNotFound)
 		return nil, errors.New("file does not exist")
 	}
+	defer fh.Close()
 	buf, err := io.ReadAll(fh)
 	var templateBody *profileBodyStruct
 	err = json.Unmarshal(buf, &templateBody)
