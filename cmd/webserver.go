@@ -421,6 +421,7 @@ func checkUseCondition(condition *Condition) bool {
 					fmt.Println(service.PlayerStat.HP.Percent, condition.value)
 					return true
 				}
+				return false
 			}
 		case entity.Mp:
 			switch condition.sign {
@@ -438,6 +439,7 @@ func checkUseCondition(condition *Condition) bool {
 				if service.PlayerStat.MP.Percent < condition.value {
 					return true
 				}
+				return false
 			}
 		}
 	}
