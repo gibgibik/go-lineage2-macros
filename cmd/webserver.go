@@ -369,7 +369,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									controlCl.Cl.SendKey(0, runAction.binding)
 									controlCl.Cl.EndKey()
 									logger.Info(message) //@todo send key
-									time.Sleep(time.Second)
+									time.Sleep(time.Millisecond * time.Duration(200))
 								}
 							}
 							i += 1
