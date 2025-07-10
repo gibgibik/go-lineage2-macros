@@ -305,7 +305,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 			createRequestError(w, "already running", http.StatusServiceUnavailable)
 			return
 		}
-		defer runMutex.Unlock()
 		controlCl, controlErr := service.NewControl(cnf.Control)
 		if controlErr != nil {
 			logger.Errorf("control create failed: %v", controlErr)
@@ -328,6 +327,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						lastRun      time.Time
 					}{}
 					stackLock.Unlock()
+					runMutex.Unlock()
 					return
 				default:
 					stackLock.Lock()
@@ -336,6 +336,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						logger.Error("init stacks error: " + err.Error())
 						sendMessage("init stacks error: " + err.Error())
 						stackLock.Unlock()
+						runMutex.Unlock()
 						return
 					}
 					for idx, delayedAction := range delayStack {
