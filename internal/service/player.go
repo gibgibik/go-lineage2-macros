@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/gibgibik/go-lineage2-macros/internal/core/entity"
