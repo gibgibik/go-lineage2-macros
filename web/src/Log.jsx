@@ -1,6 +1,7 @@
 import {useEffect, useRef, useState} from "react";
 import {Paper, Typography} from "@mui/material";
 import useWebSocket, {ReadyState} from "react-use-websocket";
+import {throttle} from "lodash/function.js";
 
 export const Log = ({profileName}) => {
     const {readyState} = useWebSocket(`ws://${import.meta.env.VITE_SERVER_DOMAIN}:${import.meta.env.VITE_SERVER_PORT}/ws`, {
@@ -13,9 +14,11 @@ export const Log = ({profileName}) => {
     const messageEndRef = useRef(null);
     const [messages, setMessages] = useState([]);
 
-    // useEffect(() => {
-    //     messageEndRef.current?.scrollIntoView({behavior: 'instant'});
-    // }, [messages]);
+    useEffect(() => {
+        throttle(() => {
+            messageEndRef.current?.scrollIntoView({behavior: 'instant'});
+        }, 100000)
+    }, [messages]);
     const connectionStatus = {
         [ReadyState.CONNECTING]: 'Connecting',
         [ReadyState.OPEN]: 'Open',
@@ -40,7 +43,8 @@ export const Log = ({profileName}) => {
     >
         {messages.map((msg, idx) => (
             <Typography
-                 key={idx} dangerouslySetInnerHTML={{ __html: msg }} />
+                className={"log"}
+                key={idx} dangerouslySetInnerHTML={{__html: msg}}/>
         ))}
         <div ref={messageEndRef}/>
     </Paper>;
