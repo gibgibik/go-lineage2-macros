@@ -16,7 +16,7 @@ export const Log = ({profileName}) => {
     const [messages, setMessages] = useState([]);
 
     useEffect(() => {
-        messageEndRef.current?.scrollIntoView({behavior: 'instant'});
+        // messageEndRef.current?.scrollIntoView({behavior: 'instant'});
     }, [messages]);
     const connectionStatus = {
         [ReadyState.CONNECTING]: 'Connecting',

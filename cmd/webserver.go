@@ -501,6 +501,7 @@ func checkTargetCondition(condition *Condition, logger *zap.SugaredLogger) bool 
 				}
 			}
 		}
+		return false
 	}
 
 	return true
