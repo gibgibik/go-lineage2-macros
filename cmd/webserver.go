@@ -354,7 +354,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							i += 1
 							continue
 						}
-						if runAction.action == "/pickup" && service.PlayerStat.Target.HpPercent == 0 && service.PlayerStat.Target.LastUpdate < (time.Now().Unix()-3) {
+						if runAction.action == "/pickup" && service.PlayerStat.Target.HpWasPresentAt < (time.Now().Unix()-3) {
 							for i = 0; i < 2; i++ {
 								message := fmt.Sprintf("%s %s <span style='color:red'>THP: [%.2f%%]</span>", runAction.action, runAction.binding, service.PlayerStat.Target.HpPercent)
 								controlCl.Cl.SendKey(0, runAction.binding)

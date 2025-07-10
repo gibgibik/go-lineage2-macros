@@ -18,8 +18,9 @@ type PlayerStat struct {
 		LastUpdate int64
 	}
 	Target struct {
-		HpPercent  float64
-		LastUpdate int64
+		HpPercent      float64
+		LastUpdate     int64
+		HpWasPresentAt int64
 	}
 }
 

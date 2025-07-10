@@ -24,6 +24,9 @@ func StartPlayerStatUpdate(ctx context.Context, url string, logger *zap.SugaredL
 			return nil
 		default:
 			PlayerStat, err = httpCl.Get(url)
+			if PlayerStat.Target.HpPercent > 0 {
+				PlayerStat.Target.HpWasPresentAt = time.Now().Unix()
+			}
 			if err != nil {
 				logger.Error("player pull stat error: ", err.Error())
 				continue
