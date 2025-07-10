@@ -318,7 +318,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						delaySeconds int
 						lastRun      time.Time
 					}{}
-					la = lastAction{}
 					_ = controlCl.Cl.Port.Close()
 					stackLock.Unlock()
 					return
