@@ -121,7 +121,7 @@ export const Macros = ({profileName}) => {
         // console.log(Object.fromEntries(formData.entries()))
         const obj = {};
         for (let [key, value] of formData.entries()) {
-            if (key === 'period_seconds[]') {
+            if (key === 'period_seconds[]' || key == 'wait_seconds[]') {
                 value = parseInt(value);
             }
             if (key.endsWith('[]')) {
