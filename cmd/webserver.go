@@ -403,6 +403,7 @@ func checkUseCondition(condition *Condition) bool {
 		return false
 	}
 	if condition.attr != "" {
+		fmt.Println(condition)
 		switch condition.attr {
 		case entity.Hp:
 			switch condition.sign {
