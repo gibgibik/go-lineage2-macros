@@ -348,6 +348,14 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						}
 						runAction := runStack[i]
 						logger.Debug("run action: " + runAction.action)
+						if runAction.action == "/attack" && runAction.endTargetCondition.attr != "" {
+							la = lastAction{
+								action:             runAction.action,
+								endTargetCondition: runAction.endTargetCondition,
+							}
+						} else {
+							la = lastAction{}
+						}
 						if !checkUseCondition(runAction.startTargetCondition) {
 							i += 1
 							continue
@@ -371,14 +379,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							controlCl.Cl.SendKey(0, runAction.binding)
 							controlCl.Cl.EndKey()
 							logger.Info(message) //@todo send key
-							if runAction.action == "/attack" && runAction.endTargetCondition.attr != "" {
-								la = lastAction{
-									action:             runAction.action,
-									endTargetCondition: runAction.endTargetCondition,
-								}
-							} else {
-								la = lastAction{}
-							}
 						}
 
 						if !checkTargetCondition(runAction.endTargetCondition, logger) {
