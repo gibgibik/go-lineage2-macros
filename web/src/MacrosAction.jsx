@@ -10,6 +10,7 @@ const rawActions = [
     '/useskill',
     '/press',
     '/ping',
+    '/pickup',
 ];
 export const MacrosAction = ({name, initValue}) => {
     const [value, setValue] = useState(null);

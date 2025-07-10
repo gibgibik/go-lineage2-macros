@@ -13,9 +13,9 @@ export const Log = ({profileName}) => {
     const messageEndRef = useRef(null);
     const [messages, setMessages] = useState([]);
 
-    useEffect(() => {
-        messageEndRef.current?.scrollIntoView({behavior: 'instant'});
-    }, [messages]);
+    // useEffect(() => {
+    //     messageEndRef.current?.scrollIntoView({behavior: 'instant'});
+    // }, [messages]);
     const connectionStatus = {
         [ReadyState.CONNECTING]: 'Connecting',
         [ReadyState.OPEN]: 'Open',
@@ -23,8 +23,8 @@ export const Log = ({profileName}) => {
         [ReadyState.CLOSED]: 'Closed',
         [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
     }[readyState];
-    if (messages.length >= 1000) {
-        setMessages(messages.slice(-999));
+    if (messages.length >= 200) {
+        setMessages(messages.slice(-199));
     }
     return <Paper
         elevation={3}

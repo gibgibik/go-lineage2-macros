@@ -36,6 +36,11 @@ type runStackStruct struct {
 	useCondition         *Condition
 }
 
+type lastAction struct {
+	action             string
+	endTargetCondition *Condition
+}
+
 var (
 	startResult = make(chan error, 1)
 	upgrader    = websocket.Upgrader{
@@ -299,6 +304,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 			logger.Errorf("control create failed: %v", err)
 		}
 		go func() {
+			var la lastAction
 			for {
 				select {
 				case <-ctx.Done():
@@ -349,6 +355,10 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							i += 1
 							continue
 						}
+						if runAction.waitSeconds > 0 && la.endTargetCondition.attr != "" { //@todo start or use condition
+							i += 1
+							continue
+						}
 						message := fmt.Sprintf("%s %s <span style='color:red'>test</span>", runAction.action, runAction.binding)
 						controlCl.Cl.SendKey(0, runAction.binding)
 						controlCl.Cl.EndKey()
@@ -362,6 +372,10 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							continue
 						} else {
 							i += 1
+						}
+						la = lastAction{
+							action:             runAction.action,
+							endTargetCondition: runAction.endTargetCondition,
 						}
 					}
 					stackLock.Unlock()
@@ -499,6 +513,7 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 		"/useskill":   nil,
 		"/press":      nil,
 		"/ping":       nil,
+		"/pickup":     nil,
 	}
 	inputBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -533,7 +548,7 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 			createRequestError(w, fmt.Sprintf("period seconds '%s' not found", action), http.StatusBadRequest)
 			return
 		}
-		if (action == "/target" || action == "/delay" || action == "/useskill" || action == "/press") && len(templateBody.Bindings[idx]) == 0 {
+		if (action == "/target" || action == "/delay" || action == "/useskill" || action == "/press" || action == "/pickup") && len(templateBody.Bindings[idx]) == 0 {
 			logger.Error(fmt.Sprintf("empty details: %s, idx: %d", action, idx))
 			createRequestError(w, fmt.Sprintf("empty details %s", action), http.StatusBadRequest)
 			return
