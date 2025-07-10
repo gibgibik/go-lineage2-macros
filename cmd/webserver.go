@@ -211,17 +211,17 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Simple echo loop
 	for {
-		if len(messagesStack) > 0 {
-			messagesStackMutex.Lock()
-			//message := []byte(fmt.Sprintf("[%s]: %s", time.Now().UTC().Format(time.DateTime), poppedElement))
-			data, _ := json.Marshal(messagesStack)
-			messagesStack = []string{}
-			messagesStackMutex.Unlock()
-			if err := wsConn.WriteMessage(1, data); err != nil {
-				logger.Errorf("Write error:", err)
-				break
-			}
-		}
+		//if len(messagesStack) > 0 {
+		//	messagesStackMutex.Lock()
+		//	//message := []byte(fmt.Sprintf("[%s]: %s", time.Now().UTC().Format(time.DateTime), poppedElement))
+		//	data, _ := json.Marshal(messagesStack)
+		//	messagesStack = []string{}
+		//	messagesStackMutex.Unlock()
+		//	if err := wsConn.WriteMessage(1, data); err != nil {
+		//		logger.Errorf("Write error:", err)
+		//		break
+		//	}
+		//}
 		time.Sleep(time.Second)
 		//mt, message, err := wsConn.ReadMessage()
 		//if err != nil {
