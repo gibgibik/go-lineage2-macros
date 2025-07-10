@@ -406,7 +406,7 @@ func checkUseCondition(condition *Condition) bool {
 		switch condition.attr {
 		case entity.Hp:
 			if service.PlayerStat.HP.Percent == 0 {
-				return true
+				return false
 			}
 			switch condition.sign {
 			case ">":
@@ -428,7 +428,7 @@ func checkUseCondition(condition *Condition) bool {
 			}
 		case entity.Mp:
 			if service.PlayerStat.MP.Percent == 0 {
-				return true
+				return false
 			}
 			switch condition.sign {
 			case ">":
