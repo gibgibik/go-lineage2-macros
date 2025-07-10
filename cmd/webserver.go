@@ -370,13 +370,13 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						if !checkTargetCondition(runAction.endTargetCondition, logger) {
 							time.Sleep(time.Millisecond * time.Duration(randNum(200, 300)))
 							logger.Debug("wait end condition")
+							la = lastAction{
+								action:             runAction.action,
+								endTargetCondition: runAction.endTargetCondition,
+							}
 							continue
 						} else {
 							i += 1
-						}
-						la = lastAction{
-							action:             runAction.action,
-							endTargetCondition: runAction.endTargetCondition,
 						}
 					}
 					stackLock.Unlock()
