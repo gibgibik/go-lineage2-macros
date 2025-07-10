@@ -379,9 +379,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							i += 1
 							continue
 						} else {
-							message := fmt.Sprintf("%s %s <span style='color:red'>THP: [%.2f%%]</span>", runAction.action, runAction.binding, service.PlayerStat.Target.HpPercent)
+							message := fmt.Sprintf("%s %s <span style='color:red'>Target HP: [%.2f%%]</span>", runAction.action, runAction.binding, service.PlayerStat.Target.HpPercent)
 							if controlErr == nil {
-								logger.Info("PRESS ", runAction.binding)
 								controlCl.Cl.SendKey(0, runAction.binding)
 								controlCl.Cl.EndKey()
 							}
@@ -390,7 +389,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 
 						if !checkTargetCondition(runAction.endTargetCondition, logger) {
 							time.Sleep(time.Millisecond * time.Duration(randNum(200, 300)))
-							logger.Debug("wait end condition")
 							continue
 						} else {
 							i += 1
