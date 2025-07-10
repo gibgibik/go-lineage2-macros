@@ -374,7 +374,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										controlCl.Cl.EndKey()
 									}
 									logger.Info(message)
-									time.Sleep(time.Millisecond * time.Duration(200))
+									time.Sleep(time.Millisecond * time.Duration(300))
 								}
 							}
 							i += 1
@@ -389,7 +389,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						}
 
 						if !checkTargetCondition(runAction.endTargetCondition, logger) {
-							time.Sleep(time.Millisecond * time.Duration(randNum(200, 300)))
+							time.Sleep(time.Millisecond * time.Duration(randNum(400, 600)))
 							continue
 						} else {
 							i += 1
