@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
 	"io"
 	"log"
 	"math/rand/v2"
@@ -286,6 +287,30 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							if err != nil {
 								logger.Error("check condition error: " + err.Error())
 							}
+							continue
+						}
+						if runAction.item.Action == service.ActionAITargetNext {
+							bounds, err := service.FindBounds(cnf.BoundsUrl, logger)
+							if err != nil {
+								logger.Error("find bounds error: " + err.Error())
+								i++
+								continue
+							} else {
+								if controlErr == nil {
+									controlCl.Cl.SendKey(ch9329.ModLeftShift, "")
+									for _, bound := range bounds {
+										controlCl.Cl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
+											X: int((bound[2] - bound[0]) / 2),
+											Y: bound[1] + 10,
+										}, 0)
+										controlCl.Cl.MouseAbsoluteEnd()
+										time.Sleep(time.Millisecond * time.Duration(500))
+									}
+									controlCl.Cl.EndKey()
+								}
+							}
+							runStack[i].lastRun = time.Now()
+							i++
 							continue
 						}
 						if runAction.item.Action == service.ActionAssistPartyMember {

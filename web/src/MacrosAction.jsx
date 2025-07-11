@@ -10,6 +10,7 @@ const rawActions = [
     '/delay',
     '/press',
     '/pickup',
+    '/aitargetnext',
 ];
 export const MacrosAction = ({name, initValue}) => {
     const [value, setValue] = useState(null);

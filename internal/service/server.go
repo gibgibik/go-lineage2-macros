@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/gibgibik/go-lineage2-macros/internal/core/entity"
@@ -12,12 +13,16 @@ import (
 var (
 	PlayerStat           *entity.PlayerStat
 	targetHpWasPresentAt time.Time
+	httpCl               = http.NewHttpClient()
 )
+
+type BoundsResult struct {
+	Boxes [][]int `json:"boxes"`
+}
 
 func StartPlayerStatUpdate(ctx context.Context, url string, logger *zap.SugaredLogger) error {
 	var err error
 	logger.Debug("player stat update start")
-	httpCl := http.NewHttpClient()
 	for {
 		select {
 		case <-ctx.Done():
@@ -36,4 +41,16 @@ func StartPlayerStatUpdate(ctx context.Context, url string, logger *zap.SugaredL
 			time.Sleep(time.Millisecond * 100)
 		}
 	}
+}
+
+func FindBounds(url string, logger *zap.SugaredLogger) ([][]int, error) {
+	var err error
+	bounds, err := httpCl.RawGet(url)
+	var result BoundsResult
+	err = json.Unmarshal(bounds, &result)
+	if err != nil {
+		logger.Error("parse bounds json error: ", err.Error())
+		return nil, nil
+	}
+	return result.Boxes, nil
 }

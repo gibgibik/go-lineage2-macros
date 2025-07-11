@@ -11,11 +11,11 @@ import (
 	"github.com/gibgibik/go-lineage2-macros/internal/core/entity"
 )
 
-type httpClient struct {
+type HttpClient struct {
 	Client *http.Client
 }
 
-func (cl *httpClient) Get(url string) (playerStat *entity.PlayerStat, err error) {
+func (cl *HttpClient) Get(url string) (playerStat *entity.PlayerStat, err error) {
 	const maxRetries = 10
 	var resp *http.Response
 	for attempt := 1; attempt <= maxRetries; attempt++ {
@@ -48,8 +48,36 @@ func (cl *httpClient) Get(url string) (playerStat *entity.PlayerStat, err error)
 	return nil, fmt.Errorf("failed after %d retries: %v", maxRetries, err)
 }
 
-func NewHttpClient() *httpClient {
-	return &httpClient{
+func (cl *HttpClient) RawGet(url string) (result []byte, err error) {
+	const maxRetries = 10
+	var resp *http.Response
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		resp, err = cl.Client.Get(url)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			defer resp.Body.Close()
+			res, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			return res, nil
+		}
+
+		// Log error and retry
+		if err != nil {
+			fmt.Printf("Attempt %d: Request failed: %v\n", attempt, err)
+		} else {
+			fmt.Printf("Attempt %d: Unexpected status: %s\n", attempt, resp.Status)
+			resp.Body.Close()
+		}
+
+		time.Sleep(time.Second / 2)
+	}
+
+	return nil, fmt.Errorf("failed after %d retries: %v", maxRetries, err)
+}
+
+func NewHttpClient() *HttpClient {
+	return &HttpClient{
 		Client: &http.Client{
 			Timeout: 10 * time.Second,
 			Transport: &http.Transport{

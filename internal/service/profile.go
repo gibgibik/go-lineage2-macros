@@ -20,6 +20,7 @@ const (
 	ActionDelay             = "/delay"
 	ActionPress             = "/press"
 	ActionPickup            = "/pickup"
+	ActionAITargetNext      = "/aitargetnext"
 )
 
 type ProfileTemplate struct {
@@ -52,7 +53,7 @@ func GetProfileData(path string, logger *zap.SugaredLogger) (*ProfileTemplate, e
 	fileName := getProfilePath(pathPieces[2])
 	fh, err := os.OpenFile(fileName, os.O_RDWR, 0600)
 	if errors.Is(err, os.ErrNotExist) {
-		return nil, errors.New("file does not exist")
+		return nil, err
 	}
 	defer fh.Close()
 	buf, err := io.ReadAll(fh)
