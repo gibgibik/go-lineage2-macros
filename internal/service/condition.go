@@ -19,7 +19,7 @@ func CheckCondition(conditions []Condition, stat *entity.PlayerStat) (bool, erro
 		cval, _ := strconv.ParseFloat(condition.Value, 64)
 		switch condition.Field {
 		case "target_hp":
-			return stat.Target.HpWasPresentAt > 0 && checkOperatorCondition(stat.Target.HpPercent, cval, condition.Operator), nil
+			return checkOperatorCondition(stat.Target.HpPercent, cval, condition.Operator), nil
 		case "my_hp":
 			return stat.HP.Percent > 0 && checkOperatorCondition(stat.HP.Percent, cval, condition.Operator), nil
 		case "my_mp":
