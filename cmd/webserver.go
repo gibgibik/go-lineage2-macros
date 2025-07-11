@@ -299,6 +299,9 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								if controlErr == nil {
 									controlCl.Cl.SendKey(ch9329.ModLeftShift, "z") //stay
 									for _, bound := range bounds {
+										if service.PlayerStat.Target.HpPercent > 0 {
+											break
+										}
 										controlCl.Cl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
 											X: int((bound[2]-bound[0])/2) + bound[0],
 											Y: bound[1] + 30,
