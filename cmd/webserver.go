@@ -291,6 +291,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, point, 0)
 									controlCl.Cl.MouseAbsoluteEnd()
 								}
+								runAction.lastRun = time.Now()
 								//@todo need delay?
 							} else {
 								logger.Error("wrong additional for assist party member: " + runAction.item.Additional)
