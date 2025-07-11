@@ -297,21 +297,18 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								continue
 							} else {
 								if controlErr == nil {
-									controlCl.Cl.SendKey(ch9329.ModLeftShift, "z")
+									controlCl.Cl.SendKey(ch9329.ModLeftShift, "z") //stay
 									for _, bound := range bounds {
-										//controlCl.Cl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
-										//	X: int((bound[2] - bound[0]) / 2),
-										//	Y: bound[1] + 10,
-										//}, 0)
-										controlCl.Cl.MouseActionAbsolute(0, image.Point{
-											X: int((bound[2]-bound[0])/2) + bound[2],
+										controlCl.Cl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
+											X: int((bound[2] - bound[0]) / 2),
 											Y: bound[1] + 10,
 										}, 0)
 										controlCl.Cl.MouseAbsoluteEnd()
-										time.Sleep(time.Millisecond * time.Duration(1000))
+										time.Sleep(time.Millisecond * time.Duration(10))
 									}
 									controlCl.Cl.EndKey()
 								}
+								time.Sleep(time.Second)
 							}
 							runStack[i].lastRun = time.Now()
 							i++
