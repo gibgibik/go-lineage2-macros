@@ -276,6 +276,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						}
 						runAction := runStack[i]
 						if runAction.item.PeriodSeconds > 0 && runAction.lastRun.Unix() > (time.Now().Unix()-int64(runAction.item.PeriodSeconds)) {
+							fmt.Println(runAction.lastRun.Unix(), time.Now().Unix())
 							i++
 							time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
 							continue
