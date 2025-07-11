@@ -297,7 +297,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								continue
 							} else {
 								if controlErr == nil {
-									controlCl.Cl.SendKey(ch9329.ModLeftShift, "")
+									controlCl.Cl.SendKey(ch9329.ModLeftShift, "z")
 									for _, bound := range bounds {
 										//controlCl.Cl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
 										//	X: int((bound[2] - bound[0]) / 2),
