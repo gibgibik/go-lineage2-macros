@@ -308,7 +308,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											Y: bound[1] + 10,
 										}, 0)
 										controlCl.Cl.MouseAbsoluteEnd()
-										time.Sleep(time.Millisecond * time.Duration(500))
+										time.Sleep(time.Millisecond * time.Duration(1000))
 									}
 									controlCl.Cl.EndKey()
 								}
