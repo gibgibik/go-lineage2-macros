@@ -12,6 +12,19 @@ type Control struct {
 	Cl *ch9329.Client
 }
 
+var (
+	AssistPartyMemberMap = map[string]image.Point{
+		"1": {40, 147},
+		"2": {40, 201},
+		"3": {40, 255},
+		"4": {40, 309},
+		"5": {40, 364},
+		"6": {40, 417},
+		"7": {40, 472},
+		"8": {40, 525},
+	}
+)
+
 func NewControl(cnf core.Control) (*Control, error) {
 	mode := &serial.Mode{
 		BaudRate: cnf.BaudRate,

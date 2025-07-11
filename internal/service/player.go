@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	PlayerStat     *entity.PlayerStat
-	hpWasPresentAt time.Time
+	PlayerStat           *entity.PlayerStat
+	targetHpWasPresentAt time.Time
 )
 
 func StartPlayerStatUpdate(ctx context.Context, url string, logger *zap.SugaredLogger) error {
@@ -26,9 +26,9 @@ func StartPlayerStatUpdate(ctx context.Context, url string, logger *zap.SugaredL
 		default:
 			PlayerStat, err = httpCl.Get(url)
 			if PlayerStat.Target.HpPercent > 0 {
-				hpWasPresentAt = time.Now()
+				targetHpWasPresentAt = time.Now()
 			}
-			PlayerStat.Target.HpWasPresentAt = hpWasPresentAt.Unix()
+			PlayerStat.Target.HpWasPresentAt = targetHpWasPresentAt.Unix()
 			if err != nil {
 				logger.Error("player pull stat error: ", err.Error())
 				continue

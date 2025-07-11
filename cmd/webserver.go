@@ -6,20 +6,18 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand/v2"
 	"net"
 	"net/http"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/gibgibik/go-ch9329/pkg/ch9329"
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
-	"github.com/gibgibik/go-lineage2-macros/internal/core/entity"
 	"github.com/gibgibik/go-lineage2-macros/internal/service"
 	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
@@ -27,17 +25,8 @@ import (
 )
 
 type runStackStruct struct {
-	action               string
-	binding              string
-	waitSeconds          int
-	startTargetCondition *Condition
-	endTargetCondition   *Condition
-	useCondition         *Condition
-}
-
-type lastAction struct {
-	action             string
-	endTargetCondition *Condition
+	item    service.ProfileTemplateItem
+	lastRun time.Time
 }
 
 var (
@@ -50,32 +39,13 @@ var (
 			return true
 		},
 	}
-	runMutex       sync.Mutex
-	stopRunChannel = make(chan interface{}, 1)
-	stackLock      sync.Mutex
-	runStack       []runStackStruct
-	delayStack     []struct {
-		action               string
-		binding              string
-		startTargetCondition *Condition
-		useCondition         *Condition
-		delaySeconds         int
-		lastRun              time.Time
-	}
+	runMutex           sync.Mutex
+	stopRunChannel     = make(chan interface{}, 1)
+	stackLock          sync.Mutex
+	runStack           []runStackStruct
 	messagesStack      []string
 	messagesStackMutex sync.Mutex
 )
-
-type profileBodyStruct struct {
-	Actions              []string
-	Bindings             []string
-	PeriodSeconds        []int    `json:"Period_seconds"`
-	WaitSeconds          []int    `json:"Wait_seconds"`
-	StartTargetCondition []string `json:"Start_target_condition"`
-	EndTargetCondition   []string `json:"End_target_condition"`
-	UseCondition         []string `json:"Use_condition"`
-	Profile              string
-}
 
 type WsSender interface {
 	io.Writer
@@ -113,64 +83,22 @@ func parseCondition(s string) *Condition {
 }
 
 func initStacks(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) error {
-	profileData, err := getProfileData(w, r, logger)
+	profileData, err := service.GetProfileData(strings.Trim(r.RequestURI, "/"), logger)
 	if err != nil {
 		return err
 	}
 	if len(runStack) == 0 {
-		for idx, val := range profileData.Actions {
-			if val == "" {
+		for _, val := range profileData.Items {
+			if val.Action == "" {
 				continue
 			}
-			if profileData.PeriodSeconds[idx] > 0 {
-				continue
-			}
-			//runStack = slices.Insert(runStack, 0, runStackStruct{
-			//	action:               val,
-			//	binding:              profileData.Bindings[idx],
-			//	startTargetCondition: parseCondition(profileData.StartTargetCondition[idx]),
-			//	endTargetCondition:   parseCondition(profileData.EndTargetCondition[idx]),
-			//	useCondition:         parseCondition(profileData.UseCondition[idx]),
-			//	waitSeconds:          profileData.WaitSeconds[idx],
-			//})
 			runStack = append(runStack, runStackStruct{
-				action:               val,
-				binding:              profileData.Bindings[idx],
-				startTargetCondition: parseCondition(profileData.StartTargetCondition[idx]),
-				endTargetCondition:   parseCondition(profileData.EndTargetCondition[idx]),
-				useCondition:         parseCondition(profileData.UseCondition[idx]),
-				waitSeconds:          profileData.WaitSeconds[idx],
+				item: val,
 			})
 		}
 
 	}
-	if len(delayStack) == 0 {
-		for idx, val := range profileData.Actions {
-			if val == "" {
-				continue
-			}
-			if profileData.PeriodSeconds[idx] == 0 {
-				continue
-			}
-
-			delayStack = append(delayStack, struct {
-				action               string
-				binding              string
-				startTargetCondition *Condition
-				useCondition         *Condition
-				delaySeconds         int
-				lastRun              time.Time
-			}{
-				action:               val,
-				binding:              profileData.Bindings[idx],
-				delaySeconds:         profileData.PeriodSeconds[idx],
-				startTargetCondition: parseCondition(profileData.StartTargetCondition[idx]),
-				useCondition:         parseCondition(profileData.UseCondition[idx]),
-				lastRun:              time.Time{},
-			})
-		}
-	}
-	if len(runStack) == 0 && len(delayStack) == 0 {
+	if len(runStack) == 0 {
 		logger.Error("no actions available")
 		return errors.New("no actions available")
 	}
@@ -325,17 +253,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					logger.Debug("macros stopped")
 					stackLock.Lock()
 					runStack = []runStackStruct{}
-					delayStack = []struct {
-						action               string
-						binding              string
-						startTargetCondition *Condition
-						useCondition         *Condition
-						delaySeconds         int
-						lastRun              time.Time
-					}{}
 					stackLock.Unlock()
 					runMutex.Unlock()
-					controlCl.Cl.Port.Close()
+					if controlErr != nil {
+						controlCl.Cl.Port.Close()
+					}
 					return
 				default:
 					stackLock.Lock()
@@ -347,44 +269,42 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						runMutex.Unlock()
 						return
 					}
-					for idx, delayedAction := range delayStack {
-						if delayedAction.lastRun.IsZero() || delayedAction.lastRun.Unix() <= time.Now().Unix() {
-							if !checkUseCondition(delayedAction.useCondition) {
-								continue
-							}
-							if !checkTargetCondition(delayedAction.startTargetCondition, logger) {
-								continue
-							}
-							message := fmt.Sprintf("[delayed] [%s] %s", delayedAction.action, delayedAction.binding)
-							logger.Info(message)
-							if controlErr == nil {
-								controlCl.Cl.SendKey(0, delayedAction.binding)
-								controlCl.Cl.EndKey()
-							}
-							delayStack[idx].lastRun = time.Now().Add(time.Duration(delayedAction.delaySeconds) * time.Second)
-						}
-					}
 					var i int
 					for {
 						if i >= len(runStack) {
 							break
 						}
 						runAction := runStack[i]
-						//logger.Debug("run action: "+runAction.action, " ", i)
-						if !checkUseCondition(runAction.useCondition) {
-							i += 1
+						if runAction.item.PeriodSeconds > 0 && runAction.lastRun.Unix() > (time.Now().Unix()-int64(runAction.item.PeriodSeconds)) {
+							i++
+							time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
 							continue
 						}
-						if !checkTargetCondition(runAction.startTargetCondition, logger) {
-							i += 1
+						if !service.CheckCondition(runAction.item.Conditions, service.PlayerStat) {
+							i++
+							time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
 							continue
 						}
-						if runAction.action == "/pickup" {
+						if runAction.item.Action == service.ActionAssistPartyMember {
+							if point, ok := service.AssistPartyMemberMap[runAction.item.Additional]; ok {
+								if controlErr == nil {
+									controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, point, 0)
+									controlCl.Cl.MouseAbsoluteEnd()
+								}
+								//@todo need delay?
+							} else {
+								logger.Error("wrong additional for assist party member: " + runAction.item.Additional)
+							}
+							i++
+							time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
+							continue
+						}
+						if runAction.item.Action == service.ActionPickup {
 							if service.PlayerStat.Target.HpWasPresentAt > (time.Now().Unix() - 2) {
 								for i = 0; i < 2; i++ {
-									message := fmt.Sprintf("%s %s <span style='color:red'>THP: [%.2f%%]</span>", runAction.action, runAction.binding, service.PlayerStat.Target.HpPercent)
+									message := fmt.Sprintf("%s %s <span style='color:red'>THP: [%.2f%%]</span>", runAction.item.Action, runAction.item.Binding, service.PlayerStat.Target.HpPercent)
 									if controlErr == nil {
-										controlCl.Cl.SendKey(0, runAction.binding)
+										controlCl.Cl.SendKey(0, runAction.item.Binding)
 										controlCl.Cl.EndKey()
 									}
 									logger.Info(message)
@@ -394,20 +314,14 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							i += 1
 							continue
 						} else {
-							message := fmt.Sprintf("%s %s <span style='color:red'>Target HP: [%.2f%%]</span>", runAction.action, runAction.binding, service.PlayerStat.Target.HpPercent)
+							message := fmt.Sprintf("%s %s <span style='color:red'>Target HP: [%.2f%%]</span>", runAction.item.Action, runAction.item.Binding, service.PlayerStat.Target.HpPercent)
 							if controlErr == nil {
-								controlCl.Cl.SendKey(0, runAction.binding)
+								controlCl.Cl.SendKey(0, runAction.item.Binding)
 								controlCl.Cl.EndKey()
 							}
 							logger.Info(message)
 						}
-
-						if !checkTargetCondition(runAction.endTargetCondition, logger) {
-							time.Sleep(time.Millisecond * time.Duration(randNum(200, 400)))
-							continue
-						} else {
-							i += 1
-						}
+						i += 1
 					}
 					stackLock.Unlock()
 					//run stack
@@ -416,109 +330,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 			}
 		}()
 	}
-}
-
-func checkUseCondition(condition *Condition) bool {
-	if service.PlayerStat == nil {
-		return false
-	}
-	if condition.attr != "" {
-		switch condition.attr {
-		case entity.Hp:
-			fmt.Println(service.PlayerStat.HP.Percent)
-			if service.PlayerStat.HP.Percent == 0 {
-				return false
-			}
-			switch condition.sign {
-			case ">":
-				if service.PlayerStat.HP.Percent > condition.value {
-					return true
-				}
-				return false
-			case "=":
-				if condition.value == service.PlayerStat.HP.Percent {
-					return true
-				}
-				return false
-			case "<":
-				if service.PlayerStat.HP.Percent < condition.value {
-					fmt.Println(service.PlayerStat.HP.Percent, condition.value)
-					return true
-				}
-				return false
-			}
-		case entity.Mp:
-			if service.PlayerStat.MP.Percent == 0 {
-				return false
-			}
-			switch condition.sign {
-			case ">":
-				if service.PlayerStat.MP.Percent > condition.value {
-					return true
-				}
-				return false
-			case "=":
-				if condition.value == service.PlayerStat.MP.Percent {
-					return true
-				}
-				return false
-			case "<":
-				if service.PlayerStat.MP.Percent < condition.value {
-					return true
-				}
-				return false
-			}
-		}
-	}
-
-	return true
-}
-
-func checkTargetCondition(condition *Condition, logger *zap.SugaredLogger) bool {
-	if service.PlayerStat == nil {
-		return false
-	}
-	if condition.attr != "" {
-		switch condition.attr {
-		case entity.Hp:
-			switch condition.sign {
-			case ">":
-				if service.PlayerStat.Target.HpPercent > condition.value {
-					return true
-				}
-				return false
-			case "=":
-				if service.PlayerStat.Target.HpPercent == condition.value {
-					return true
-				}
-				return false
-			case "<":
-				if service.PlayerStat.Target.HpPercent < condition.value {
-					return true
-				}
-			}
-		case entity.Mp:
-			switch condition.sign {
-			case ">":
-				if service.PlayerStat.MP.Percent > condition.value {
-					return true
-				}
-				return false
-			case "=":
-				if service.PlayerStat.MP.Percent == condition.value {
-					return true
-				}
-				return false
-			case "<":
-				if service.PlayerStat.MP.Percent < condition.value {
-					return true
-				}
-			}
-		}
-		return false
-	}
-
-	return true
 }
 
 func sendMessage(message string) {
@@ -546,124 +357,21 @@ func templateHandler(w http.ResponseWriter, r *http.Request) {
 func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
 	stackLock.Lock()
 	stackLock.Unlock()
-	availableActions := map[string]interface{}{
-		"/assist":     nil,
-		"/targetnext": nil,
-		"/attack":     nil,
-		"/target":     nil,
-		"/delay":      nil,
-		"/useskill":   nil,
-		"/press":      nil,
-		"/ping":       nil,
-		"/pickup":     nil,
-	}
-	inputBody, err := ioutil.ReadAll(r.Body)
+	err := service.SaveProfileData(r.Body, logger)
 	if err != nil {
-		logger.Error(err.Error())
 		createRequestError(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	var templateBody profileBodyStruct
-	err = json.Unmarshal(inputBody, &templateBody)
-	if err != nil {
-		logger.Error(err.Error())
-		createRequestError(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	reg := regexp.MustCompile("[^\\w /]")
-	for idx, action := range templateBody.Actions {
-		if action == "" {
-			continue
-		}
-		if _, ok := availableActions[action]; !ok {
-			logger.Error(fmt.Sprintf("action %s not found, idx: %d", action, idx))
-			createRequestError(w, fmt.Sprintf("action '%s' not found", action), http.StatusBadRequest)
-			return
-		}
-		if idx > len(templateBody.Bindings) {
-			logger.Error(fmt.Sprintf("binding %s not found, idx: %d", action, idx))
-			createRequestError(w, fmt.Sprintf("binding '%s' not found", action), http.StatusBadRequest)
-			return
-		}
-		if idx > len(templateBody.PeriodSeconds) {
-			logger.Error(fmt.Sprintf("period seconds %s not found, idx: %d", action, idx))
-			createRequestError(w, fmt.Sprintf("period seconds '%s' not found", action), http.StatusBadRequest)
-			return
-		}
-		if (action == "/target" || action == "/delay" || action == "/useskill" || action == "/press" || action == "/pickup") && len(templateBody.Bindings[idx]) == 0 {
-			logger.Error(fmt.Sprintf("empty details: %s, idx: %d", action, idx))
-			createRequestError(w, fmt.Sprintf("empty details %s", action), http.StatusBadRequest)
-			return
-		}
-		templateBody.Actions[idx] = reg.ReplaceAllString(action, "")
-		templateBody.Bindings[idx] = reg.ReplaceAllString(templateBody.Bindings[idx], "")
-		templateBody.PeriodSeconds[idx] = templateBody.PeriodSeconds[idx]
-	}
-	fileName := getProfilePath(templateBody.Profile)
-	if err != nil {
-		logger.Error(err.Error())
-		createRequestError(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	tb, err := json.Marshal(templateBody)
-	if err != nil {
-		logger.Error(err.Error())
-		createRequestError(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	err = os.WriteFile(fileName, tb, 0600)
-	if err != nil {
-		logger.Error(err.Error())
-		createRequestError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	runStack = []runStackStruct{}
-	delayStack = []struct {
-		action               string
-		binding              string
-		startTargetCondition *Condition
-		useCondition         *Condition
-		delaySeconds         int
-		lastRun              time.Time
-	}{}
 }
 func getTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
-	buf, err := getProfileData(w, r, logger)
+	buf, err := service.GetProfileData(strings.Trim(r.RequestURI, "/"), logger)
 	if err != nil {
+		createRequestError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	data, _ := json.Marshal(buf)
 	w.Write(data)
-}
-
-func getProfileData(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) (*profileBodyStruct, error) {
-	path := strings.Trim(r.RequestURI, "/")
-	pathPieces := strings.SplitN(path, "/", 4)
-	if len(pathPieces) < 3 {
-		logger.Infof("invalid request", path)
-		createRequestError(w, "invalid request", http.StatusBadRequest)
-		return nil, errors.New("invalid request")
-	}
-	fileName := getProfilePath(pathPieces[2])
-	fh, err := os.OpenFile(fileName, os.O_RDWR, 0600)
-	if errors.Is(err, os.ErrNotExist) {
-		createRequestError(w, "file does not exist", http.StatusNotFound)
-		return nil, errors.New("file does not exist")
-	}
-	defer fh.Close()
-	buf, err := io.ReadAll(fh)
-	var templateBody *profileBodyStruct
-	err = json.Unmarshal(buf, &templateBody)
-	if err != nil {
-		return nil, err
-	}
-	return templateBody, err
-}
-
-func getProfilePath(profileName string) string {
-	reg := regexp.MustCompile("\\W")
-	fileName := "var/profiles/" + reg.ReplaceAllString(profileName, "") + ".json" //@todo move to config
-	return fileName
 }
 
 func createRequestError(w http.ResponseWriter, err string, code int) {

@@ -15,11 +15,14 @@
     "@fontsource/roboto": "^5.2.6",
     "@mui/icons-material": "^7.2.0",
     "@mui/material": "^7.2.0",
+    "@react-querybuilder/material": "^8.8.1",
     "axios": "^1.10.0",
+    "i": "^0.3.7",
+    "npm": "^11.4.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hotkeys-hook": "^5.1.0",
-    "react-imask": "^7.6.1",
+    "react-querybuilder": "^8.8.1",
     "react-use-websocket": "^4.13.0"
   },
   "devDependencies": {

@@ -1,8 +1,8 @@
-import {Box, Button, ButtonGroup, Container, TextField} from "@mui/material";
+import {Box, Button, ButtonGroup, TextField} from "@mui/material";
 import {MacrosAction} from "./MacrosAction.jsx";
 import {getProfile, saveProfile} from "./api.js";
 import React, {useEffect, useState} from "react";
-import {IMaskInput} from "react-imask";
+import {Condition} from "./Contition.jsx";
 
 const INPUT_COUNT = 10;
 const onChangeBinding = (event) => {
@@ -20,90 +20,53 @@ const onChangeBinding = (event) => {
     return false;
 }
 
-const ConditionMask = React.forwardRef(
-    function TextMaskCustom(props, ref) {
-        const {onChange, ...other} = props;
-        return (
-            <IMaskInput
-                {...other}
-                mask="P\P S ##%"
-                definitions={{
-                    '#': /[0-9]/,
-                    'P': /H|M/,
-                    'S': />|<|=/,
-                }}
-                inputRef={ref}
-                onAccept={(value) => onChange({target: {name: props.name, value}})}
-                overwrite
-            />
-        );
-    },
-);
-
-const renderItems = ({
-                         'Actions': actions = [],
-                         'Bindings': bindings = [],
-                         'Period_seconds': periodSeconds = [],
-                         'Start_target_condition': startTargetCondition = [],
-                         'End_target_condition': endTargetCondition = [],
-                         'Use_condition': useCondition = [],
-                         'Wait_seconds': waitSeconds = [],
-                     }) => {
-    const items = []
+const renderItems = ({Items: items = []}, conditions, setConditions) => {
+    const result = []
     for (let i = 0; i < INPUT_COUNT; i++) {
-        items.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
-            <MacrosAction name={'actions[]'} initValue={actions[i] || ''}/>
-            <TextField variant={"outlined"} fullWidth={true} name={'bindings[]'} label="Binding"
+        result.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
+            <MacrosAction name={'actions[]'} initValue={!items.length ? '' : items[i]['Action']}/>
+            <TextField variant={"outlined"} name={'bindings[]'} label="Binding"
                        slotProps={{inputLabel: {shrink: true}}}
-                       onKeyDown={onChangeBinding} defaultValue={bindings[i] || ''}
+                       onKeyDown={onChangeBinding} defaultValue={!items.length ? '' : items[i]['Binding']}
             />
-            <TextField variant={"outlined"} fullWidth={true} name={'period_seconds[]'} label={"Interval Seconds"}
+            <TextField variant={"outlined"} name={'period_seconds[]'} label={"Period Seconds"}
                        slotProps={{inputLabel: {shrink: true}}}
-                       defaultValue={periodSeconds[i] || ''}
+                       defaultValue={!items.length ? '' : items[i]['period_seconds']}
             />
-            <TextField variant={"outlined"} fullWidth={true} name={'wait_seconds[]'} label={"Wait Seconds"}
+            <TextField variant={"outlined"} name={'additional[]'} label={"Additional"}
                        slotProps={{inputLabel: {shrink: true}}}
-                       defaultValue={waitSeconds[i] || ''}
+                       defaultValue={!items.length ? '' : items[i]['Additional']}
             />
-            <TextField variant={"outlined"} fullWidth={true} name={'start_target_condition[]'}
-                       label={"Start Target Condition"}
-                       slotProps={{inputLabel: {shrink: true}}}
-                       defaultValue={startTargetCondition[i] || ''}
-                       InputProps={{inputComponent: ConditionMask}}
-            />
-            <TextField variant={"outlined"} fullWidth={true} name={'end_target_condition[]'}
-                       label={"End Target Condition"}
-                       slotProps={{inputLabel: {shrink: true}}}
-                       defaultValue={endTargetCondition[i] || ''}
-                       InputProps={{inputComponent: ConditionMask}}
-
-            />
-            <TextField variant={"outlined"} fullWidth={true} name={'use_condition[]'} label={"Use Condition"}
-                       slotProps={{inputLabel: {shrink: true}}}
-                       defaultValue={useCondition[i] || ''}
-                       InputProps={{inputComponent: ConditionMask}}
-
-            />
+            <Condition conditions={{rules: !items.length ? [] : items[i]['Conditions']}} fullWidth={true}
+                       onQueryChange={(data) => {
+                           conditions[i] = data;
+                           setConditions(conditions);
+                       }} idx={i}/>
         </Box>);
     }
 
-    return items;
+    return result;
 }
 export const Macros = ({profileName}) => {
     const [submitDisabled, disableSubmit] = useState(false);
-    const [formItemsData, setFormItemsData] = useState({Actions: [], Bindings: [], Period_seconds: []});
+    const [formItemsData, setFormItemsData] = useState([]);
     const [formItems, setFormItems] = useState([]);
-    useEffect(() => {
-        setFormItems(renderItems(formItemsData));
-    }, [formItemsData]);
+    const [conditions, setConditions] = useState([]);
+    // useEffect(() => {
+    //     setFormItems(renderItems(formItemsData, setConditions));
+    // }, [formItemsData, setConditions]);
     useEffect(() => {
         async function initProfile() {
             try {
                 const data = await getProfile(profileName);
                 if (data) {
                     setFormItemsData(data);
+                    setFormItems(renderItems(data, conditions, setConditions));
+                } else {
+                    setFormItems(renderItems([], conditions, setConditions));
                 }
             } catch (error) {
+                setFormItems(renderItems([], conditions, setConditions));
             }
         }
 
@@ -117,34 +80,31 @@ export const Macros = ({profileName}) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        // const data = Object.fromEntries(formData.entries());
-        // console.log(Object.fromEntries(formData.entries()))
-        const obj = {};
-        for (let [key, value] of formData.entries()) {
-            if (key === 'period_seconds[]' || key == 'wait_seconds[]') {
-                value = parseInt(value);
-            }
-            if (key.endsWith('[]')) {
-                const cleanKey = key.slice(0, -2);
-                if (!obj[cleanKey]) obj[cleanKey] = [];
-                obj[cleanKey].push(value);
-            } else {
-                obj[key] = value;
-            }
+        const obj = {items: [], profile: profileName};
+        for (let i = 0; i < INPUT_COUNT; i++) {
+            obj.items.push({
+                'action': formData.getAll('actions[]')[i],
+                'binding': formData.getAll('bindings[]')[i],
+                'period_seconds': parseInt(formData.getAll('period_seconds[]')[i]),
+                'additional': formData.getAll('additional[]')[i],
+                'conditions': conditions[i],
+            })
         }
-        obj['profile'] = profileName
 
+        // console.log(conditions);
+        // console.log(obj);
+        // return;
         disableSubmit(true);
         await saveProfile(profileName, obj);
         disableSubmit(false);
     }
-    return (<Container>
+    return (<Box>
         <form onSubmit={handleSubmit}>
             {formItems}
             <ButtonGroup variant="contained" sx={{gap: 4, display: 'flex', justifyContent: 'center'}}>
                 <Button type={"submit"} disabled={submitDisabled}>Save</Button>
             </ButtonGroup>
         </form>
-    </Container>)
+    </Box>)
         ;
 }
