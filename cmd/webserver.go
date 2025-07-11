@@ -318,6 +318,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								controlCl.Cl.SendKey(0, runAction.item.Binding)
 								controlCl.Cl.EndKey()
 							}
+							runAction.lastRun = time.Now()
 							//message := fmt.Sprintf("%s %s <span style='color:red'>Target HP: [%.2f%%]</span>", runAction.item.Action, runAction.item.Binding, service.PlayerStat.Target.HpPercent)
 							//logger.Info(message)
 						}
