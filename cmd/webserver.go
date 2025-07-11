@@ -280,9 +280,12 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
 							continue
 						}
-						if !service.CheckCondition(runAction.item.Conditions, service.PlayerStat) {
+						if ok, err := service.CheckCondition(runAction.item.Conditions, service.PlayerStat); !ok {
 							i++
 							time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
+							if err != nil {
+								logger.Error("check condition error: " + err.Error())
+							}
 							continue
 						}
 						if runAction.item.Action == service.ActionAssistPartyMember {
