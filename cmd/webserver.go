@@ -255,7 +255,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					runStack = []runStackStruct{}
 					stackLock.Unlock()
 					runMutex.Unlock()
-					if controlErr != nil {
+					if controlErr == nil {
 						controlCl.Cl.Port.Close()
 					}
 					return
