@@ -403,7 +403,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						}
 
 						if !checkTargetCondition(runAction.endTargetCondition, logger) {
-							time.Sleep(time.Millisecond * time.Duration(randNum(600, 800)))
+							time.Sleep(time.Millisecond * time.Duration(randNum(200, 400)))
 							continue
 						} else {
 							i += 1
