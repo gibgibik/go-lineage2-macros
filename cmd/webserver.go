@@ -411,7 +411,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					}
 					stackLock.Unlock()
 					//run stack
-					time.Sleep(time.Millisecond * time.Duration(randNum(600, 900)))
+					time.Sleep(time.Millisecond * time.Duration(randNum(200, 300)))
 				}
 			}
 		}()
