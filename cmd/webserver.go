@@ -276,7 +276,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						}
 						runAction := runStack[i]
 						if runAction.item.PeriodSeconds > 0 && runAction.lastRun.Unix() > (time.Now().Unix()-int64(runAction.item.PeriodSeconds)) {
-							fmt.Println(runAction.lastRun.Unix(), time.Now().Unix())
 							i++
 							time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
 							continue
@@ -292,7 +291,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, point, 0)
 									controlCl.Cl.MouseAbsoluteEnd()
 								}
-								runAction.lastRun = time.Now()
+								runStack[i].lastRun = time.Now()
 								//@todo need delay?
 							} else {
 								logger.Error("wrong additional for assist party member: " + runAction.item.Additional)
@@ -320,7 +319,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								controlCl.Cl.SendKey(0, runAction.item.Binding)
 								controlCl.Cl.EndKey()
 							}
-							runAction.lastRun = time.Now()
+							runStack[i].lastRun = time.Now()
 							//message := fmt.Sprintf("%s %s <span style='color:red'>Target HP: [%.2f%%]</span>", runAction.item.Action, runAction.item.Binding, service.PlayerStat.Target.HpPercent)
 							//logger.Info(message)
 						}
