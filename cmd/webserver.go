@@ -301,7 +301,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									for _, bound := range bounds {
 										controlCl.Cl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
 											X: int((bound[2]-bound[0])/2) + bound[0],
-											Y: bound[1] + 10,
+											Y: bound[1] + 20,
 										}, 0)
 										controlCl.Cl.MouseAbsoluteEnd()
 										time.Sleep(time.Millisecond * time.Duration(100))
