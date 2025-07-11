@@ -304,7 +304,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											Y: bound[1] + 30,
 										}, 0)
 										controlCl.Cl.MouseAbsoluteEnd()
-										time.Sleep(time.Millisecond * time.Duration(100))
+										time.Sleep(time.Millisecond * time.Duration(500))
 									}
 									controlCl.Cl.EndKey()
 									controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(480, 320), 0)
