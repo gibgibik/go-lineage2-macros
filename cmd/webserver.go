@@ -335,6 +335,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					}{}
 					stackLock.Unlock()
 					runMutex.Unlock()
+					controlCl.Cl.Port.Close()
 					return
 				default:
 					stackLock.Lock()
