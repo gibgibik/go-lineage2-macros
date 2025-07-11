@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"os"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -56,10 +55,12 @@ var (
 	stackLock      sync.Mutex
 	runStack       []runStackStruct
 	delayStack     []struct {
-		action       string
-		binding      string
-		delaySeconds int
-		lastRun      time.Time
+		action               string
+		binding              string
+		startTargetCondition *Condition
+		useCondition         *Condition
+		delaySeconds         int
+		lastRun              time.Time
 	}
 	messagesStack      []string
 	messagesStackMutex sync.Mutex
@@ -152,16 +153,20 @@ func initStacks(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogge
 				continue
 			}
 
-			delayStack = slices.Insert(delayStack, 0, struct {
-				action       string
-				binding      string
-				delaySeconds int
-				lastRun      time.Time
+			delayStack = append(delayStack, struct {
+				action               string
+				binding              string
+				startTargetCondition *Condition
+				useCondition         *Condition
+				delaySeconds         int
+				lastRun              time.Time
 			}{
-				action:       val,
-				binding:      profileData.Bindings[idx],
-				delaySeconds: profileData.PeriodSeconds[idx],
-				lastRun:      time.Time{},
+				action:               val,
+				binding:              profileData.Bindings[idx],
+				delaySeconds:         profileData.PeriodSeconds[idx],
+				startTargetCondition: parseCondition(profileData.StartTargetCondition[idx]),
+				useCondition:         parseCondition(profileData.UseCondition[idx]),
+				lastRun:              time.Time{},
 			})
 		}
 	}
@@ -321,10 +326,12 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					stackLock.Lock()
 					runStack = []runStackStruct{}
 					delayStack = []struct {
-						action       string
-						binding      string
-						delaySeconds int
-						lastRun      time.Time
+						action               string
+						binding              string
+						startTargetCondition *Condition
+						useCondition         *Condition
+						delaySeconds         int
+						lastRun              time.Time
 					}{}
 					stackLock.Unlock()
 					runMutex.Unlock()
@@ -341,6 +348,12 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					}
 					for idx, delayedAction := range delayStack {
 						if delayedAction.lastRun.IsZero() || delayedAction.lastRun.Unix() <= time.Now().Unix() {
+							if !checkUseCondition(delayedAction.useCondition) {
+								continue
+							}
+							if !checkTargetCondition(delayedAction.startTargetCondition, logger) {
+								continue
+							}
 							message := fmt.Sprintf("[delayed] [%s] %s", delayedAction.action, delayedAction.binding)
 							logger.Info(message)
 							if controlErr == nil {
@@ -389,7 +402,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						}
 
 						if !checkTargetCondition(runAction.endTargetCondition, logger) {
-							time.Sleep(time.Millisecond * time.Duration(randNum(400, 600)))
+							time.Sleep(time.Millisecond * time.Duration(randNum(600, 800)))
 							continue
 						} else {
 							i += 1
@@ -397,7 +410,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					}
 					stackLock.Unlock()
 					//run stack
-					time.Sleep(time.Millisecond * time.Duration(randNum(500, 900)))
+					time.Sleep(time.Millisecond * time.Duration(randNum(600, 900)))
 				}
 			}
 		}()
@@ -605,10 +618,12 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 	}
 	runStack = []runStackStruct{}
 	delayStack = []struct {
-		action       string
-		binding      string
-		delaySeconds int
-		lastRun      time.Time
+		action               string
+		binding              string
+		startTargetCondition *Condition
+		useCondition         *Condition
+		delaySeconds         int
+		lastRun              time.Time
 	}{}
 }
 func getTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
