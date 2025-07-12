@@ -308,7 +308,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										}, 0)
 										controlCl.Cl.MouseAbsoluteEnd()
 										//time.Sleep(time.Millisecond * time.Duration(700))
-										time.Sleep(time.Millisecond * time.Duration(100))
+										time.Sleep(time.Millisecond * time.Duration(200))
 									}
 									controlCl.Cl.EndKey()
 									if service.PlayerStat.Target.HpPercent == 0 {
