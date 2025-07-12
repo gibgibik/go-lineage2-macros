@@ -19,13 +19,21 @@ func CheckCondition(conditions []Condition, stat *entity.PlayerStat) (bool, erro
 		cval, _ := strconv.ParseFloat(condition.Value, 64)
 		switch condition.Field {
 		case "target_hp":
-			return checkOperatorCondition(stat.Target.HpPercent, cval, condition.Operator), nil
+			if !checkOperatorCondition(stat.Target.HpPercent, cval, condition.Operator) {
+				return false, nil
+			}
 		case "my_hp":
-			return stat.HP.Percent > 0 && checkOperatorCondition(stat.HP.Percent, cval, condition.Operator), nil
+			if stat.HP.Percent > 0 && checkOperatorCondition(stat.HP.Percent, cval, condition.Operator) {
+				return false, nil
+			}
 		case "my_mp":
-			return stat.MP.Percent > 0 && checkOperatorCondition(stat.MP.Percent, cval, condition.Operator), nil
+			if stat.MP.Percent > 0 && checkOperatorCondition(stat.MP.Percent, cval, condition.Operator) {
+				return false, nil
+			}
 		case "since_last_success_target":
-			return checkOperatorCondition(float64(stat.Target.HpWasPresentAt), float64(time.Now().Unix()-int64(cval)), condition.Operator), nil
+			if checkOperatorCondition(float64(stat.Target.HpWasPresentAt), float64(time.Now().Unix()-int64(cval)), condition.Operator) {
+				return false, nil
+			}
 		}
 	}
 	return true, nil

@@ -310,9 +310,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										time.Sleep(time.Millisecond * time.Duration(500))
 									}
 									controlCl.Cl.EndKey()
-									controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(480, 320), 0)
-									controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(580, 320), 0)
-									controlCl.Cl.MouseAbsoluteEnd()
+									if service.PlayerStat.Target.HpPercent == 0 {
+										controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(480, 320), 0)
+										controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(580, 320), 0)
+										controlCl.Cl.MouseAbsoluteEnd()
+									}
 
 								}
 								time.Sleep(time.Second)
