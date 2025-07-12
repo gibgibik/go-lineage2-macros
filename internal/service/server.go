@@ -56,5 +56,5 @@ func FindBounds(url string, logger *zap.SugaredLogger) ([][]int, error) {
 	sort.Slice(result.Boxes, func(i, j int) bool {
 		return result.Boxes[i][1] > result.Boxes[j][1]
 	})
-	return result.Boxes, nil
+	return result.Boxes[:10], nil
 }
