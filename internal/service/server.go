@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"sort"
 	"time"
 
 	"github.com/gibgibik/go-lineage2-macros/internal/core/entity"
@@ -52,5 +53,8 @@ func FindBounds(url string, logger *zap.SugaredLogger) ([][]int, error) {
 		logger.Error("parse bounds json error: ", err.Error())
 		return nil, nil
 	}
+	sort.Slice(result.Boxes, func(i, j int) bool {
+		return result.Boxes[i][1] > result.Boxes[j][1]
+	})
 	return result.Boxes, nil
 }
