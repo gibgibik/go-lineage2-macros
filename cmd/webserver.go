@@ -339,30 +339,15 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
 							continue
 						}
-						if false && runAction.item.Action == service.ActionPickup {
-							if service.PlayerStat.Target.HpWasPresentAt > (time.Now().Unix() - 2) {
-								for i = 0; i < 2; i++ {
-									if controlErr == nil {
-										controlCl.Cl.SendKey(0, runAction.item.Binding)
-										controlCl.Cl.EndKey()
-									}
-									//message := fmt.Sprintf("%s %s <span style='color:red'>THP: [%.2f%%]</span>", runAction.item.Action, runAction.item.Binding, service.PlayerStat.Target.HpPercent)
-									//logger.Info(message)
-									time.Sleep(time.Millisecond * time.Duration(300))
-								}
-							}
-							i += 1
-							continue
-						} else {
-							if controlErr == nil {
-								controlCl.Cl.SendKey(0, runAction.item.Binding)
-								controlCl.Cl.EndKey()
-							}
-							runStack[i].lastRun = time.Now()
-							//message := fmt.Sprintf("%s %s <span style='color:red'>Target HP: [%.2f%%]</span>", runAction.item.Action, runAction.item.Binding, service.PlayerStat.Target.HpPercent)
-							//logger.Info(message)
+
+						if controlErr == nil {
+							controlCl.Cl.SendKey(0, runAction.item.Binding)
+							controlCl.Cl.EndKey()
 						}
-						i += 1
+						runStack[i].lastRun = time.Now()
+						//message := fmt.Sprintf("%s %s <span style='color:red'>Target HP: [%.2f%%]</span>", runAction.item.Action, runAction.item.Binding, service.PlayerStat.Target.HpPercent)
+						//logger.Info(message)
+						i++
 					}
 					stackLock.Unlock()
 					//run stack

@@ -12,6 +12,7 @@ func CheckCondition(conditions []Condition, stat *entity.PlayerStat) (bool, erro
 	if stat == nil {
 		return false, errors.New("empty player stat, please check server")
 	}
+	result := true
 	for _, condition := range conditions {
 		if condition.Value == "" {
 			continue
@@ -19,24 +20,16 @@ func CheckCondition(conditions []Condition, stat *entity.PlayerStat) (bool, erro
 		cval, _ := strconv.ParseFloat(condition.Value, 64)
 		switch condition.Field {
 		case "target_hp":
-			if !checkOperatorCondition(stat.Target.HpPercent, cval, condition.Operator) {
-				return false, nil
-			}
+			result = result && checkOperatorCondition(stat.Target.HpPercent, cval, condition.Operator)
 		case "my_hp":
-			if stat.HP.Percent > 0 && checkOperatorCondition(stat.HP.Percent, cval, condition.Operator) {
-				return false, nil
-			}
+			result = result && stat.HP.Percent > 0 && checkOperatorCondition(stat.HP.Percent, cval, condition.Operator)
 		case "my_mp":
-			if stat.MP.Percent > 0 && checkOperatorCondition(stat.MP.Percent, cval, condition.Operator) {
-				return false, nil
-			}
+			result = result && stat.MP.Percent > 0 && checkOperatorCondition(stat.MP.Percent, cval, condition.Operator)
 		case "since_last_success_target":
-			if checkOperatorCondition(float64(stat.Target.HpWasPresentAt), float64(time.Now().Unix()-int64(cval)), condition.Operator) {
-				return false, nil
-			}
+			result = result && checkOperatorCondition(float64(stat.Target.HpWasPresentAt), float64(time.Now().Unix()-int64(cval)), condition.Operator)
 		}
 	}
-	return true, nil
+	return result, nil
 }
 
 func checkOperatorCondition(item float64, item2 float64, operator string) bool {
