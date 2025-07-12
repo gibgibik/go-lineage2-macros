@@ -87,7 +87,7 @@ export const Macros = ({profileName}) => {
                 'binding': formData.getAll('bindings[]')[i],
                 'period_seconds': parseInt(formData.getAll('period_seconds[]')[i]),
                 'additional': formData.getAll('additional[]')[i],
-                'conditions': conditions[i],
+                'conditions': conditions[i].filter(item => typeof item === 'object'),
             })
         }
 
