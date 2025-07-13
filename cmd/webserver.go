@@ -313,10 +313,9 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(480, 320), 0)
 										controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(580, 320), 0)
 										controlCl.Cl.MouseAbsoluteEnd()
+										time.Sleep(time.Second)
 									}
-
 								}
-								time.Sleep(time.Second)
 							}
 							runStack[i].lastRun = time.Now()
 							i++
