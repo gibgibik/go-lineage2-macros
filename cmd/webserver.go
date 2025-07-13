@@ -290,7 +290,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								stopRunChannel <- struct{}{}
 								logger.Debug("macros stopped due to stop!!!")
 							}
-							fmt.Println("stop action ", runAction.lastRun.Unix(), runAction.item.PeriodSeconds)
+							fmt.Println("stop action ", runAction.lastRun.Unix(), runAction.item.PeriodSeconds, time.Now().Unix())
 							i++
 							continue
 						}
