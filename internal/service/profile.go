@@ -21,6 +21,7 @@ const (
 	ActionPress             = "/press"
 	ActionPickup            = "/pickup"
 	ActionAITargetNext      = "/aitargetnext"
+	ActionStop              = "/stop"
 )
 
 type ProfileTemplate struct {

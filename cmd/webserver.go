@@ -276,6 +276,21 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							break
 						}
 						runAction := runStack[i]
+						if runAction.item.Action == service.ActionStop {
+							if runAction.lastRun.Unix() < 0 {
+								runAction.lastRun = time.Now()
+							} else if runAction.item.PeriodSeconds > 0 && runAction.lastRun.Unix() > (time.Now().Unix()-int64(runAction.item.PeriodSeconds)) {
+								if service.PlayerStat.Target.HpPercent > 0 {
+									time.Sleep(time.Second * 10)
+								}
+								controlCl.Cl.SendKey(0, runAction.item.Binding)
+								controlCl.Cl.EndKey()
+								stopRunChannel <- struct{}{}
+								logger.Debug("macros stopped due to stop!!!")
+							}
+							i++
+							continue
+						}
 						if runAction.item.PeriodSeconds > 0 && runAction.lastRun.Unix() > (time.Now().Unix()-int64(runAction.item.PeriodSeconds)) {
 							i++
 							continue
