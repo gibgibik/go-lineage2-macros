@@ -28,6 +28,9 @@ const muiComponents = {
 export const Condition = ({onQueryChange, fullWidth, conditions}) => {
     const [query, setQuery] = useState(conditions);
     useEffect(() => {
+        setQuery(conditions);
+    }, [conditions]);
+    useEffect(() => {
         onQueryChange(query.rules, 'json');
     }, [query]);
     return (
