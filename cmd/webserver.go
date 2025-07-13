@@ -279,7 +279,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						if runAction.item.Action == service.ActionStop {
 							fmt.Println("stop action")
 							if runAction.lastRun.Unix() < 0 {
-								runAction.lastRun = time.Now()
+								runStack[i].lastRun = time.Now()
 								fmt.Println("stop action init")
 							} else if runAction.item.PeriodSeconds > 0 && (runAction.lastRun.Unix()+int64(runAction.item.PeriodSeconds)) < time.Now().Unix() {
 								if service.PlayerStat.Target.HpPercent > 0 {
