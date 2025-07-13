@@ -278,12 +278,10 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						runAction := runStack[i]
 						if runAction.item.PeriodSeconds > 0 && runAction.lastRun.Unix() > (time.Now().Unix()-int64(runAction.item.PeriodSeconds)) {
 							i++
-							time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
 							continue
 						}
 						if ok, err := service.CheckCondition(runAction.item.Conditions, service.PlayerStat); !ok {
 							i++
-							time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
 							if err != nil {
 								logger.Error("check condition error: " + err.Error())
 							}
@@ -318,7 +316,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									}
 
 								}
-								time.Sleep(time.Second)
+								//time.Sleep(time.Second)
 							}
 							runStack[i].lastRun = time.Now()
 							i++
