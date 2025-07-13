@@ -306,7 +306,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										}, 0)
 										controlCl.Cl.MouseAbsoluteEnd()
 										//time.Sleep(time.Millisecond * time.Duration(700))
-										time.Sleep(time.Millisecond * time.Duration(400))
+										time.Sleep(time.Millisecond * time.Duration(100))
 									}
 									controlCl.Cl.EndKey()
 									if service.PlayerStat.Target.HpPercent == 0 {
@@ -316,7 +316,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									}
 
 								}
-								//time.Sleep(time.Second)
+								time.Sleep(time.Second)
 							}
 							runStack[i].lastRun = time.Now()
 							i++
