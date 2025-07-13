@@ -9,6 +9,7 @@ import {Log} from "./Log.jsx";
 import {Macros} from "./Macros.jsx";
 import {useEffect, useState} from "react";
 import {init, startMacros, stopMacros} from "./api.js";
+import {Profiles} from "./Profile.jsx";
 
 const theme = createTheme({
     palette: {
@@ -19,14 +20,16 @@ const theme = createTheme({
     },
 });
 
-const PROFILE_NAME = 'static_profile'
+// const PROFILE_NAME = 'static_profile'
 
 function App() {
     const [disabledStart, setDisabledStart] = useState(false);
+    const [profile, setProfile] = useState(null);
+    const [profilesList, setProfilesList] = useState([]);
     const startMacrosAction = () => {
         setDisabledStart(true);
         const stFunc = async () => {
-            await startMacros(PROFILE_NAME);
+            await startMacros(profile);
         }
         try {
             stFunc();
@@ -44,8 +47,9 @@ function App() {
         }
     }
     useEffect(() => {
-        init().then(({data: {isMacrosRunning}}) => {
+        init().then(({data: {isMacrosRunning, profilesList}}) => {
             console.log('isMacrosRunning', isMacrosRunning);
+            setProfilesList(profilesList);
             setDisabledStart(isMacrosRunning);
         }).catch(e => {
             console.log('init failed', e);
@@ -56,8 +60,11 @@ function App() {
         <ThemeProvider theme={theme}>
             <CssBaseline/>
             <Grid container spacing={0} sx={{flexDirection: 'column', width: '100vw'}}>
-                <Grid md={6} xs={12} sx={{maxWidth: '100vw'}}><Macros profileName={PROFILE_NAME}/></Grid>
-                <Grid md={6} xs={12} sx={{mb: 2 }}><Log profileName={PROFILE_NAME}/>
+                <Grid md={6} xs={12} sx={{maxWidth: '100vw', display: 'flex'}}>
+                    <Macros profileName={profile}/>
+                    <Profiles profilesList={profilesList} setProfile={setProfile} setProfilesList={setProfilesList} />
+                </Grid>
+                <Grid md={6} xs={12} sx={{mb: 2 }}><Log profileName={profile}/>
                     <ButtonGroup variant="contained" sx={{gap: 4, display: 'flex', justifyContent: 'center'}}>
                         <Button color={'error'} onClick={stopMacrosAction} disabled={!disabledStart}>Stop</Button>
                         <Button onClick={startMacrosAction} disabled={disabledStart}>Start</Button>

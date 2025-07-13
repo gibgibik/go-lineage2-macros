@@ -71,7 +71,7 @@ export const Macros = ({profileName}) => {
         }
 
         initProfile();
-    }, []);
+    }, [profileName]);
     useEffect(() => {
         if (!formItemsData || !Object.keys(formItemsData).length) {
             return;

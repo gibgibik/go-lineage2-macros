@@ -210,9 +210,11 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 			defer runMutex.Unlock()
 		}
 		response := struct {
-			IsMacrosRunning bool `json:"isMacrosRunning"`
+			IsMacrosRunning bool     `json:"isMacrosRunning"`
+			ProfilesList    []string `json:"profilesList"`
 		}{
 			IsMacrosRunning: !lockResult,
+			ProfilesList:    service.GetProfilesList(),
 		}
 		res, _ := json.Marshal(response)
 		writer.Write(res)
@@ -277,20 +279,18 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						}
 						runAction := runStack[i]
 						if runAction.item.Action == service.ActionStop {
-							fmt.Println("stop action")
 							if runAction.lastRun.Unix() < 0 {
 								runStack[i].lastRun = time.Now()
-								fmt.Println("stop action init")
 							} else if runAction.item.PeriodSeconds > 0 && (runAction.lastRun.Unix()+int64(runAction.item.PeriodSeconds)) < time.Now().Unix() {
 								if service.PlayerStat.Target.HpPercent > 0 {
 									time.Sleep(time.Second * 10)
 								}
 								controlCl.Cl.SendKey(0, runAction.item.Binding)
 								controlCl.Cl.EndKey()
+								time.Sleep(time.Millisecond * 100)
 								stopRunChannel <- struct{}{}
 								logger.Debug("macros stopped due to stop!!!")
 							}
-							fmt.Println("stop action ", runAction.lastRun.Unix(), runAction.item.PeriodSeconds, time.Now().Unix())
 							i++
 							continue
 						}
@@ -363,6 +363,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						//message := fmt.Sprintf("%s %s <span style='color:red'>Target HP: [%.2f%%]</span>", runAction.item.Action, runAction.item.Binding, service.PlayerStat.Target.HpPercent)
 						//logger.Info(message)
 						i++
+						time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
 					}
 					stackLock.Unlock()
 					//run stack

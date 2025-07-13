@@ -98,3 +98,14 @@ func SaveProfileData(body io.Reader, logger *zap.SugaredLogger) error {
 	}
 	return nil
 }
+
+func GetProfilesList() []string {
+	entries, _ := os.ReadDir("var/profiles")
+	var result []string
+	for _, entry := range entries {
+		pieces := strings.Split(entry.Name(), ".")
+		result = append(result, pieces[0])
+	}
+
+	return result
+}
