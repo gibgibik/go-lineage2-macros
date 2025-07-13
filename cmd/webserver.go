@@ -277,8 +277,10 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						}
 						runAction := runStack[i]
 						if runAction.item.Action == service.ActionStop {
+							fmt.Println("stop action")
 							if runAction.lastRun.Unix() < 0 {
 								runAction.lastRun = time.Now()
+								fmt.Println("stop action init")
 							} else if runAction.item.PeriodSeconds > 0 && (runAction.lastRun.Unix()+int64(runAction.item.PeriodSeconds)) < time.Now().Unix() {
 								if service.PlayerStat.Target.HpPercent > 0 {
 									time.Sleep(time.Second * 10)
@@ -288,6 +290,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								stopRunChannel <- struct{}{}
 								logger.Debug("macros stopped due to stop!!!")
 							}
+							fmt.Println("stop action ", runAction.lastRun.Unix(), runAction.item.PeriodSeconds)
 							i++
 							continue
 						}
