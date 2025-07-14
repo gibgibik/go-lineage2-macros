@@ -26,7 +26,7 @@ func CheckCondition(conditions []Condition, stat *entity.PlayerStat) (bool, erro
 		case "my_mp":
 			result = result && stat.MP.Percent > 0 && checkOperatorCondition(stat.MP.Percent, cval, condition.Operator)
 		case "since_last_success_target":
-			result = result && checkOperatorCondition(float64(stat.Target.HpWasPresentAt), float64(time.Now().Unix()-int64(cval)), condition.Operator)
+			result = result && checkOperatorCondition(float64(time.Now().Unix()-int64(cval)), float64(stat.Target.HpWasPresentAt), condition.Operator)
 		}
 	}
 	return result, nil
