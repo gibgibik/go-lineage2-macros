@@ -298,7 +298,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							i++
 							continue
 						}
-						if ok, err := service.CheckCondition(runAction.item.Conditions, service.PlayerStat); !ok {
+						if ok, err := service.CheckCondition(runAction.item.ConditionsCombinator, runAction.item.Conditions, service.PlayerStat); !ok {
 							i++
 							if err != nil {
 								logger.Error("check condition error: " + err.Error())

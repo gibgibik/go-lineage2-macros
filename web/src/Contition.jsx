@@ -21,6 +21,7 @@ const operators = [
 ];
 const combinators = [
     {name: 'AND', label: 'AND'},
+    {name: 'OR', label: 'OR'},
 ];
 const muiComponents = {
     Button: (props) => <Button onClick={props.onClick}>{props.className === 'rule-remove' ? '-' : '+'}</Button>

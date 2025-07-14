@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"sort"
 	"time"
 
@@ -67,8 +68,8 @@ func FindBounds(url string, logger *zap.SugaredLogger) ([][]int, error) {
 		return boxes.Boxes[i][0] < boxes.Boxes[j][2]
 	})
 	for i := 0; i < len(boxes.Boxes); i++ {
-		if i+1 < len(boxes.Boxes) && (boxes.Boxes[i+1][0]-boxes.Boxes[i][2]) <= 3 { //glue nested boxes
-			result.Boxes[i+1] = []int{boxes.Boxes[i][0], boxes.Boxes[i][1], boxes.Boxes[i+1][2], boxes.Boxes[i+1][3]}
+		if i+1 < len(boxes.Boxes) && (boxes.Boxes[i+1][0]-boxes.Boxes[i][2]) <= 3 && math.Abs(float64(boxes.Boxes[i+1][1]-boxes.Boxes[i][3])) < 3 { //glue nested boxes
+			result.Boxes = append(result.Boxes, []int{boxes.Boxes[i][0], boxes.Boxes[i][1], boxes.Boxes[i+1][2], boxes.Boxes[i+1][3]})
 			i++
 		} else {
 			result.Boxes = append(result.Boxes, boxes.Boxes[i])

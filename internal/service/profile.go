@@ -22,6 +22,9 @@ const (
 	ActionPickup            = "/pickup"
 	ActionAITargetNext      = "/aitargetnext"
 	ActionStop              = "/stop"
+
+	ConditionCombinatorAnd = "AND"
+	ConditionCombinatorOr  = "OR"
 )
 
 type ProfileTemplate struct {
@@ -30,11 +33,12 @@ type ProfileTemplate struct {
 }
 
 type ProfileTemplateItem struct {
-	Action        string
-	Binding       string
-	PeriodSeconds int `json:"period_seconds"`
-	Additional    string
-	Conditions    []Condition
+	Action               string
+	Binding              string
+	PeriodSeconds        int `json:"period_seconds"`
+	Additional           string
+	Conditions           []Condition
+	ConditionsCombinator string `json:"conditions_combinator"`
 }
 
 type Condition struct {

@@ -23,6 +23,13 @@ const onChangeBinding = (event) => {
 const renderItems = ({Items: items = []}, conditions, setConditions) => {
     const result = []
     for (let i = 0; i < INPUT_COUNT; i++) {
+        let preparedConditions = {rules: []};
+        if (items.length && (items[i]?.conditions_combinator || '') !== '') {
+            preparedConditions.rules = items[i]['Conditions'].flatMap((item, index) => index < items[i]['Conditions'].length - 1 ? [item, items[i]?.conditions_combinator] : [item]);
+            // preparedConditions.rules = items[i]['Conditions'];
+        }  else {
+            preparedConditions.rules = !items.length ? [] : items[i]['Conditions']
+        }
         result.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
             <MacrosAction name={'actions[]'} initValue={!items.length ? '' : items[i]['Action']}/>
             <TextField variant={"outlined"} name={'bindings[]'} label="Binding"
@@ -37,7 +44,7 @@ const renderItems = ({Items: items = []}, conditions, setConditions) => {
                        slotProps={{inputLabel: {shrink: true}}}
                        defaultValue={!items.length ? '' : items[i]['Additional']}
             />
-            <Condition conditions={{rules: !items.length ? [] : items[i]['Conditions']}} fullWidth={true}
+            <Condition conditions={preparedConditions} fullWidth={true}
                        onQueryChange={(data) => {
                            conditions[i] = data;
                            setConditions(conditions);
@@ -88,12 +95,10 @@ export const Macros = ({profileName}) => {
                 'period_seconds': parseInt(formData.getAll('period_seconds[]')[i]),
                 'additional': formData.getAll('additional[]')[i],
                 'conditions': conditions[i].filter(item => typeof item === 'object'),
+                'conditions_combinator': conditions[i].filter(item => typeof item === 'string')[0] || "",
             })
         }
 
-        // console.log(conditions);
-        // console.log(obj);
-        // return;
         disableSubmit(true);
         await saveProfile(profileName, obj);
         disableSubmit(false);

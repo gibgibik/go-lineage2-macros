@@ -8,11 +8,11 @@ import (
 	"github.com/gibgibik/go-lineage2-macros/internal/core/entity"
 )
 
-func CheckCondition(conditions []Condition, stat *entity.PlayerStat) (bool, error) {
+func CheckCondition(conditionsCombinator string, conditions []Condition, stat *entity.PlayerStat) (bool, error) {
 	if stat == nil {
 		return false, errors.New("empty player stat, please check server")
 	}
-	result := true
+	result := conditionsCombinator != ConditionCombinatorOr
 	for _, condition := range conditions {
 		if condition.Value == "" {
 			continue
@@ -20,13 +20,30 @@ func CheckCondition(conditions []Condition, stat *entity.PlayerStat) (bool, erro
 		cval, _ := strconv.ParseFloat(condition.Value, 64)
 		switch condition.Field {
 		case "target_hp":
-			result = result && checkOperatorCondition(stat.Target.HpPercent, cval, condition.Operator)
+			if conditionsCombinator == ConditionCombinatorOr {
+				result = result || checkOperatorCondition(stat.Target.HpPercent, cval, condition.Operator)
+			} else {
+				result = result && checkOperatorCondition(stat.Target.HpPercent, cval, condition.Operator)
+			}
 		case "my_hp":
-			result = result && stat.HP.Percent > 0 && checkOperatorCondition(stat.HP.Percent, cval, condition.Operator)
+			if conditionsCombinator == ConditionCombinatorOr {
+				result = result || (stat.HP.Percent > 0 && checkOperatorCondition(stat.HP.Percent, cval, condition.Operator))
+
+			} else {
+				result = result && stat.HP.Percent > 0 && checkOperatorCondition(stat.HP.Percent, cval, condition.Operator)
+			}
 		case "my_mp":
-			result = result && stat.MP.Percent > 0 && checkOperatorCondition(stat.MP.Percent, cval, condition.Operator)
+			if conditionsCombinator == ConditionCombinatorOr {
+				result = result || (stat.MP.Percent > 0 && checkOperatorCondition(stat.MP.Percent, cval, condition.Operator))
+			} else {
+				result = result && stat.MP.Percent > 0 && checkOperatorCondition(stat.MP.Percent, cval, condition.Operator)
+			}
 		case "since_last_success_target":
-			result = result && checkOperatorCondition(float64(time.Now().Unix()-int64(cval)), float64(stat.Target.HpWasPresentAt), condition.Operator)
+			if conditionsCombinator == ConditionCombinatorOr {
+				result = result || (checkOperatorCondition(float64(time.Now().Unix()-int64(cval)), float64(stat.Target.HpWasPresentAt), condition.Operator))
+			} else {
+				result = result && checkOperatorCondition(float64(time.Now().Unix()-int64(cval)), float64(stat.Target.HpWasPresentAt), condition.Operator)
+			}
 		}
 	}
 	return result, nil
