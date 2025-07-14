@@ -4,7 +4,17 @@ import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import './App.css'
 import CssBaseline from '@mui/material/CssBaseline';
-import {Button, ButtonGroup, createTheme, Grid, ThemeProvider} from "@mui/material";
+import {
+    Button,
+    ButtonGroup,
+    createTheme,
+    FormControl,
+    Grid,
+    InputLabel,
+    MenuItem,
+    Select,
+    ThemeProvider
+} from "@mui/material";
 import {Log} from "./Log.jsx";
 import {Macros} from "./Macros.jsx";
 import {useEffect, useState} from "react";
@@ -26,10 +36,12 @@ function App() {
     const [disabledStart, setDisabledStart] = useState(false);
     const [profile, setProfile] = useState(null);
     const [profilesList, setProfilesList] = useState([]);
+    const [pidsData, setPidData] = useState([]);
+    const [currentPid, setCurrentPid] = useState(null);
     const startMacrosAction = () => {
         setDisabledStart(true);
         const stFunc = async () => {
-            await startMacros(profile);
+            await startMacros(profile, parseInt(currentPid));
         }
         try {
             stFunc();
@@ -43,14 +55,18 @@ function App() {
         try {
             stFunc();
         } finally {
-            setDisabledStart(false);
+            setDisabledStart(!currentPid || !profile);
         }
     }
     useEffect(() => {
-        init().then(({data: {isMacrosRunning, profilesList}}) => {
+        setDisabledStart(!profile || !currentPid);
+    }, [profile, currentPid]);
+    useEffect(() => {
+        init().then(({data: {isMacrosRunning, profilesList, PidsData: pidsData}}) => {
             console.log('isMacrosRunning', isMacrosRunning);
             setProfilesList(profilesList);
-            setDisabledStart(isMacrosRunning);
+            setDisabledStart(isMacrosRunning || !currentPid || !profile);
+            setPidData(pidsData);
         }).catch(e => {
             console.log('init failed', e);
             setDisabledStart(true);
@@ -62,10 +78,24 @@ function App() {
             <Grid container spacing={0} sx={{flexDirection: 'column', width: '100vw'}}>
                 <Grid md={6} xs={12} sx={{maxWidth: '100vw', display: 'flex'}}>
                     <Macros profileName={profile}/>
-                    <Profiles profilesList={profilesList} setProfile={setProfile} setProfilesList={setProfilesList} />
+                    <Profiles profilesList={profilesList} setProfile={setProfile} setProfilesList={setProfilesList}/>
                 </Grid>
-                <Grid md={6} xs={12} sx={{mb: 2 }}><Log profileName={profile}/>
+                <Grid md={6} xs={12} sx={{mb: 2}}><Log profileName={profile}/>
                     <ButtonGroup variant="contained" sx={{gap: 4, display: 'flex', justifyContent: 'center'}}>
+                        <FormControl sx={{'width': '200px'}}>
+                            <InputLabel id={'pid-label'}>Pid</InputLabel>
+                            <Select
+                                labelId="pid-label"
+                                value={currentPid}
+                                label="Pid"
+                                onChange={(event) => {
+                                    setCurrentPid(event.target.value);
+                                }}
+                            >
+                                {Object.keys(pidsData).map((index) => <MenuItem key={index}
+                                                                                value={index}>{`${index} - ${pidsData[index]}`}</MenuItem>)}
+                            </Select>
+                        </FormControl>
                         <Button color={'error'} onClick={stopMacrosAction} disabled={!disabledStart}>Stop</Button>
                         <Button onClick={startMacrosAction} disabled={disabledStart}>Start</Button>
                     </ButtonGroup>

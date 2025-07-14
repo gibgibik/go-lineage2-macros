@@ -22,6 +22,10 @@ type BoundsResult struct {
 	Boxes [][]int `json:"boxes"`
 }
 
+type InitData struct {
+	PidsData map[uint32]string
+}
+
 func StartPlayerStatUpdate(ctx context.Context, url string, logger *zap.SugaredLogger) error {
 	var err error
 	logger.Debug("player stat update start")
@@ -79,4 +83,14 @@ func FindBounds(url string, logger *zap.SugaredLogger) ([][]int, error) {
 	//	boxes.Boxes = boxes.Boxes[:10]
 	//}
 	return result.Boxes, nil
+}
+
+func Init(url string, logger *zap.SugaredLogger) (InitData, error) {
+	var result InitData
+	initData, err := httpCl.RawGet(url)
+	if err != nil {
+		return InitData{}, err
+	}
+	_ = json.Unmarshal(initData, &result)
+	return result, nil
 }

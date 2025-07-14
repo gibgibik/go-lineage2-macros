@@ -209,12 +209,15 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 		if lockResult {
 			defer runMutex.Unlock()
 		}
+		initData, _ := service.Init(cnf.InitUrl, logger)
 		response := struct {
 			IsMacrosRunning bool     `json:"isMacrosRunning"`
 			ProfilesList    []string `json:"profilesList"`
+			PidsData        map[uint32]string
 		}{
 			IsMacrosRunning: !lockResult,
 			ProfilesList:    service.GetProfilesList(),
+			PidsData:        initData.PidsData,
 		}
 		res, _ := json.Marshal(response)
 		writer.Write(res)
@@ -247,6 +250,15 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		} else {
 			//defer controlCl.Cl.Port.Close()
 		}
+		var body struct {
+			Pid uint32 `json:"pid"`
+		}
+		defer r.Body.Close()
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			createRequestError(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+		fmt.Println(body)
 		go func() {
 			for {
 				select {

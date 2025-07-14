@@ -16,6 +16,7 @@ type Config struct {
 	WebServer     Web    `mapstructure:"web"`
 	PlayerStatUrl string `mapstructure:"player_stat_url"`
 	BoundsUrl     string `mapstructure:"bounds_url"`
+	InitUrl       string `mapstructure:"init_url"`
 	Control
 }
 

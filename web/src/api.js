@@ -16,8 +16,8 @@ export const saveProfile = (profileName, formData) => {
     })
 }
 
-export const startMacros = (profileName) => {
-    return api.post('/start/' + profileName).then((response) => {
+export const startMacros = (profileName, pid) => {
+    return api.post('/start/' + profileName, {pid}).then((response) => {
     })
 }
 
