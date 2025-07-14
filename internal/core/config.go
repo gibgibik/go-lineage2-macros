@@ -17,6 +17,7 @@ type Config struct {
 	PlayerStatUrl string `mapstructure:"player_stat_url"`
 	BoundsUrl     string `mapstructure:"bounds_url"`
 	InitUrl       string `mapstructure:"init_url"`
+	BaseUrl       string `mapstructure:"base_url"`
 	Control
 }
 

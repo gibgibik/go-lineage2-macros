@@ -1,9 +1,12 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"math"
+	http2 "net/http"
 	"sort"
 	"time"
 
@@ -24,6 +27,10 @@ type BoundsResult struct {
 
 type InitData struct {
 	PidsData map[uint32]string
+}
+
+type ChangeCurrentWindowStr struct {
+	Pid uint32 `json:"pid"`
 }
 
 func StartPlayerStatUpdate(ctx context.Context, url string, logger *zap.SugaredLogger) error {
@@ -54,7 +61,7 @@ func StartPlayerStatUpdate(ctx context.Context, url string, logger *zap.SugaredL
 
 func FindBounds(url string, logger *zap.SugaredLogger) ([][]int, error) {
 	var err error
-	bounds, err := httpCl.RawGet(url)
+	bounds, err := httpCl.RawRequest(url, http2.MethodGet, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -87,10 +94,21 @@ func FindBounds(url string, logger *zap.SugaredLogger) ([][]int, error) {
 
 func Init(url string, logger *zap.SugaredLogger) (InitData, error) {
 	var result InitData
-	initData, err := httpCl.RawGet(url)
+	initData, err := httpCl.RawRequest(url, http2.MethodGet, nil)
 	if err != nil {
 		return InitData{}, err
 	}
 	_ = json.Unmarshal(initData, &result)
 	return result, nil
+}
+func ChangeCurrentWindow(url string, pid *ChangeCurrentWindowStr, logger *zap.SugaredLogger) error {
+	b, _ := json.Marshal(pid)
+	fmt.Println(url)
+	res, err := httpCl.RawRequest(url, http2.MethodPost, bytes.NewBuffer(b))
+	if err != nil {
+		logger.Error("change current window error: ", err.Error())
+		return err
+	}
+	logger.Debug("change current window result ", string(res))
+	return nil
 }

@@ -48,11 +48,15 @@ func (cl *HttpClient) Get(url string) (playerStat *entity.PlayerStat, err error)
 	return nil, fmt.Errorf("failed after %d retries: %v", maxRetries, err)
 }
 
-func (cl *HttpClient) RawGet(url string) (result []byte, err error) {
+func (cl *HttpClient) RawRequest(url string, method string, body io.Reader) (result []byte, err error) {
 	const maxRetries = 10
 	var resp *http.Response
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		resp, err = cl.Client.Get(url)
+		if method == http.MethodPost {
+			resp, err = cl.Client.Post(url, "application/json", body)
+		} else {
+			resp, err = cl.Client.Get(url)
+		}
 		if err == nil && resp.StatusCode == http.StatusOK {
 			defer resp.Body.Close()
 			res, err := io.ReadAll(resp.Body)

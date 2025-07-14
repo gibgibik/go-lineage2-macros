@@ -3,6 +3,7 @@ web:
 player_stat_url: "http://192.168.1.60:2223/"
 bounds_url: "http://192.168.1.60:2223/findBounds"
 init_url: "http://192.168.1.60:2223/init"
+base_url: "http://192.168.1.60:2223/"
 control:
   port: "/dev/serial0"
   baud_rate: 9600

@@ -250,15 +250,27 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		} else {
 			//defer controlCl.Cl.Port.Close()
 		}
-		var body struct {
-			Pid uint32 `json:"pid"`
-		}
+		var body service.ChangeCurrentWindowStr
 		defer r.Body.Close()
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			createRequestError(w, "Invalid JSON", http.StatusBadRequest)
+			runMutex.Unlock()
 			return
 		}
-		fmt.Println(body)
+		if controlErr != nil {
+			controlCl.Cl.SendKey("alt", "")
+		}
+		if err := service.ChangeCurrentWindow(cnf.BaseUrl+"changeActiveWindow", &body, logger); err != nil {
+			createRequestError(w, err.Error(), http.StatusBadRequest)
+			runMutex.Unlock()
+			if controlErr != nil {
+				controlCl.Cl.EndKey()
+			}
+			return
+		}
+		if controlErr != nil {
+			controlCl.Cl.EndKey()
+		}
 		go func() {
 			for {
 				select {
