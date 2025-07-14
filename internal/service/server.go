@@ -71,7 +71,7 @@ func FindBounds(url string, logger *zap.SugaredLogger) ([][]int, error) {
 			result.Boxes[i+1] = []int{boxes.Boxes[i][0], boxes.Boxes[i][1], boxes.Boxes[i+1][2], boxes.Boxes[i+1][3]}
 			i++
 		} else {
-			result.Boxes = append(result.Boxes, result.Boxes[i])
+			result.Boxes = append(result.Boxes, boxes.Boxes[i])
 		}
 	}
 	//if len(boxes.Boxes) > 10 {
