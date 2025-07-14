@@ -258,7 +258,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 			return
 		}
 		if controlErr != nil {
-			controlCl.Cl.SendKey("alt", "")
+			controlCl.Cl.SendKey(ch9329.ModLeftAlt, "")
 		}
 		if err := service.ChangeCurrentWindow(cnf.BaseUrl+"changeActiveWindow", &body, logger); err != nil {
 			createRequestError(w, err.Error(), http.StatusBadRequest)
