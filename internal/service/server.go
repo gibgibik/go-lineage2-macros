@@ -51,9 +51,11 @@ func StartPlayerStatUpdate(ctx context.Context, url string, logger *zap.SugaredL
 				targetHpWasPresentAt = time.Now()
 			}
 			if PlayerStat.Target.HpPercent >= 99 {
-				fullTargetHpUnchangedSince = time.Now()
+				if fullTargetHpUnchangedSince.IsZero() {
+					fullTargetHpUnchangedSince = time.Now()
+				}
 			} else {
-				fullTargetHpUnchangedSince = time.Time{}
+				fullTargetHpUnchangedSince = time.Now()
 			}
 			PlayerStat.Target.HpWasPresentAt = targetHpWasPresentAt.Unix()
 			PlayerStat.Target.FullHpUnchangedSince = fullTargetHpUnchangedSince.Unix()
