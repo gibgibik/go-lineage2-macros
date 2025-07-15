@@ -257,15 +257,15 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 			runMutex.Unlock()
 			return
 		}
-		if controlErr != nil {
-			controlCl.Cl.SendKey(ch9329.ModLeftAlt, "")
-			controlCl.Cl.EndKey()
-		}
-		if err := service.ChangeCurrentWindow(cnf.BaseUrl+"changeActiveWindow", &body, logger); err != nil {
-			createRequestError(w, err.Error(), http.StatusBadRequest)
-			runMutex.Unlock()
-			return
-		}
+		//if controlErr != nil {
+		//	controlCl.Cl.SendKey(ch9329.ModLeftAlt, "tab")
+		//	controlCl.Cl.EndKey()
+		//}
+		//if err := service.ChangeCurrentWindow(cnf.BaseUrl+"changeActiveWindow", &body, logger); err != nil {
+		//	createRequestError(w, err.Error(), http.StatusBadRequest)
+		//	runMutex.Unlock()
+		//	return
+		//}
 		go func() {
 			for {
 				select {

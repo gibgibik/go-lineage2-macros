@@ -16,9 +16,10 @@ import (
 )
 
 var (
-	PlayerStat           *entity.PlayerStat
-	targetHpWasPresentAt time.Time
-	httpCl               = http.NewHttpClient()
+	PlayerStat                 *entity.PlayerStat
+	targetHpWasPresentAt       time.Time
+	fullTargetHpUnchangedSince time.Time
+	httpCl                     = http.NewHttpClient()
 )
 
 type BoundsResult struct {
@@ -49,7 +50,13 @@ func StartPlayerStatUpdate(ctx context.Context, url string, logger *zap.SugaredL
 			if PlayerStat.Target.HpPercent > 0 {
 				targetHpWasPresentAt = time.Now()
 			}
+			if PlayerStat.Target.HpPercent >= 99 {
+				fullTargetHpUnchangedSince = time.Now()
+			} else {
+				fullTargetHpUnchangedSince = time.Time{}
+			}
 			PlayerStat.Target.HpWasPresentAt = targetHpWasPresentAt.Unix()
+			PlayerStat.Target.FullHpUnchangedSince = fullTargetHpUnchangedSince.Unix()
 			if err != nil {
 				logger.Error("player pull stat error: ", err.Error())
 				continue

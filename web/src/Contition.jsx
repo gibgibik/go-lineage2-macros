@@ -8,6 +8,7 @@ const fields = [
     {name: 'my_hp', label: 'My HP'},
     {name: 'my_mp', label: 'My MP'},
     {name: 'since_last_success_target', label: 'Since Last Success Target'},
+    {name: 'full_target_hp_unchanged_since', label: 'Full Target Hp Unchanged'},
 ];
 
 const controlElements = {

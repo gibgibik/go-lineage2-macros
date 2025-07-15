@@ -22,6 +22,7 @@ const (
 	ActionPickup            = "/pickup"
 	ActionAITargetNext      = "/aitargetnext"
 	ActionStop              = "/stop"
+	ActionUnstuck           = "/unstuck"
 
 	ConditionCombinatorAnd = "AND"
 	ConditionCombinatorOr  = "OR"

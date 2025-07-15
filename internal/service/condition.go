@@ -44,6 +44,12 @@ func CheckCondition(conditionsCombinator string, conditions []Condition, stat *e
 			} else {
 				result = result && checkOperatorCondition(float64(time.Now().Unix()-int64(cval)), float64(stat.Target.HpWasPresentAt), condition.Operator)
 			}
+		case "full_target_hp_unchanged_since":
+			if conditionsCombinator == ConditionCombinatorOr {
+				result = result || (checkOperatorCondition(float64(time.Now().Unix()-int64(cval)), float64(stat.Target.FullHpUnchangedSince), condition.Operator))
+			} else {
+				result = result && checkOperatorCondition(float64(time.Now().Unix()-int64(cval)), float64(stat.Target.FullHpUnchangedSince), condition.Operator)
+			}
 		}
 	}
 	return result, nil

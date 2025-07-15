@@ -12,6 +12,7 @@ const rawActions = [
     '/pickup',
     '/aitargetnext',
     '/stop',
+    '/unstuck',
 ];
 export const MacrosAction = ({name, initValue}) => {
     const [value, setValue] = useState(null);
