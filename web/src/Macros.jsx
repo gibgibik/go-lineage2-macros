@@ -40,6 +40,10 @@ const renderItems = ({Items: items = []}, conditions, setConditions) => {
                        slotProps={{inputLabel: {shrink: true}}}
                        defaultValue={!items.length ? '' : items[i]['period_seconds']}
             />
+            <TextField variant={"outlined"} name={'delay_seconds[]'} label={"Delay"}
+                       slotProps={{inputLabel: {shrink: true}}}
+                       defaultValue={!items.length ? '' : items[i]['delay_seconds']}
+            />
             <TextField variant={"outlined"} name={'additional[]'} label={"Additional"}
                        slotProps={{inputLabel: {shrink: true}}}
                        defaultValue={!items.length ? '' : items[i]['Additional']}
@@ -92,6 +96,7 @@ export const Macros = ({profileName}) => {
             obj.items.push({
                 'action': formData.getAll('actions[]')[i],
                 'binding': formData.getAll('bindings[]')[i],
+                'delay_seconds': parseInt(formData.getAll('delay_seconds[]')[i]),
                 'period_seconds': parseInt(formData.getAll('period_seconds[]')[i]),
                 'additional': formData.getAll('additional[]')[i],
                 'conditions': conditions[i].filter(item => typeof item === 'object'),
