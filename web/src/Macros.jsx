@@ -30,6 +30,7 @@ const renderItems = ({Items: items = []}, conditions, setConditions) => {
         } else {
             preparedConditions.rules = !items.length ? [] : items[i]?.Conditions
         }
+        console.log(preparedConditions);
         result.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
             <MacrosAction name={'actions[]'} initValue={!items.length ? '' : items[i]?.Action || ''}/>
             <TextField variant={"outlined"} name={'bindings[]'} label="Binding"
