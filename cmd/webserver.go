@@ -296,7 +296,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 				controlCl.Cl.EndKey()
 			}
 		}
-
 		go func() {
 			for {
 				select {
@@ -322,13 +321,12 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						}
 						return
 					}
+
 				default:
-					runStack[pid].runMutex.Lock()
 					err := initStacks(body.Pid, r, logger)
 					if err != nil {
 						logger.Error("init stacks error: " + err.Error())
 						sendMessage("init stacks error: " + err.Error())
-						runStack[pid].runMutex.Unlock()
 						return
 					}
 					var i int
@@ -418,10 +416,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							controlCl.Cl.EndKey()
 						}
 						if runAction.item.Action == service.ActionUnstuck {
-							controlCl.Cl.SendKey(0, "esc")
-							controlCl.Cl.EndKey()
-							controlCl.Cl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960 + randNum(-150, 150), 540 + randNum(-150, 150)}, 0)
-							time.Sleep(time.Second * 3)
+							if controlErr == nil {
+								controlCl.Cl.SendKey(0, "esc")
+								controlCl.Cl.EndKey()
+								controlCl.Cl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960 + randNum(-150, 150), 540 + randNum(-150, 150)}, 0)
+							}
 						}
 						if runAction.item.DelaySeconds > 0 {
 							time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
@@ -432,7 +431,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						i++
 						time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
 					}
-					runStack[pid].runMutex.Unlock()
 					//run stack
 					time.Sleep(time.Millisecond * time.Duration(randNum(200, 300)))
 				}
