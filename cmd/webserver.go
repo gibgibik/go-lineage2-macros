@@ -157,16 +157,6 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		time.Sleep(time.Second)
-		//mt, message, err := wsConn.ReadMessage()
-		//if err != nil {
-		//	logger.Errorf("Read error:", err)
-		//	break
-		//}
-		//log.Printf("Received: %s", message)
-		//if err := wsConn.WriteMessage(mt, message); err != nil {
-		//	logger.Errorf("Write error:", err)
-		//	break
-		//}
 	}
 }
 
@@ -250,22 +240,24 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		} else {
 			//defer controlCl.Cl.Port.Close()
 		}
-		var body service.ChangeCurrentWindowStr
+		var body service.CheckCurrentWindowStr
 		defer r.Body.Close()
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			createRequestError(w, "Invalid JSON", http.StatusBadRequest)
 			runMutex.Unlock()
 			return
 		}
-		//if controlErr != nil {
-		//	controlCl.Cl.SendKey(ch9329.ModLeftAlt, "tab")
-		//	controlCl.Cl.EndKey()
-		//}
-		//if err := service.ChangeCurrentWindow(cnf.BaseUrl+"changeActiveWindow", &body, logger); err != nil {
-		//	createRequestError(w, err.Error(), http.StatusBadRequest)
-		//	runMutex.Unlock()
-		//	return
-		//}
+
+		curW, err := service.CheckCurrentWindow(cnf.BaseUrl+"checkActiveWindow", body, logger)
+		if err != nil {
+			logger.Errorf("check current window failed: %v", err)
+		} else if !curW {
+			if controlErr == nil {
+				controlCl.Cl.SendKey(ch9329.ModLeftAlt, "tab")
+				controlCl.Cl.EndKey()
+			}
+		}
+
 		go func() {
 			for {
 				select {
