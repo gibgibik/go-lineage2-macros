@@ -418,7 +418,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							controlCl.Cl.EndKey()
 						}
 						if runAction.item.Action == service.ActionUnstuck {
-							controlCl.Cl.SendKey(0, ch9329.HidKeycodes["esc"])
+							controlCl.Cl.SendKey(0, "esc")
 							controlCl.Cl.EndKey()
 							controlCl.Cl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960 + randNum(-150, 150), 540 + randNum(-150, 150)}, 0)
 							time.Sleep(time.Second * 3)
