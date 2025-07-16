@@ -293,6 +293,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		if err != nil {
 			logger.Errorf("check current window failed: %v", err)
 		} else if curPid != pid {
+			fmt.Println(curPid, pid)
 			if controlErr == nil {
 				controlCl.Cl.SendKey(ch9329.ModLeftAlt, "tab")
 				controlCl.Cl.EndKey()
