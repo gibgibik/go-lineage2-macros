@@ -229,21 +229,23 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 			ProfilesList:    service.GetProfilesList(),
 			PidsData:        initData.PidsData,
 		}
-		runStack = make(map[uint32]stackStruct, 0)
 		var minPid uint32
 		for pid := range response.PidsData {
-			if minPid == 0 || minPid < pid {
+			if minPid == 0 || minPid > pid {
 				minPid = pid
 			}
 		}
-		for pid := range response.PidsData {
-			str := stackStruct{runMutex: &sync.Mutex{}, stack: []runStackStruct{}}
-			if minPid == pid {
-				str.stackType = stackTypeMain
-			} else {
-				str.stackType = stackTypeSecondary
+		if len(runStack) == 0 {
+			runStack = make(map[uint32]stackStruct, 0)
+			for pid := range response.PidsData {
+				str := stackStruct{runMutex: &sync.Mutex{}, stack: []runStackStruct{}}
+				if minPid == pid {
+					str.stackType = stackTypeMain
+				} else {
+					str.stackType = stackTypeSecondary
+				}
+				runStack[pid] = str
 			}
-			runStack[pid] = str
 		}
 		res, _ := json.Marshal(response)
 		writer.Write(res)
