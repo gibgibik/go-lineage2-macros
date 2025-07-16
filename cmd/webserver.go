@@ -214,8 +214,10 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 			return
 		}
 		if !runStack[pb.Pid].runMutex.TryLock() {
+			logger.Info("trigger stop")
 			runStack[pb.Pid].stopCh <- struct{}{}
 		} else {
+			logger.Info("not locked")
 			runStack[pb.Pid].runMutex.Unlock()
 		}
 	})
