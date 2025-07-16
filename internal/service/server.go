@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"math"
 	http2 "net/http"
 	"sort"
@@ -112,7 +111,6 @@ func Init(url string, logger *zap.SugaredLogger) (InitData, error) {
 }
 func GetForegroundWindowPid(url string, body ForeGroundWindowInfo, logger *zap.SugaredLogger) (uint32, error) {
 	b, _ := json.Marshal(body)
-	fmt.Println(url)
 	res, err := httpCl.RawRequest(url, http2.MethodPost, bytes.NewBuffer(b))
 	if err != nil {
 		return 0, err

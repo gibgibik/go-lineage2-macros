@@ -283,7 +283,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 			createRequestError(w, "already running", http.StatusServiceUnavailable)
 			return
 		}
-		defer runStack[pid].runMutex.Unlock()
 		logger.Info("starting macros")
 		controlCl, controlErr := service.GetControl(cnf.Control)
 		if controlErr != nil {
@@ -302,6 +301,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 			}
 		}
 		go func() {
+			defer runStack[pid].runMutex.Unlock()
 			for {
 				select {
 				case <-ctx.Done():
