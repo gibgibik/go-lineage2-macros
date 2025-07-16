@@ -108,9 +108,11 @@ func initStacks(pid uint32, r *http.Request, logger *zap.SugaredLogger) error {
 			if val.Action == "" {
 				continue
 			}
-			runStack[pid] = stackStruct{stackType: runStack[pid].stackType, runMutex: runStack[pid].runMutex, stack: append(runStack[pid].stack, runStackStruct{
+			cp := runStack[pid]
+			cp.stack = append(runStack[pid].stack, runStackStruct{
 				item: val,
-			})}
+			})
+			runStack[pid] = cp
 		}
 
 	}
@@ -307,11 +309,15 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 				case <-ctx.Done():
 					runStack[curPid].stopCh <- struct{}{}
 				case <-runStack[curPid].reloadCh:
-					runStack[curPid] = stackStruct{stackType: runStack[curPid].stackType, runMutex: runStack[curPid].runMutex, stack: []runStackStruct{}}
+					cp := runStack[curPid]
+					cp.stack = []runStackStruct{}
+					runStack[curPid] = cp
 					logger.Info("reloaded")
 				case <-runStack[curPid].stopCh:
 					//runStack[curPid].runMutex.Lock()
-					runStack[curPid] = stackStruct{stackType: runStack[curPid].stackType, runMutex: runStack[curPid].runMutex, stack: []runStackStruct{}}
+					cp := runStack[curPid]
+					cp.stack = []runStackStruct{}
+					runStack[curPid] = cp
 					logger.Info("macros stopped")
 					//runStack[curPid].runMutex.Unlock()
 					return
