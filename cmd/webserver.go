@@ -38,9 +38,10 @@ const (
 )
 
 type stackStruct struct {
-	stackType uint8
-	runMutex  *sync.Mutex
-	stack     []runStackStruct
+	stackType   uint8
+	runMutex    *sync.Mutex
+	stopChannel chan struct{}
+	stack       []runStackStruct
 }
 
 var (
@@ -53,7 +54,6 @@ var (
 			return true
 		},
 	}
-	stopRunChannel     = make(chan uint32, 1)
 	runStack           map[uint32]stackStruct
 	currentStackCount  atomic.Int32
 	messagesStack      []string
@@ -215,7 +215,7 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 			return
 		}
 		if currentStackCount.Load() > 0 {
-			stopRunChannel <- pb.Pid
+			runStack[pb.Pid].stopChannel <- struct{}{}
 		}
 	})
 	mux.HandleFunc("/api/init", func(writer http.ResponseWriter, request *http.Request) {
@@ -302,26 +302,13 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 			for {
 				select {
 				case <-ctx.Done():
-					stopRunChannel <- 0
-				case ipid := <-stopRunChannel:
+					runStack[curPid].stopChannel <- struct{}{}
+				case <-runStack[curPid].stopChannel:
 					logger.Info("macros stopped")
-					if ipid > 0 {
-						runStack[ipid].runMutex.Lock()
-						runStack[ipid] = stackStruct{stackType: runStack[ipid].stackType, runMutex: runStack[ipid].runMutex, stack: []runStackStruct{}}
-						runStack[ipid].runMutex.Unlock()
-					} else {
-						for k := range runStack {
-							runStack[k].runMutex.Lock()
-							runStack[k] = stackStruct{stackType: runStack[ipid].stackType, runMutex: runStack[k].runMutex, stack: []runStackStruct{}}
-							runStack[k].runMutex.Unlock()
-						}
-					}
 
-					if ipid == 0 {
-						if controlErr == nil {
-							controlCl.Cl.Port.Close()
-						}
-					}
+					runStack[curPid].runMutex.Lock()
+					runStack[curPid] = stackStruct{stackType: runStack[curPid].stackType, runMutex: runStack[curPid].runMutex, stack: []runStackStruct{}}
+					runStack[curPid].runMutex.Unlock()
 					return
 				default:
 					err := initStacks(body.Pid, r, logger)
@@ -344,7 +331,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									controlCl.Cl.SendKey(0, runAction.item.Binding)
 									controlCl.Cl.EndKey()
 									time.Sleep(time.Second * 10)
-									stopRunChannel <- body.Pid
+									runStack[curPid].stopChannel <- struct{}{}
 									logger.Debug("macros stopped due to stop!!!")
 								}
 							}
