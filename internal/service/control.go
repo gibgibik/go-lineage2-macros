@@ -23,14 +23,23 @@ var (
 		"7": {40, 472},
 		"8": {40, 525},
 	}
+
+	control *Control
 )
 
-func NewControl(cnf core.Control) (*Control, error) {
+func GetControl(cnf core.Control) (*Control, error) {
+	if control != nil {
+		return control, nil
+	}
 	mode := &serial.Mode{
 		BaudRate: cnf.BaudRate,
 	}
 	port, err := serial.Open(cnf.Port, mode)
-	return &Control{
+	if err != nil {
+		return nil, err
+	}
+	control = &Control{
 		Cl: ch9329.NewClient(port, image.Rect(0, 0, cnf.Resolution[0], cnf.Resolution[1])),
-	}, err
+	}
+	return control, nil
 }

@@ -283,7 +283,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		currentStackCount.Add(1)
 		defer currentStackCount.Add(-1)
 		logger.Info("starting macros")
-		controlCl, controlErr := service.NewControl(cnf.Control)
+		controlCl, controlErr := service.GetControl(cnf.Control)
 		if controlErr != nil {
 			logger.Errorf("control create failed: %v", controlErr)
 		} else {
