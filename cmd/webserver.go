@@ -341,14 +341,13 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							if runAction.lastRun.Unix() < 0 {
 								runStack[pid].stack[i].lastRun = time.Now()
 							} else if runAction.item.PeriodSeconds > 0 && (runAction.lastRun.Unix()+int64(runAction.item.PeriodSeconds)) < time.Now().Unix() {
-								if service.PlayerStat.Target.HpPercent > 0 {
+								if service.PlayerStat.Target.HpPercent == 0 {
+									controlCl.Cl.SendKey(0, runAction.item.Binding)
+									controlCl.Cl.EndKey()
 									time.Sleep(time.Second * 10)
+									stopRunChannel <- body.Pid
+									logger.Debug("macros stopped due to stop!!!")
 								}
-								controlCl.Cl.SendKey(0, runAction.item.Binding)
-								controlCl.Cl.EndKey()
-								time.Sleep(time.Millisecond * 100)
-								stopRunChannel <- body.Pid
-								logger.Debug("macros stopped due to stop!!!")
 							}
 							i++
 							continue
