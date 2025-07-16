@@ -31,7 +31,7 @@ const renderItems = ({Items: items = []}, conditions, setConditions) => {
             preparedConditions.rules = !items.length ? [] : items[i]?.Conditions
         }
         result.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
-            <MacrosAction name={'actions[]'} initValue={items.length === 0 ? '' : items[i]?.Action || ''}/>
+            <MacrosAction name={'actions[]'} initValue={!items.length ? '' : items[i]?.Action || ''}/>
             <TextField variant={"outlined"} name={'bindings[]'} label="Binding"
                        slotProps={{inputLabel: {shrink: true}}}
                        onKeyDown={onChangeBinding} defaultValue={!items.length ? '' : items[i]?.Binding || ''}
