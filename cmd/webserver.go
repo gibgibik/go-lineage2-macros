@@ -54,7 +54,7 @@ var (
 			return true
 		},
 	}
-	runStack           map[uint32]stackStruct
+	runStack           map[uint32]*stackStruct
 	messagesStack      []string
 	messagesStackMutex sync.Mutex
 )
@@ -216,10 +216,8 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 			return
 		}
 		if !runStack[pb.Pid].runMutex.TryLock() {
-			logger.Info("trigger stop")
 			runStack[pb.Pid].stopCh <- struct{}{}
 		} else {
-			logger.Info("not locked")
 			runStack[pb.Pid].runMutex.Unlock()
 		}
 	})
@@ -241,15 +239,15 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 			}
 		}
 		if len(runStack) == 0 {
-			runStack = make(map[uint32]stackStruct, 0)
+			runStack = make(map[uint32]*stackStruct, 0)
 			for pid := range response.PidsData {
-				str := stackStruct{runMutex: &sync.Mutex{}, stack: []runStackStruct{}}
+				str := stackStruct{runMutex: &sync.Mutex{}, stack: []runStackStruct{}, stopCh: make(chan struct{}), reloadCh: make(chan struct{})}
 				if minPid == pid {
 					str.stackType = stackTypeMain
 				} else {
 					str.stackType = stackTypeSecondary
 				}
-				runStack[pid] = str
+				runStack[pid] = &str
 			}
 		}
 		res, _ := json.Marshal(response)
@@ -296,7 +294,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		if err != nil {
 			logger.Errorf("check current window failed: %v", err)
 		} else if curPid != pid {
-			fmt.Println(curPid, pid)
 			if controlErr == nil {
 				controlCl.Cl.SendKey(ch9329.ModLeftAlt, "tab")
 				controlCl.Cl.EndKey()
@@ -305,21 +302,20 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		go func() {
 			defer runStack[pid].runMutex.Unlock()
 			for {
+				fmt.Println("start ", runStack[pid].stopCh)
 				select {
 				case <-ctx.Done():
-					runStack[curPid].stopCh <- struct{}{}
-				case <-runStack[curPid].reloadCh:
-					cp := runStack[curPid]
+					runStack[pid].stopCh <- struct{}{}
+				case <-runStack[pid].reloadCh:
+					cp := runStack[pid]
 					cp.stack = []runStackStruct{}
-					runStack[curPid] = cp
+					runStack[pid] = cp
 					logger.Info("reloaded")
-				case <-runStack[curPid].stopCh:
-					//runStack[curPid].runMutex.Lock()
-					cp := runStack[curPid]
-					cp.stack = []runStackStruct{}
-					runStack[curPid] = cp
+				case <-runStack[pid].stopCh:
 					logger.Info("macros stopped")
-					//runStack[curPid].runMutex.Unlock()
+					cp := runStack[pid]
+					cp.stack = []runStackStruct{}
+					runStack[pid] = cp
 					return
 				default:
 					err := initStacks(body.Pid, r, logger)
@@ -342,7 +338,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									controlCl.Cl.SendKey(0, runAction.item.Binding)
 									controlCl.Cl.EndKey()
 									time.Sleep(time.Second * 10)
-									runStack[curPid].stopCh <- struct{}{}
+									runStack[pid].stopCh <- struct{}{}
 									logger.Debug("macros stopped due to stop!!!")
 								}
 							}
@@ -468,9 +464,6 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 	}
 	for k := range runStack {
 		runStack[k].reloadCh <- struct{}{}
-		//runStack[k].runMutex.Lock()
-		//runStack[k] = stackStruct{stackType: runStack[k].stackType, runMutex: runStack[k].runMutex, stack: []runStackStruct{}}
-		//runStack[k].runMutex.Unlock()
 	}
 }
 func getTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
