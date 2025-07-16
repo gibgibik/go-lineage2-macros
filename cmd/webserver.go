@@ -264,7 +264,7 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 
 func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var body service.CheckCurrentWindowStr
+		var body service.ForeGroundWindowInfo
 		defer r.Body.Close()
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			createRequestError(w, "Invalid JSON", http.StatusBadRequest)
@@ -287,10 +287,10 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		} else {
 			//defer controlCl.Cl.Port.Close()
 		}
-		curW, err := service.CheckCurrentWindow(cnf.BaseUrl+"checkActiveWindow", body, logger)
+		curPid, err := service.GetForegroundWindowPid(cnf.BaseUrl+"getForegroundWindowPid", body, logger)
 		if err != nil {
 			logger.Errorf("check current window failed: %v", err)
-		} else if !curW {
+		} else if curPid != pid {
 			if controlErr == nil {
 				controlCl.Cl.SendKey(ch9329.ModLeftAlt, "tab")
 				controlCl.Cl.EndKey()
@@ -319,9 +319,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						if controlErr == nil {
 							controlCl.Cl.Port.Close()
 						}
-						return
 					}
-
+					return
 				default:
 					err := initStacks(body.Pid, r, logger)
 					if err != nil {

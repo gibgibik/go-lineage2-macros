@@ -86,7 +86,7 @@ function App() {
                             <InputLabel id={'pid-label'}>Pid</InputLabel>
                             <Select
                                 labelId="pid-label"
-                                value={currentPid}
+                                value={currentPid || ''}
                                 label="Pid"
                                 onChange={(event) => {
                                     setCurrentPid(event.target.value);

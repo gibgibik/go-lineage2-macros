@@ -4,7 +4,7 @@ import {getProfile, saveProfile} from "./api.js";
 import React, {useEffect, useState} from "react";
 import {Condition} from "./Contition.jsx";
 
-const INPUT_COUNT = 10;
+const INPUT_COUNT = 20;
 const onChangeBinding = (event) => {
     let combo = '';
     if (event.ctrlKey) combo += 'ctrl+';
@@ -24,29 +24,29 @@ const renderItems = ({Items: items = []}, conditions, setConditions) => {
     const result = []
     for (let i = 0; i < INPUT_COUNT; i++) {
         let preparedConditions = {rules: []};
-        if (items.length && (items[i]?.conditions_combinator || '') !== '') {
+        if (items.length && items[i] && (items[i]?.conditions_combinator || '') !== '') {
             preparedConditions.rules = items[i]['Conditions'].flatMap((item, index) => index < items[i]['Conditions'].length - 1 ? [item, items[i]?.conditions_combinator] : [item]);
             // preparedConditions.rules = items[i]['Conditions'];
-        }  else {
-            preparedConditions.rules = !items.length ? [] : items[i]['Conditions']
+        } else {
+            preparedConditions.rules = !items.length ? [] : items[i]?.Conditions
         }
         result.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
-            <MacrosAction name={'actions[]'} initValue={!items.length ? '' : items[i]['Action']}/>
+            <MacrosAction name={'actions[]'} initValue={items.length === 0 ? '' : items[i]?.Action || ''}/>
             <TextField variant={"outlined"} name={'bindings[]'} label="Binding"
                        slotProps={{inputLabel: {shrink: true}}}
-                       onKeyDown={onChangeBinding} defaultValue={!items.length ? '' : items[i]['Binding']}
+                       onKeyDown={onChangeBinding} defaultValue={!items.length ? '' : items[i]?.Binding || ''}
             />
             <TextField variant={"outlined"} name={'period_seconds[]'} label={"Period Seconds"}
                        slotProps={{inputLabel: {shrink: true}}}
-                       defaultValue={!items.length ? '' : items[i]['period_seconds']}
+                       defaultValue={!items.length ? '' : items[i]?.period_seconds}
             />
             <TextField variant={"outlined"} name={'delay_seconds[]'} label={"Delay"}
                        slotProps={{inputLabel: {shrink: true}}}
-                       defaultValue={!items.length ? '' : items[i]['delay_seconds']}
+                       defaultValue={!items.length ? '' : items[i]?.delay_seconds}
             />
             <TextField variant={"outlined"} name={'additional[]'} label={"Additional"}
                        slotProps={{inputLabel: {shrink: true}}}
-                       defaultValue={!items.length ? '' : items[i]['Additional']}
+                       defaultValue={!items.length ? '' : items[i]?.Additional}
             />
             <Condition conditions={preparedConditions} fullWidth={true}
                        onQueryChange={(data) => {
@@ -83,11 +83,6 @@ export const Macros = ({profileName}) => {
 
         initProfile();
     }, [profileName]);
-    useEffect(() => {
-        if (!formItemsData || !Object.keys(formItemsData).length) {
-            return;
-        }
-    }, [formItemsData])
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);

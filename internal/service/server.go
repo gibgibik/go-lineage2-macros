@@ -30,9 +30,8 @@ type InitData struct {
 	PidsData map[uint32]string
 }
 
-type CheckCurrentWindowStr struct {
-	Pid          uint32 `json:"pid"`
-	IsPidMatched bool
+type ForeGroundWindowInfo struct {
+	Pid uint32 `json:"pid"`
 }
 
 func StartPlayerStatUpdate(ctx context.Context, url string, logger *zap.SugaredLogger) {
@@ -111,14 +110,14 @@ func Init(url string, logger *zap.SugaredLogger) (InitData, error) {
 	_ = json.Unmarshal(initData, &result)
 	return result, nil
 }
-func CheckCurrentWindow(url string, body CheckCurrentWindowStr, logger *zap.SugaredLogger) (bool, error) {
+func GetForegroundWindowPid(url string, body ForeGroundWindowInfo, logger *zap.SugaredLogger) (uint32, error) {
 	b, _ := json.Marshal(body)
 	fmt.Println(url)
 	res, err := httpCl.RawRequest(url, http2.MethodPost, bytes.NewBuffer(b))
 	if err != nil {
-		return false, err
+		return 0, err
 	}
-	var result CheckCurrentWindowStr
+	var result ForeGroundWindowInfo
 	_ = json.Unmarshal(res, &result)
-	return result.IsPidMatched, nil
+	return result.Pid, nil
 }
