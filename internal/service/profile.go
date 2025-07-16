@@ -102,6 +102,7 @@ func SaveProfileData(body io.Reader, logger *zap.SugaredLogger) error {
 		logger.Error(err.Error())
 		return err
 	}
+	logger.Info("profile saved: ", templateBody.Profile)
 	return nil
 }
 

@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gibgibik/go-ch9329/pkg/ch9329"
@@ -26,8 +27,20 @@ import (
 )
 
 type runStackStruct struct {
+	sync.Mutex
 	item    service.ProfileTemplateItem
 	lastRun time.Time
+}
+
+const (
+	stackTypeMain = iota
+	stackTypeSecondary
+)
+
+type stackStruct struct {
+	stackType uint8
+	runMutex  *sync.Mutex
+	stack     []runStackStruct
 }
 
 var (
@@ -40,10 +53,9 @@ var (
 			return true
 		},
 	}
-	runMutex           sync.Mutex
-	stopRunChannel     = make(chan interface{}, 1)
-	stackLock          sync.Mutex
-	runStack           []runStackStruct
+	stopRunChannel     = make(chan uint32, 1)
+	runStack           map[uint32]stackStruct
+	currentStackCount  atomic.Int32
 	messagesStack      []string
 	messagesStackMutex sync.Mutex
 )
@@ -59,6 +71,10 @@ type Condition struct {
 	value float64
 }
 type BaseWsSender struct{}
+
+type pidBody struct {
+	Pid uint32 `json:"pid"`
+}
 
 func (ws BaseWsSender) Sync() error {
 	return nil
@@ -83,23 +99,23 @@ func parseCondition(s string) *Condition {
 	}
 }
 
-func initStacks(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) error {
+func initStacks(pid uint32, r *http.Request, logger *zap.SugaredLogger) error {
 	profileData, err := service.GetProfileData(strings.Trim(r.RequestURI, "/"), logger)
 	if err != nil {
 		return err
 	}
-	if len(runStack) == 0 {
+	if len(runStack[pid].stack) == 0 {
 		for _, val := range profileData.Items {
 			if val.Action == "" {
 				continue
 			}
-			runStack = append(runStack, runStackStruct{
+			runStack[pid] = stackStruct{stackType: runStack[pid].stackType, runMutex: runStack[pid].runMutex, stack: append(runStack[pid].stack, runStackStruct{
 				item: val,
-			})
+			})}
 		}
 
 	}
-	if len(runStack) == 0 {
+	if len(runStack[pid].stack) == 0 {
 		logger.Error("no actions available")
 		return errors.New("no actions available")
 	}
@@ -160,7 +176,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func withCORS(next http.Handler, logger *zap.SugaredLogger) http.Handler {
+func withCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*") // ✅ дозволяє всі домени (НЕБЕЗПЕЧНО для production!)
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
@@ -192,28 +208,48 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	mux.HandleFunc("/api/profile/", templateHandler)
 	mux.HandleFunc("/api/start/", startHandler(ctx, cnf))
 	mux.HandleFunc("/api/stop", func(writer http.ResponseWriter, request *http.Request) {
-		stopRunChannel <- struct{}{}
+		var pb pidBody
+		defer request.Body.Close()
+		if err := json.NewDecoder(request.Body).Decode(&pb); err != nil {
+			createRequestError(writer, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+		if currentStackCount.Load() > 0 {
+			stopRunChannel <- pb.Pid
+		}
 	})
 	mux.HandleFunc("/api/init", func(writer http.ResponseWriter, request *http.Request) {
-		lockResult := runMutex.TryLock()
-		if lockResult {
-			defer runMutex.Unlock()
-		}
 		initData, _ := service.Init(cnf.InitUrl, logger)
 		response := struct {
 			IsMacrosRunning bool     `json:"isMacrosRunning"`
 			ProfilesList    []string `json:"profilesList"`
 			PidsData        map[uint32]string
 		}{
-			IsMacrosRunning: !lockResult,
+			IsMacrosRunning: false, //@todo detect?
 			ProfilesList:    service.GetProfilesList(),
 			PidsData:        initData.PidsData,
+		}
+		runStack = make(map[uint32]stackStruct, 0)
+		var minPid uint32
+		for pid := range response.PidsData {
+			if minPid == 0 || minPid < pid {
+				minPid = pid
+			}
+		}
+		for pid := range response.PidsData {
+			str := stackStruct{runMutex: &sync.Mutex{}, stack: []runStackStruct{}}
+			if minPid == pid {
+				str.stackType = stackTypeMain
+			} else {
+				str.stackType = stackTypeSecondary
+			}
+			runStack[pid] = str
 		}
 		res, _ := json.Marshal(response)
 		writer.Write(res)
 	})
 	mux.Handle("/", http.FileServer(http.Dir("./web/dist")))
-	handle.Handler = withCORS(mux, logger)
+	handle.Handler = withCORS(mux)
 	go func() {
 		if err := handle.ListenAndServe(); err != nil {
 			if !errors.Is(err, http.ErrServerClosed) {
@@ -228,26 +264,29 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 
 func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		logger := r.Context().Value("logger").(*zap.SugaredLogger)
-		if !runMutex.TryLock() {
+		var body service.CheckCurrentWindowStr
+		defer r.Body.Close()
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			createRequestError(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+
+		pid := body.Pid
+		logger := r.Context().Value("logger").(*zap.SugaredLogger).With("pid", pid)
+		if !runStack[pid].runMutex.TryLock() {
 			logger.Error("already running")
 			createRequestError(w, "already running", http.StatusServiceUnavailable)
 			return
 		}
+		currentStackCount.Add(1)
+		defer currentStackCount.Add(-1)
+		logger.Info("starting macros")
 		controlCl, controlErr := service.NewControl(cnf.Control)
 		if controlErr != nil {
 			logger.Errorf("control create failed: %v", controlErr)
 		} else {
 			//defer controlCl.Cl.Port.Close()
 		}
-		var body service.CheckCurrentWindowStr
-		defer r.Body.Close()
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			createRequestError(w, "Invalid JSON", http.StatusBadRequest)
-			runMutex.Unlock()
-			return
-		}
-
 		curW, err := service.CheckCurrentWindow(cnf.BaseUrl+"checkActiveWindow", body, logger)
 		if err != nil {
 			logger.Errorf("check current window failed: %v", err)
@@ -262,36 +301,45 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 			for {
 				select {
 				case <-ctx.Done():
-					stopRunChannel <- struct{}{}
-				case <-stopRunChannel:
-					logger.Debug("macros stopped")
-					stackLock.Lock()
-					runStack = []runStackStruct{}
-					stackLock.Unlock()
-					runMutex.Unlock()
-					if controlErr == nil {
-						controlCl.Cl.Port.Close()
+					stopRunChannel <- 0
+				case ipid := <-stopRunChannel:
+					logger.Info("macros stopped")
+					if ipid > 0 {
+						runStack[ipid].runMutex.Lock()
+						runStack[ipid] = stackStruct{stackType: runStack[ipid].stackType, runMutex: runStack[ipid].runMutex, stack: []runStackStruct{}}
+						runStack[ipid].runMutex.Unlock()
+					} else {
+						for k := range runStack {
+							runStack[k].runMutex.Lock()
+							runStack[k] = stackStruct{stackType: runStack[ipid].stackType, runMutex: runStack[k].runMutex, stack: []runStackStruct{}}
+							runStack[k].runMutex.Unlock()
+						}
 					}
-					return
+
+					if ipid == 0 {
+						if controlErr == nil {
+							controlCl.Cl.Port.Close()
+						}
+						return
+					}
 				default:
-					stackLock.Lock()
-					err := initStacks(w, r, logger)
+					runStack[pid].runMutex.Lock()
+					err := initStacks(body.Pid, r, logger)
 					if err != nil {
 						logger.Error("init stacks error: " + err.Error())
 						sendMessage("init stacks error: " + err.Error())
-						stackLock.Unlock()
-						runMutex.Unlock()
+						runStack[pid].runMutex.Unlock()
 						return
 					}
 					var i int
 					for {
-						if i >= len(runStack) {
+						if i >= len(runStack[pid].stack) {
 							break
 						}
-						runAction := runStack[i]
+						runAction := &runStack[pid].stack[i]
 						if runAction.item.Action == service.ActionStop {
 							if runAction.lastRun.Unix() < 0 {
-								runStack[i].lastRun = time.Now()
+								runStack[pid].stack[i].lastRun = time.Now()
 							} else if runAction.item.PeriodSeconds > 0 && (runAction.lastRun.Unix()+int64(runAction.item.PeriodSeconds)) < time.Now().Unix() {
 								if service.PlayerStat.Target.HpPercent > 0 {
 									time.Sleep(time.Second * 10)
@@ -299,7 +347,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								controlCl.Cl.SendKey(0, runAction.item.Binding)
 								controlCl.Cl.EndKey()
 								time.Sleep(time.Millisecond * 100)
-								stopRunChannel <- struct{}{}
+								stopRunChannel <- body.Pid
 								logger.Debug("macros stopped due to stop!!!")
 							}
 							i++
@@ -335,7 +383,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										}, 0)
 										controlCl.Cl.MouseAbsoluteEnd()
 										//time.Sleep(time.Millisecond * time.Duration(700))
-										time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
+										time.Sleep(time.Millisecond * time.Duration(randNum(100, 150)))
 									}
 									controlCl.Cl.EndKey()
 									if service.PlayerStat.Target.HpPercent == 0 {
@@ -346,7 +394,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									}
 								}
 							}
-							runStack[i].lastRun = time.Now()
+							runStack[pid].stack[i].lastRun = time.Now()
 							i++
 							continue
 						}
@@ -356,7 +404,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, point, 0)
 									controlCl.Cl.MouseAbsoluteEnd()
 								}
-								runStack[i].lastRun = time.Now()
+								runStack[pid].stack[i].lastRun = time.Now()
 								//@todo need delay?
 							} else {
 								logger.Error("wrong additional for assist party member: " + runAction.item.Additional)
@@ -370,16 +418,22 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							controlCl.Cl.SendKey(0, runAction.item.Binding)
 							controlCl.Cl.EndKey()
 						}
+						if runAction.item.Action == service.ActionUnstuck {
+							controlCl.Cl.SendKey(0, ch9329.HidKeycodes["esc"])
+							controlCl.Cl.EndKey()
+							controlCl.Cl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960 + randNum(-150, 150), 540 + randNum(-150, 150)}, 0)
+							time.Sleep(time.Second * 3)
+						}
 						if runAction.item.DelaySeconds > 0 {
 							time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
 						}
-						runStack[i].lastRun = time.Now()
+						runStack[pid].stack[i].lastRun = time.Now()
 						//message := fmt.Sprintf("%s %s <span style='color:red'>Target HP: [%.2f%%]</span>", runAction.item.Action, runAction.item.Binding, service.PlayerStat.Target.HpPercent)
 						//logger.Info(message)
 						i++
 						time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
 					}
-					stackLock.Unlock()
+					runStack[pid].runMutex.Unlock()
 					//run stack
 					time.Sleep(time.Millisecond * time.Duration(randNum(200, 300)))
 				}
@@ -411,14 +465,16 @@ func templateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
-	stackLock.Lock()
-	stackLock.Unlock()
 	err := service.SaveProfileData(r.Body, logger)
 	if err != nil {
 		createRequestError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	runStack = []runStackStruct{}
+	for k := range runStack {
+		runStack[k].runMutex.Lock()
+		runStack[k] = stackStruct{stackType: runStack[k].stackType, runMutex: runStack[k].runMutex, stack: []runStackStruct{}}
+		runStack[k].runMutex.Unlock()
+	}
 }
 func getTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
 	buf, err := service.GetProfileData(strings.Trim(r.RequestURI, "/"), logger)

@@ -4,7 +4,7 @@ import {getProfile, saveProfile} from "./api.js";
 import React, {useEffect, useState} from "react";
 import {Condition} from "./Contition.jsx";
 
-const INPUT_COUNT = 10;
+const INPUT_COUNT = 20;
 const onChangeBinding = (event) => {
     let combo = '';
     if (event.ctrlKey) combo += 'ctrl+';
@@ -13,7 +13,7 @@ const onChangeBinding = (event) => {
     if (event.metaKey) combo += 'meta+';
     combo += event.key.toLowerCase();
     if (combo === 'escape') {
-        return true;
+        combo = 'esc';
     }
     event.target.value = combo;
     event.preventDefault();

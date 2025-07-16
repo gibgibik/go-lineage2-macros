@@ -21,8 +21,8 @@ export const startMacros = (profileName, pid) => {
     })
 }
 
-export const stopMacros = () => {
-    return api.post('/stop').then((response) => {
+export const stopMacros = (pid) => {
+    return api.post('/stop', {pid}).then((response) => {
     })
 }
 

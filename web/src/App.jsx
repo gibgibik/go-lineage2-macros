@@ -48,9 +48,9 @@ function App() {
         } finally {
         }
     }
-    const stopMacrosAction = () => {
+    const stopMacrosAction = (pid) => {
         const stFunc = async () => {
-            await stopMacros();
+            await stopMacros(pid);
         }
         try {
             stFunc();
@@ -96,8 +96,8 @@ function App() {
                                                                                 value={index}>{`${index} - ${pidsData[index]}`}</MenuItem>)}
                             </Select>
                         </FormControl>
-                        <Button color={'error'} onClick={stopMacrosAction} disabled={!disabledStart}>Stop</Button>
-                        <Button onClick={startMacrosAction} disabled={disabledStart}>Start</Button>
+                        <Button color={'error'} onClick={() => stopMacrosAction(parseInt(currentPid))} >Stop</Button>
+                        <Button onClick={startMacrosAction} >Start</Button>
                     </ButtonGroup>
                 </Grid>
             </Grid>
