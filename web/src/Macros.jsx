@@ -28,9 +28,8 @@ const renderItems = ({Items: items = []}, conditions, setConditions) => {
             preparedConditions.rules = items[i]['Conditions'].flatMap((item, index) => index < items[i]['Conditions'].length - 1 ? [item, items[i]?.conditions_combinator] : [item]);
             // preparedConditions.rules = items[i]['Conditions'];
         } else {
-            preparedConditions.rules = !items.length ? [] : items[i]?.Conditions
+            preparedConditions.rules = !items.length ? [] : items[i]?.Conditions || []
         }
-        console.log(preparedConditions);
         result.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
             <MacrosAction name={'actions[]'} initValue={!items.length ? '' : items[i]?.Action || ''}/>
             <TextField variant={"outlined"} name={'bindings[]'} label="Binding"
