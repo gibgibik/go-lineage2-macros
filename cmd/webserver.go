@@ -15,7 +15,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/gibgibik/go-ch9329/pkg/ch9329"
@@ -38,10 +37,11 @@ const (
 )
 
 type stackStruct struct {
-	stackType   uint8
-	runMutex    *sync.Mutex
-	stopChannel chan struct{}
-	stack       []runStackStruct
+	stackType uint8
+	runMutex  *sync.Mutex
+	stopCh    chan struct{}
+	reloadCh  chan struct{}
+	stack     []runStackStruct
 }
 
 var (
@@ -55,7 +55,6 @@ var (
 		},
 	}
 	runStack           map[uint32]stackStruct
-	currentStackCount  atomic.Int32
 	messagesStack      []string
 	messagesStackMutex sync.Mutex
 )
@@ -214,8 +213,10 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 			createRequestError(writer, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
-		if currentStackCount.Load() > 0 {
-			runStack[pb.Pid].stopChannel <- struct{}{}
+		if !runStack[pb.Pid].runMutex.TryLock() {
+			runStack[pb.Pid].stopCh <- struct{}{}
+		} else {
+			runStack[pb.Pid].runMutex.Unlock()
 		}
 	})
 	mux.HandleFunc("/api/init", func(writer http.ResponseWriter, request *http.Request) {
@@ -280,8 +281,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 			createRequestError(w, "already running", http.StatusServiceUnavailable)
 			return
 		}
-		currentStackCount.Add(1)
-		defer currentStackCount.Add(-1)
+		defer runStack[pid].runMutex.Unlock()
 		logger.Info("starting macros")
 		controlCl, controlErr := service.GetControl(cnf.Control)
 		if controlErr != nil {
@@ -303,13 +303,15 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 			for {
 				select {
 				case <-ctx.Done():
-					runStack[curPid].stopChannel <- struct{}{}
-				case <-runStack[curPid].stopChannel:
-					logger.Info("macros stopped")
-
-					runStack[curPid].runMutex.Lock()
+					runStack[curPid].stopCh <- struct{}{}
+				case <-runStack[curPid].reloadCh:
 					runStack[curPid] = stackStruct{stackType: runStack[curPid].stackType, runMutex: runStack[curPid].runMutex, stack: []runStackStruct{}}
-					runStack[curPid].runMutex.Unlock()
+					logger.Info("reloaded")
+				case <-runStack[curPid].stopCh:
+					//runStack[curPid].runMutex.Lock()
+					runStack[curPid] = stackStruct{stackType: runStack[curPid].stackType, runMutex: runStack[curPid].runMutex, stack: []runStackStruct{}}
+					logger.Info("macros stopped")
+					//runStack[curPid].runMutex.Unlock()
 					return
 				default:
 					err := initStacks(body.Pid, r, logger)
@@ -332,7 +334,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									controlCl.Cl.SendKey(0, runAction.item.Binding)
 									controlCl.Cl.EndKey()
 									time.Sleep(time.Second * 10)
-									runStack[curPid].stopChannel <- struct{}{}
+									runStack[curPid].stopCh <- struct{}{}
 									logger.Debug("macros stopped due to stop!!!")
 								}
 							}
@@ -457,9 +459,10 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 		return
 	}
 	for k := range runStack {
-		runStack[k].runMutex.Lock()
-		runStack[k] = stackStruct{stackType: runStack[k].stackType, runMutex: runStack[k].runMutex, stack: []runStackStruct{}}
-		runStack[k].runMutex.Unlock()
+		runStack[k].reloadCh <- struct{}{}
+		//runStack[k].runMutex.Lock()
+		//runStack[k] = stackStruct{stackType: runStack[k].stackType, runMutex: runStack[k].runMutex, stack: []runStackStruct{}}
+		//runStack[k].runMutex.Unlock()
 	}
 }
 func getTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
