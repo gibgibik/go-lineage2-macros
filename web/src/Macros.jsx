@@ -4,7 +4,7 @@ import {getProfile, saveProfile} from "./api.js";
 import React, {useEffect, useState} from "react";
 import {Condition} from "./Contition.jsx";
 
-const INPUT_COUNT = 20;
+const INPUT_COUNT = 10;
 const onChangeBinding = (event) => {
     let combo = '';
     if (event.ctrlKey) combo += 'ctrl+';
