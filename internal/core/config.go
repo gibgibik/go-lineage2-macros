@@ -13,11 +13,9 @@ type Control struct {
 	Resolution []int `mapstructure:"resolution"`
 }
 type Config struct {
-	WebServer     Web    `mapstructure:"web"`
-	PlayerStatUrl string `mapstructure:"player_stat_url"`
-	BoundsUrl     string `mapstructure:"bounds_url"`
-	InitUrl       string `mapstructure:"init_url"`
-	BaseUrl       string `mapstructure:"base_url"`
+	WebServer Web    `mapstructure:"web"`
+	InitUrl   string `mapstructure:"init_url"`
+	BaseUrl   string `mapstructure:"base_url"`
 	Control
 }
 

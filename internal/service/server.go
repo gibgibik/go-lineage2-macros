@@ -1,7 +1,6 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"math"
@@ -18,7 +17,7 @@ var (
 	PlayerStat                 *entity.PlayerStat
 	targetHpWasPresentAt       time.Time
 	fullTargetHpUnchangedSince time.Time
-	httpCl                     = http.NewHttpClient()
+	httpCl                     *http.HttpClient
 )
 
 type BoundsResult struct {
@@ -33,7 +32,7 @@ type ForeGroundWindowInfo struct {
 	Pid uint32 `json:"pid"`
 }
 
-func StartPlayerStatUpdate(ctx context.Context, url string, logger *zap.SugaredLogger) {
+func StartPlayerStatUpdate(ctx context.Context, logger *zap.SugaredLogger) {
 	var err error
 	logger.Debug("player stat update start")
 	for {
@@ -42,7 +41,7 @@ func StartPlayerStatUpdate(ctx context.Context, url string, logger *zap.SugaredL
 			logger.Info("player stat update stopped")
 			return
 		default:
-			PlayerStat, err = httpCl.Get(url)
+			PlayerStat, err = httpCl.Get("")
 			if PlayerStat == nil {
 				continue
 			}
@@ -67,9 +66,9 @@ func StartPlayerStatUpdate(ctx context.Context, url string, logger *zap.SugaredL
 	}
 }
 
-func FindBounds(url string, logger *zap.SugaredLogger) ([][]int, error) {
+func FindBounds(logger *zap.SugaredLogger) ([][]int, error) {
 	var err error
-	bounds, err := httpCl.RawRequest(url, http2.MethodGet, nil)
+	bounds, err := httpCl.RawRequest("findBounds", http2.MethodGet, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -100,20 +99,17 @@ func FindBounds(url string, logger *zap.SugaredLogger) ([][]int, error) {
 	return result.Boxes, nil
 }
 
-func Init(url string, logger *zap.SugaredLogger) (InitData, error) {
+func Init() (InitData, error) {
 	var result InitData
-	initData, err := httpCl.RawRequest(url, http2.MethodGet, nil)
+	initData, err := httpCl.RawRequest("init", http2.MethodGet, nil)
 	if err != nil {
 		return InitData{}, err
 	}
 	_ = json.Unmarshal(initData, &result)
 	return result, nil
 }
-func GetForegroundWindowPid(url string, body ForeGroundWindowInfo, logger *zap.SugaredLogger) (uint32, error) {
-	b, _ := json.Marshal(body)
-	logger.Info("get foreground start")
-	res, err := httpCl.RawRequest(url, http2.MethodPost, bytes.NewBuffer(b))
-	logger.Info("get foreground end")
+func GetForegroundWindowPid() (uint32, error) {
+	res, err := httpCl.RawRequest("getForegroundWindowPid", http2.MethodPost, nil)
 	if err != nil {
 		return 0, err
 	}

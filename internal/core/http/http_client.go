@@ -11,15 +11,18 @@ import (
 	"github.com/gibgibik/go-lineage2-macros/internal/core/entity"
 )
 
+var HttpCl *HttpClient
+
 type HttpClient struct {
-	Client *http.Client
+	Client  *http.Client
+	baseUrl string
 }
 
-func (cl *HttpClient) Get(url string) (playerStat *entity.PlayerStat, err error) {
+func (cl *HttpClient) Get(path string) (playerStat *entity.PlayerStat, err error) {
 	const maxRetries = 10
 	var resp *http.Response
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		resp, err = cl.Client.Get(url)
+		resp, err = cl.Client.Get(cl.baseUrl + path)
 		if err == nil && resp.StatusCode == http.StatusOK {
 			defer resp.Body.Close()
 			res, err := io.ReadAll(resp.Body)
@@ -48,14 +51,14 @@ func (cl *HttpClient) Get(url string) (playerStat *entity.PlayerStat, err error)
 	return nil, fmt.Errorf("failed after %d retries: %v", maxRetries, err)
 }
 
-func (cl *HttpClient) RawRequest(url string, method string, body io.Reader) (result []byte, err error) {
+func (cl *HttpClient) RawRequest(path string, method string, body io.Reader) (result []byte, err error) {
 	const maxRetries = 10
 	var resp *http.Response
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		if method == http.MethodPost {
-			resp, err = cl.Client.Post(url, "application/json", body)
+			resp, err = cl.Client.Post(cl.baseUrl+path, "application/json", body)
 		} else {
-			resp, err = cl.Client.Get(url)
+			resp, err = cl.Client.Get(cl.baseUrl + path)
 		}
 		if err == nil && resp.StatusCode == http.StatusOK {
 			defer resp.Body.Close()
@@ -80,8 +83,9 @@ func (cl *HttpClient) RawRequest(url string, method string, body io.Reader) (res
 	return nil, fmt.Errorf("failed after %d retries: %v", maxRetries, err)
 }
 
-func NewHttpClient() *HttpClient {
+func IniHttpClient(baseUrl string) *HttpClient {
 	return &HttpClient{
+		baseUrl: baseUrl,
 		Client: &http.Client{
 			Timeout: 10 * time.Second,
 			Transport: &http.Transport{
