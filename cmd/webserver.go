@@ -303,7 +303,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		go func() {
 			defer runStack[pid].runMutex.Unlock()
 			for {
-				fmt.Println("start ", runStack[pid].stopCh)
 				select {
 				case <-ctx.Done():
 					runStack[pid].stopCh <- struct{}{}
