@@ -17,7 +17,6 @@ var (
 	PlayerStat                 *entity.PlayerStat
 	targetHpWasPresentAt       time.Time
 	fullTargetHpUnchangedSince time.Time
-	httpCl                     *http.HttpClient
 )
 
 type BoundsResult struct {
@@ -41,7 +40,7 @@ func StartPlayerStatUpdate(ctx context.Context, logger *zap.SugaredLogger) {
 			logger.Info("player stat update stopped")
 			return
 		default:
-			PlayerStat, err = httpCl.Get("")
+			PlayerStat, err = http.HttpCl.Get("")
 			if PlayerStat == nil {
 				continue
 			}
@@ -68,7 +67,7 @@ func StartPlayerStatUpdate(ctx context.Context, logger *zap.SugaredLogger) {
 
 func FindBounds(logger *zap.SugaredLogger) ([][]int, error) {
 	var err error
-	bounds, err := httpCl.RawRequest("findBounds", http2.MethodGet, nil)
+	bounds, err := http.HttpCl.RawRequest("findBounds", http2.MethodGet, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +100,7 @@ func FindBounds(logger *zap.SugaredLogger) ([][]int, error) {
 
 func Init() (InitData, error) {
 	var result InitData
-	initData, err := httpCl.RawRequest("init", http2.MethodGet, nil)
+	initData, err := http.HttpCl.RawRequest("init", http2.MethodGet, nil)
 	if err != nil {
 		return InitData{}, err
 	}
@@ -109,7 +108,7 @@ func Init() (InitData, error) {
 	return result, nil
 }
 func GetForegroundWindowPid() (uint32, error) {
-	res, err := httpCl.RawRequest("getForegroundWindowPid", http2.MethodPost, nil)
+	res, err := http.HttpCl.RawRequest("getForegroundWindowPid", http2.MethodPost, nil)
 	if err != nil {
 		return 0, err
 	}
