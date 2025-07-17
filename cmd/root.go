@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
+	"github.com/gibgibik/go-lineage2-macros/internal/core/http"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -55,6 +56,7 @@ func Execute() error {
 	if err != nil {
 		return err
 	}
+	http.IniHttpClient(cnf.BaseUrl)
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL)
 	defer cancel()
 	rootCmd := &cobra.Command{
