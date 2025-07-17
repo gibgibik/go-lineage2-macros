@@ -84,7 +84,7 @@ func (cl *HttpClient) RawRequest(path string, method string, body io.Reader) (re
 }
 
 func IniHttpClient(baseUrl string) *HttpClient {
-	return &HttpClient{
+	HttpCl = &HttpClient{
 		baseUrl: baseUrl,
 		Client: &http.Client{
 			Timeout: 10 * time.Second,
