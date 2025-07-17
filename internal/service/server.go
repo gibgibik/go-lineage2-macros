@@ -67,7 +67,9 @@ func StartPlayerStatUpdate(ctx context.Context, logger *zap.SugaredLogger) {
 
 func FindBounds(logger *zap.SugaredLogger) ([][]int, error) {
 	var err error
+	logger.Info("get bounds start")
 	bounds, err := http.HttpCl.RawRequest("findBounds", http2.MethodGet, nil)
+	logger.Info("get bounds end")
 	if err != nil {
 		return nil, err
 	}

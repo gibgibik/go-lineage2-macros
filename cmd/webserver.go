@@ -216,7 +216,7 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 			createRequestError(writer, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
-		if pb.Pid == 0 {
+		if _, ok := runStack[pb.Pid]; !ok {
 			createRequestError(writer, "Invalid PID", http.StatusBadRequest)
 			return
 		}
@@ -282,7 +282,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		}
 
 		pid := body.Pid
-		if pid == 0 {
+		if _, ok := runStack[pid]; !ok {
 			createRequestError(w, "Invalid PID", http.StatusBadRequest)
 			return
 		}
@@ -413,7 +413,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(480, 320), 0)
 											controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(580, 320), 0)
 											controlCl.Cl.MouseAbsoluteEnd()
-											time.Sleep(time.Second)
+											time.Sleep(time.Millisecond * 200)
 										}
 									}
 								}
