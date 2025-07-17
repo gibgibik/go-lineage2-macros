@@ -328,6 +328,14 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					return
 				case <-runStack[pid].waitCh:
 					logger.Info("wait start")
+					if runStack[pid].stackType == stackTypeMain {
+						for k := range runStack {
+							if k != pid {
+								runStack[k].waitCh <- struct{}{}
+								break
+							}
+						}
+					}
 					<-runStack[pid].waitCh
 					logger.Info("wait end")
 				default:
@@ -350,7 +358,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								runStack[pid].stack[i].lastRun = time.Now()
 							} else if runAction.item.PeriodSeconds > 0 && (runAction.lastRun.Unix()+int64(runAction.item.PeriodSeconds)) < time.Now().Unix() {
 								if service.PlayerStat.Target.HpPercent == 0 {
-									checksPassed = makeChecks(pid, checksPassed, controlCl, logger)
+									checksPassed = makeChecks(runStack, pid, checksPassed, controlCl, logger)
 									if !checksPassed {
 										logger.Error("makecheck failed")
 									} else {
@@ -415,7 +423,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							continue
 						}
 						if runAction.item.Action == service.ActionAssistPartyMember {
-							checksPassed = makeChecks(pid, checksPassed, controlCl, logger)
+							checksPassed = makeChecks(runStack, pid, checksPassed, controlCl, logger)
 							if !checksPassed {
 								logger.Error("makecheck failed")
 							} else {
@@ -434,7 +442,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						}
 
 						if controlErr == nil {
-							checksPassed = makeChecks(pid, checksPassed, controlCl, logger)
+							checksPassed = makeChecks(runStack, pid, checksPassed, controlCl, logger)
 							if !checksPassed {
 								logger.Error("makecheck failed")
 							} else {
@@ -443,13 +451,16 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							}
 						}
 						if runAction.item.Action == service.ActionUnstuck {
-							checksPassed = makeChecks(pid, checksPassed, controlCl, logger)
+							checksPassed = makeChecks(runStack, pid, checksPassed, controlCl, logger)
 							if !checksPassed {
 								logger.Error("makecheck failed")
 							} else {
+								controlCl.Cl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960 + randNum(-150, 150), 540 + randNum(-150, 150)}, 0)
+								time.Sleep(time.Second * 3)
+								controlCl.Cl.SendKey(0, runAction.item.Binding)
+								controlCl.Cl.EndKey()
 								controlCl.Cl.SendKey(0, "esc")
 								controlCl.Cl.EndKey()
-								controlCl.Cl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960 + randNum(-150, 150), 540 + randNum(-150, 150)}, 0)
 							}
 						}
 						if runAction.item.DelaySeconds > 0 {
@@ -465,6 +476,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						for k := range runStack {
 							if k != pid {
 								_ = switchWindow(k, controlCl, logger) //switching back
+								runStack[k].waitCh <- struct{}{}       //back control
 							}
 						}
 					}
@@ -527,7 +539,7 @@ func createRequestError(w http.ResponseWriter, err string, code int) {
 	_, _ = w.Write([]byte(err))
 }
 
-func makeChecks(pid uint32, checksPassed bool, controlCl *service.Control, logger *zap.SugaredLogger) bool {
+func makeChecks(runStack map[uint32]*stackStruct, pid uint32, checksPassed bool, controlCl *service.Control, logger *zap.SugaredLogger) bool {
 	if controlCl == nil {
 		logger.Error("control cl is nil")
 		return false
@@ -536,6 +548,13 @@ func makeChecks(pid uint32, checksPassed bool, controlCl *service.Control, logge
 		return true
 	}
 	if runStack[pid].stackType == stackTypeSecondary {
+		for k := range runStack {
+			if k != pid {
+				runStack[k].waitCh <- struct{}{}
+				break
+			}
+		}
+		<-runStack[pid].waitCh //get control
 		return switchWindow(pid, controlCl, logger)
 	} else {
 		return true
