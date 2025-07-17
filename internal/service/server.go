@@ -111,7 +111,9 @@ func Init(url string, logger *zap.SugaredLogger) (InitData, error) {
 }
 func GetForegroundWindowPid(url string, body ForeGroundWindowInfo, logger *zap.SugaredLogger) (uint32, error) {
 	b, _ := json.Marshal(body)
+	logger.Info("get foreground start")
 	res, err := httpCl.RawRequest(url, http2.MethodPost, bytes.NewBuffer(b))
+	logger.Info("get foreground end")
 	if err != nil {
 		return 0, err
 	}

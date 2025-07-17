@@ -291,6 +291,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 			//defer controlCl.Cl.Port.Close()
 		}
 		curPid, err := service.GetForegroundWindowPid(cnf.BaseUrl+"getForegroundWindowPid", body, logger)
+		fmt.Println(curPid, pid)
 		if err != nil {
 			logger.Errorf("check current window failed: %v", err)
 		} else if curPid != pid {
