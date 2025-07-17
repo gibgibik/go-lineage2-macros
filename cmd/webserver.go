@@ -216,6 +216,10 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 			createRequestError(writer, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
+		if pb.Pid == 0 {
+			createRequestError(writer, "Invalid PID", http.StatusBadRequest)
+			return
+		}
 		if !runStack[pb.Pid].runMutex.TryLock() {
 			runStack[pb.Pid].stopCh <- struct{}{}
 		} else {
@@ -278,6 +282,10 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		}
 
 		pid := body.Pid
+		if pid == 0 {
+			createRequestError(w, "Invalid PID", http.StatusBadRequest)
+			return
+		}
 		logger := r.Context().Value("logger").(*zap.SugaredLogger).With("pid", pid)
 		if !runStack[pid].runMutex.TryLock() {
 			logger.Error("already running")
