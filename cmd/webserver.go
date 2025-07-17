@@ -464,7 +464,11 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 		return
 	}
 	for k := range runStack {
-		runStack[k].reloadCh <- struct{}{}
+		if !runStack[k].runMutex.TryLock() {
+			runStack[k].reloadCh <- struct{}{}
+		} else {
+			runStack[k].runMutex.Unlock()
+		}
 	}
 }
 func getTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
