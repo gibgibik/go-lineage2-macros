@@ -299,14 +299,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		} else {
 			//defer controlCl.Cl.Port.Close()
 		}
-		curPid, err := service.GetForegroundWindowPid()
-		fmt.Println(curPid, pid)
-		if err != nil {
-			logger.Errorf("check current window failed: %v", err)
-		} else if curPid != pid {
-			if controlErr == nil {
-				controlCl.Cl.SendKey(ch9329.ModLeftAlt, "tab")
-				controlCl.Cl.EndKey()
+		var anotherPid uint32
+		for k := range runStack {
+			if k != pid {
+				anotherPid = k
+				break
 			}
 		}
 		go func() {
@@ -328,14 +325,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					return
 				case <-runStack[pid].waitCh:
 					logger.Info("wait start")
-					if runStack[pid].stackType == stackTypeMain {
-						for k := range runStack {
-							if k != pid {
-								runStack[k].waitCh <- struct{}{}
-								break
-							}
-						}
-					}
 					<-runStack[pid].waitCh
 					logger.Info("wait end")
 				default:
@@ -362,8 +351,12 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									if !checksPassed {
 										logger.Error("makecheck failed")
 									} else {
+										runStack[anotherPid].waitCh <- struct{}{}
+										<-runStack[pid].waitCh
+										logger.Info("press ", runAction.item.Binding)
 										controlCl.Cl.SendKey(0, runAction.item.Binding)
 										controlCl.Cl.EndKey()
+										runStack[anotherPid].waitCh <- struct{}{}
 									}
 									time.Sleep(time.Second * 10)
 									runStack[pid].stopCh <- struct{}{}
@@ -428,8 +421,12 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								logger.Error("makecheck failed")
 							} else {
 								if point, ok := service.AssistPartyMemberMap[runAction.item.Additional]; ok {
+									runStack[anotherPid].waitCh <- struct{}{}
+									<-runStack[pid].waitCh
+									logger.Info("press ", runAction.item.Binding)
 									controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, point, 0)
 									controlCl.Cl.MouseAbsoluteEnd()
+									runStack[anotherPid].waitCh <- struct{}{}
 									runStack[pid].stack[i].lastRun = time.Now()
 									//@todo need delay?
 								} else {
@@ -446,8 +443,12 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							if !checksPassed {
 								logger.Error("makecheck failed")
 							} else {
+								runStack[anotherPid].waitCh <- struct{}{}
+								<-runStack[pid].waitCh
+								logger.Info("press ", runAction.item.Binding)
 								controlCl.Cl.SendKey(0, runAction.item.Binding)
 								controlCl.Cl.EndKey()
+								runStack[anotherPid].waitCh <- struct{}{}
 							}
 						}
 						if runAction.item.Action == service.ActionUnstuck {
@@ -455,12 +456,16 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							if !checksPassed {
 								logger.Error("makecheck failed")
 							} else {
+								runStack[anotherPid].waitCh <- struct{}{}
+								<-runStack[pid].waitCh
+								logger.Info("press ", runAction.item.Binding)
 								controlCl.Cl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960 + randNum(-150, 150), 540 + randNum(-150, 150)}, 0)
 								time.Sleep(time.Second * 3)
 								controlCl.Cl.SendKey(0, runAction.item.Binding)
 								controlCl.Cl.EndKey()
 								controlCl.Cl.SendKey(0, "esc")
 								controlCl.Cl.EndKey()
+								runStack[anotherPid].waitCh <- struct{}{}
 							}
 						}
 						if runAction.item.DelaySeconds > 0 {
@@ -473,15 +478,12 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
 					}
 					if runStack[pid].stackType == stackTypeSecondary {
-						for k := range runStack {
-							if k != pid {
-								_ = switchWindow(k, controlCl, logger) //switching back
-								runStack[k].waitCh <- struct{}{}       //back control
-							}
-						}
+						_ = switchWindow(anotherPid, controlCl, logger)
 					}
+					logger.Info("end interation")
 					//run stack
-					time.Sleep(time.Millisecond * time.Duration(randNum(200, 300)))
+					//time.Sleep(time.Millisecond * time.Duration(randNum(200, 300)))
+					time.Sleep(time.Second)
 				}
 			}
 		}()
@@ -547,18 +549,19 @@ func makeChecks(runStack map[uint32]*stackStruct, pid uint32, checksPassed bool,
 	if checksPassed {
 		return true
 	}
-	if runStack[pid].stackType == stackTypeSecondary {
-		for k := range runStack {
-			if k != pid {
-				runStack[k].waitCh <- struct{}{}
-				break
-			}
-		}
-		<-runStack[pid].waitCh //get control
-		return switchWindow(pid, controlCl, logger)
-	} else {
-		return true
-	}
+	return true
+	//if runStack[pid].stackType == stackTypeSecondary {
+	//	for k := range runStack {
+	//		if k != pid {
+	//			runStack[k].waitCh <- struct{}{}
+	//			break
+	//		}
+	//	}
+	//	<-runStack[pid].waitCh //get control
+	//	return switchWindow(pid, controlCl, logger)
+	//} else {
+	//	return true
+	//}
 }
 
 func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLogger) bool {
@@ -570,8 +573,10 @@ func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLog
 	if curPid == pid {
 		return true
 	}
-	controlCl.Cl.SendKey(ch9329.ModLeftAlt, "tab")
-	controlCl.Cl.EndKey()
+	if controlCl != nil {
+		controlCl.Cl.SendKey(ch9329.ModLeftAlt, "tab")
+		controlCl.Cl.EndKey()
+	}
 	curPid, err = service.GetForegroundWindowPid()
 	if err != nil {
 		logger.Errorf("get foreground window failed: %v", err)
