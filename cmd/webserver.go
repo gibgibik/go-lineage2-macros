@@ -527,6 +527,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					if windowSwitched {
 						runStack[anotherPid].waitCh <- struct{}{}
 						windowSwitched = false
+						_ = switchWindow(anotherPid, controlCl, logger)
 					}
 					logger.Info("end interation")
 					//run stack
