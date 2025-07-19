@@ -625,11 +625,11 @@ func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLog
 	}
 	if controlCl != nil {
 		controlCl.Cl.SendKey(ch9329.ModLeftAlt, "")
-		time.Sleep(time.Millisecond * 300)
+		//time.Sleep(time.Millisecond * 50)
 		controlCl.Cl.SendKey(ch9329.ModLeftAlt, "tab")
 		controlCl.Cl.SendKey(ch9329.ModLeftAlt, "")
-		time.Sleep(time.Millisecond * 300)
-		controlCl.Cl.SendKey(0, "")
+		//time.Sleep(time.Millisecond * 300)
+		//controlCl.Cl.SendKey(0, "")
 		time.Sleep(time.Millisecond * 300)
 		controlCl.Cl.EndKey()
 		time.Sleep(time.Millisecond * 300)
