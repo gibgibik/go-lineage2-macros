@@ -340,7 +340,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					var i int
 					var checksPassed bool
 					var windowSwitched = false
-					_ = switchWindow(pid, controlCl, logger) //switching window
+					//_ = switchWindow(pid, controlCl, logger) //switching window
 					logger.Info("tick2")
 					for {
 						logger.Info("tick3")
@@ -359,14 +359,17 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									if !checksPassed {
 										logger.Error("makecheck failed")
 									} else {
-										if !windowSwitched && !runStack[anotherPid].runMutex.TryLock() {
-											runStack[anotherPid].waitCh <- struct{}{}
-											<-runStack[pid].waitCh
-											windowSwitched = true
-										} else {
-											runStack[anotherPid].runMutex.Unlock()
+										if !windowSwitched && runStack[pid].stackType == stackTypeSecondary {
+											if !runStack[anotherPid].runMutex.TryLock() {
+												runStack[anotherPid].waitCh <- struct{}{}
+												<-runStack[pid].waitCh
+												_ = switchWindow(pid, controlCl, logger)
+												windowSwitched = true
+
+											} else {
+												runStack[anotherPid].runMutex.Unlock()
+											}
 										}
-										_ = switchWindow(pid, controlCl, logger)
 										logger.Info("press ", runAction.item.Binding)
 										controlCl.Cl.SendKey(0, runAction.item.Binding)
 										controlCl.Cl.EndKey()
@@ -437,14 +440,16 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								logger.Error("makecheck failed")
 							} else {
 								if point, ok := service.AssistPartyMemberMap[runAction.item.Additional]; ok {
-									if !windowSwitched && !runStack[anotherPid].runMutex.TryLock() {
-										runStack[anotherPid].waitCh <- struct{}{}
-										<-runStack[pid].waitCh
-										windowSwitched = true
-									} else {
-										runStack[anotherPid].runMutex.Unlock()
+									if !windowSwitched && runStack[pid].stackType == stackTypeSecondary {
+										if !runStack[anotherPid].runMutex.TryLock() {
+											runStack[anotherPid].waitCh <- struct{}{}
+											<-runStack[pid].waitCh
+											windowSwitched = true
+											_ = switchWindow(pid, controlCl, logger)
+										} else {
+											runStack[anotherPid].runMutex.Unlock()
+										}
 									}
-									_ = switchWindow(pid, controlCl, logger)
 									logger.Info("press ", runAction.item.Binding)
 									controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, point, 0)
 									controlCl.Cl.MouseAbsoluteEnd()
@@ -467,14 +472,17 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							if !checksPassed {
 								logger.Error("makecheck failed")
 							} else {
-								if !windowSwitched && !runStack[anotherPid].runMutex.TryLock() {
-									runStack[anotherPid].waitCh <- struct{}{}
-									<-runStack[pid].waitCh
-									windowSwitched = true
-								} else {
-									runStack[anotherPid].runMutex.Unlock()
+								if !windowSwitched && runStack[pid].stackType == stackTypeSecondary {
+									if !runStack[anotherPid].runMutex.TryLock() {
+										runStack[anotherPid].waitCh <- struct{}{}
+										<-runStack[pid].waitCh
+										windowSwitched = true
+										_ = switchWindow(pid, controlCl, logger)
+									} else {
+										runStack[anotherPid].runMutex.Unlock()
+
+									}
 								}
-								_ = switchWindow(pid, controlCl, logger)
 								logger.Info("press ", runAction.item.Binding)
 								controlCl.Cl.SendKey(0, runAction.item.Binding)
 								controlCl.Cl.EndKey()
@@ -488,14 +496,16 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							if !checksPassed {
 								logger.Error("makecheck failed")
 							} else {
-								if !windowSwitched && !runStack[anotherPid].runMutex.TryLock() {
-									runStack[anotherPid].waitCh <- struct{}{}
-									<-runStack[pid].waitCh
-									windowSwitched = true
-								} else {
-									runStack[anotherPid].runMutex.Unlock()
+								if !windowSwitched && runStack[pid].stackType == stackTypeSecondary {
+									if !runStack[anotherPid].runMutex.TryLock() {
+										runStack[anotherPid].waitCh <- struct{}{}
+										<-runStack[pid].waitCh
+										windowSwitched = true
+										_ = switchWindow(pid, controlCl, logger)
+									} else {
+										runStack[anotherPid].runMutex.Unlock()
+									}
 								}
-								_ = switchWindow(pid, controlCl, logger)
 								logger.Info("press ", runAction.item.Binding)
 								controlCl.Cl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960 + randNum(-150, 150), 540 + randNum(-150, 150)}, 0)
 								time.Sleep(time.Second * 3)
