@@ -340,9 +340,9 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					var i int
 					var checksPassed bool
 					var windowSwitched = false
-					if runStack[pid].stackType == stackTypeMain {
-						_ = switchWindow(pid, controlCl, logger) //switching window
-					}
+					//if runStack[pid].stackType == stackTypeMain {
+					//	_ = switchWindow(pid, controlCl, logger) //switching window
+					//}
 					logger.Info("tick2")
 					for {
 						logger.Info("tick3")
