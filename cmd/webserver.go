@@ -341,10 +341,14 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					var checksPassed bool
 					var windowSwitched = false
 					_ = switchWindow(pid, controlCl, logger) //switching window
+					logger.Info("tick2")
 					for {
+						logger.Info("tick3")
 						if i >= len(runStack[pid].stack) {
 							break
 						}
+						logger.Info("tick4")
+
 						runAction := &runStack[pid].stack[i]
 						if runAction.item.Action == service.ActionStop {
 							if runAction.lastRun.Unix() < 0 {
