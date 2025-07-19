@@ -372,7 +372,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											}
 										}
 										logger.Info("press ", runAction.item.Binding)
-										controlCl.Cl.SendKey(0, runAction.item.Binding)
+										controlCl.Cl.SendKey(ch9329.ModLeftCtrl, runAction.item.Binding)
 										controlCl.Cl.EndKey()
 										if runAction.item.DelaySeconds > 0 {
 											time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
@@ -485,7 +485,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									}
 								}
 								logger.Info("press ", runAction.item.Binding)
-								controlCl.Cl.SendKey(0, runAction.item.Binding)
+								controlCl.Cl.SendKey(ch9329.ModLeftCtrl, runAction.item.Binding)
 								controlCl.Cl.EndKey()
 								if runAction.item.DelaySeconds > 0 {
 									time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
@@ -510,7 +510,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								logger.Info("press ", runAction.item.Binding)
 								controlCl.Cl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960 + randNum(-150, 150), 540 + randNum(-150, 150)}, 0)
 								time.Sleep(time.Second * 3)
-								controlCl.Cl.SendKey(0, runAction.item.Binding)
+								controlCl.Cl.SendKey(ch9329.ModLeftCtrl, runAction.item.Binding)
 								controlCl.Cl.EndKey()
 								controlCl.Cl.SendKey(0, "esc")
 								controlCl.Cl.EndKey()
