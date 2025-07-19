@@ -337,6 +337,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					}
 					var i int
 					var checksPassed bool
+					var windowSwitched = false
 					_ = switchWindow(pid, controlCl, logger) //switching window
 					for {
 						if i >= len(runStack[pid].stack) {
@@ -355,6 +356,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										if !runStack[anotherPid].runMutex.TryLock() {
 											runStack[anotherPid].waitCh <- struct{}{}
 											<-runStack[pid].waitCh
+											windowSwitched = true
 										} else {
 											runStack[anotherPid].runMutex.Unlock()
 										}
@@ -362,10 +364,12 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										logger.Info("press ", runAction.item.Binding)
 										controlCl.Cl.SendKey(0, runAction.item.Binding)
 										controlCl.Cl.EndKey()
-										if !runStack[anotherPid].runMutex.TryLock() {
+										if runAction.item.DelaySeconds > 0 {
+											time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
+										}
+										if windowSwitched {
 											runStack[anotherPid].waitCh <- struct{}{}
-										} else {
-											runStack[anotherPid].runMutex.Unlock()
+											windowSwitched = false
 										}
 									}
 									time.Sleep(time.Second * 10)
@@ -434,6 +438,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									if !runStack[anotherPid].runMutex.TryLock() {
 										runStack[anotherPid].waitCh <- struct{}{}
 										<-runStack[pid].waitCh
+										windowSwitched = true
 									} else {
 										runStack[anotherPid].runMutex.Unlock()
 									}
@@ -441,10 +446,12 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									logger.Info("press ", runAction.item.Binding)
 									controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, point, 0)
 									controlCl.Cl.MouseAbsoluteEnd()
-									if !runStack[anotherPid].runMutex.TryLock() {
+									if runAction.item.DelaySeconds > 0 {
+										time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
+									}
+									if windowSwitched {
 										runStack[anotherPid].waitCh <- struct{}{}
-									} else {
-										runStack[anotherPid].runMutex.Unlock()
+										windowSwitched = false
 									}
 									runStack[pid].stack[i].lastRun = time.Now()
 									//@todo need delay?
@@ -465,6 +472,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								if !runStack[anotherPid].runMutex.TryLock() {
 									runStack[anotherPid].waitCh <- struct{}{}
 									<-runStack[pid].waitCh
+									windowSwitched = true
 								} else {
 									runStack[anotherPid].runMutex.Unlock()
 								}
@@ -472,10 +480,12 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								logger.Info("press ", runAction.item.Binding)
 								controlCl.Cl.SendKey(0, runAction.item.Binding)
 								controlCl.Cl.EndKey()
-								if !runStack[anotherPid].runMutex.TryLock() {
+								if runAction.item.DelaySeconds > 0 {
+									time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
+								}
+								if windowSwitched {
 									runStack[anotherPid].waitCh <- struct{}{}
-								} else {
-									runStack[anotherPid].runMutex.Unlock()
+									windowSwitched = false
 								}
 							}
 						}
@@ -487,6 +497,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								if !runStack[anotherPid].runMutex.TryLock() {
 									runStack[anotherPid].waitCh <- struct{}{}
 									<-runStack[pid].waitCh
+									windowSwitched = true
 								} else {
 									runStack[anotherPid].runMutex.Unlock()
 								}
@@ -498,15 +509,14 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								controlCl.Cl.EndKey()
 								controlCl.Cl.SendKey(0, "esc")
 								controlCl.Cl.EndKey()
-								if !runStack[anotherPid].runMutex.TryLock() {
+								if runAction.item.DelaySeconds > 0 {
+									time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
+								}
+								if windowSwitched {
 									runStack[anotherPid].waitCh <- struct{}{}
-								} else {
-									runStack[anotherPid].runMutex.Unlock()
+									windowSwitched = false
 								}
 							}
-						}
-						if runAction.item.DelaySeconds > 0 {
-							time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
 						}
 						runStack[pid].stack[i].lastRun = time.Now()
 						//message := fmt.Sprintf("%s %s <span style='color:red'>Target HP: [%.2f%%]</span>", runAction.item.Action, runAction.item.Binding, service.PlayerStat.Target.HpPercent)

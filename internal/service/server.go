@@ -98,6 +98,7 @@ func GetForegroundWindowPid() (uint32, error) {
 	res, err := http.HttpCl.RawRequest("getForegroundWindowPid", http2.MethodPost, nil)
 	fmt.Println("get foreground", string(res))
 	if err != nil {
+		fmt.Println("err", err)
 		return 0, err
 	}
 	var result ForeGroundWindowInfo
