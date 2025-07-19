@@ -522,14 +522,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						//message := fmt.Sprintf("%s %s <span style='color:red'>Target HP: [%.2f%%]</span>", runAction.item.Action, runAction.item.Binding, service.PlayerStat.Target.HpPercent)
 						//logger.Info(message)
 						i++
-						if windowSwitched {
-							runStack[anotherPid].waitCh <- struct{}{}
-							windowSwitched = false
-						}
 						time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
 					}
-					if runStack[pid].stackType == stackTypeSecondary {
-						_ = switchWindow(anotherPid, controlCl, logger)
+					if windowSwitched {
+						runStack[anotherPid].waitCh <- struct{}{}
+						windowSwitched = false
 					}
 					logger.Info("end interation")
 					//run stack
