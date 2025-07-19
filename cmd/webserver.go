@@ -340,9 +340,9 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					var i int
 					var checksPassed bool
 					var windowSwitched = false
-					//if runStack[pid].stackType == stackTypeMain {
-					//	_ = switchWindow(pid, controlCl, logger) //switching window
-					//}
+					if runStack[pid].stackType == stackTypeMain {
+						_ = switchWindow(pid, controlCl, logger) //switching window
+					}
 					logger.Info("tick2")
 					for {
 						logger.Info("tick3")
@@ -625,13 +625,13 @@ func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLog
 	}
 	if controlCl != nil {
 		controlCl.Cl.SendKey(ch9329.ModLeftAlt, "")
-		time.Sleep(time.Millisecond * 50)
+		time.Sleep(time.Millisecond * 300)
 		controlCl.Cl.SendKey(ch9329.ModLeftAlt, "tab")
-		time.Sleep(time.Millisecond * 50)
+		time.Sleep(time.Millisecond * 300)
 		controlCl.Cl.SendKey(ch9329.ModLeftAlt, "")
-		time.Sleep(time.Millisecond * 50)
+		time.Sleep(time.Millisecond * 300)
 		controlCl.Cl.SendKey(0, "")
-		time.Sleep(time.Millisecond * 50)
+		time.Sleep(time.Millisecond * 300)
 		controlCl.Cl.EndKey()
 		time.Sleep(time.Millisecond * 300)
 		//controlCl.Cl.SendKey(ch9329.ModRightAlt, "")
