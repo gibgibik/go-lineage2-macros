@@ -359,7 +359,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									if !checksPassed {
 										logger.Error("makecheck failed")
 									} else {
-										if !runStack[anotherPid].runMutex.TryLock() {
+										if !windowSwitched && !runStack[anotherPid].runMutex.TryLock() {
 											runStack[anotherPid].waitCh <- struct{}{}
 											<-runStack[pid].waitCh
 											windowSwitched = true
@@ -372,10 +372,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										controlCl.Cl.EndKey()
 										if runAction.item.DelaySeconds > 0 {
 											time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
-										}
-										if windowSwitched {
-											runStack[anotherPid].waitCh <- struct{}{}
-											windowSwitched = false
 										}
 									}
 									time.Sleep(time.Second * 10)
@@ -441,7 +437,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								logger.Error("makecheck failed")
 							} else {
 								if point, ok := service.AssistPartyMemberMap[runAction.item.Additional]; ok {
-									if !runStack[anotherPid].runMutex.TryLock() {
+									if !windowSwitched && !runStack[anotherPid].runMutex.TryLock() {
 										runStack[anotherPid].waitCh <- struct{}{}
 										<-runStack[pid].waitCh
 										windowSwitched = true
@@ -454,10 +450,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									controlCl.Cl.MouseAbsoluteEnd()
 									if runAction.item.DelaySeconds > 0 {
 										time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
-									}
-									if windowSwitched {
-										runStack[anotherPid].waitCh <- struct{}{}
-										windowSwitched = false
 									}
 									runStack[pid].stack[i].lastRun = time.Now()
 									//@todo need delay?
@@ -475,7 +467,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							if !checksPassed {
 								logger.Error("makecheck failed")
 							} else {
-								if !runStack[anotherPid].runMutex.TryLock() {
+								if !windowSwitched && !runStack[anotherPid].runMutex.TryLock() {
 									runStack[anotherPid].waitCh <- struct{}{}
 									<-runStack[pid].waitCh
 									windowSwitched = true
@@ -489,10 +481,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								if runAction.item.DelaySeconds > 0 {
 									time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
 								}
-								if windowSwitched {
-									runStack[anotherPid].waitCh <- struct{}{}
-									windowSwitched = false
-								}
 							}
 						}
 						if runAction.item.Action == service.ActionUnstuck {
@@ -500,7 +488,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							if !checksPassed {
 								logger.Error("makecheck failed")
 							} else {
-								if !runStack[anotherPid].runMutex.TryLock() {
+								if !windowSwitched && !runStack[anotherPid].runMutex.TryLock() {
 									runStack[anotherPid].waitCh <- struct{}{}
 									<-runStack[pid].waitCh
 									windowSwitched = true
@@ -518,16 +506,16 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								if runAction.item.DelaySeconds > 0 {
 									time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
 								}
-								if windowSwitched {
-									runStack[anotherPid].waitCh <- struct{}{}
-									windowSwitched = false
-								}
 							}
 						}
 						runStack[pid].stack[i].lastRun = time.Now()
 						//message := fmt.Sprintf("%s %s <span style='color:red'>Target HP: [%.2f%%]</span>", runAction.item.Action, runAction.item.Binding, service.PlayerStat.Target.HpPercent)
 						//logger.Info(message)
 						i++
+						if windowSwitched {
+							runStack[anotherPid].waitCh <- struct{}{}
+							windowSwitched = false
+						}
 						time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
 					}
 					if runStack[pid].stackType == stackTypeSecondary {
