@@ -325,6 +325,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					return
 				case <-runStack[pid].waitCh:
 					logger.Info("wait start")
+					runStack[anotherPid].waitCh <- struct{}{}
 					<-runStack[pid].waitCh
 					logger.Info("wait end")
 				default:
