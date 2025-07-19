@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	http2 "net/http"
 	"time"
 
@@ -95,6 +96,7 @@ func Init() (InitData, error) {
 }
 func GetForegroundWindowPid() (uint32, error) {
 	res, err := http.HttpCl.RawRequest("getForegroundWindowPid", http2.MethodPost, nil)
+	fmt.Println("get foreground", string(res))
 	if err != nil {
 		return 0, err
 	}
