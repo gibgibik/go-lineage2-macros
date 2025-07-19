@@ -3,9 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"math"
 	http2 "net/http"
-	"sort"
 	"time"
 
 	"github.com/gibgibik/go-lineage2-macros/internal/core/entity"
@@ -79,20 +77,6 @@ func FindBounds(logger *zap.SugaredLogger) ([][]int, error) {
 	if err != nil {
 		logger.Error("parse bounds json error: ", err.Error())
 		return nil, nil
-	}
-	sort.Slice(boxes.Boxes, func(i, j int) bool {
-		return boxes.Boxes[i][1] < boxes.Boxes[j][1]
-	})
-	sort.Slice(boxes.Boxes, func(i, j int) bool {
-		return boxes.Boxes[i][0] < boxes.Boxes[j][2]
-	})
-	for i := 0; i < len(boxes.Boxes); i++ {
-		if i+1 < len(boxes.Boxes) && (boxes.Boxes[i+1][0]-boxes.Boxes[i][2]) <= 5 && math.Abs(float64(boxes.Boxes[i+1][1]-boxes.Boxes[i][3])) < 5 { //glue nested boxes
-			result.Boxes = append(result.Boxes, []int{boxes.Boxes[i][0], boxes.Boxes[i][1], boxes.Boxes[i+1][2], boxes.Boxes[i+1][3]})
-			i++
-		} else {
-			result.Boxes = append(result.Boxes, boxes.Boxes[i])
-		}
 	}
 	//if len(boxes.Boxes) > 10 {
 	//	boxes.Boxes = boxes.Boxes[:10]
