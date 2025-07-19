@@ -613,6 +613,7 @@ func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLog
 		controlCl.Cl.SendKey(ch9329.ModLeftAlt, "tab")
 		controlCl.Cl.EndKey()
 	}
+	time.Sleep(time.Millisecond * 50)
 	curPid, err = service.GetForegroundWindowPid()
 	if err != nil {
 		logger.Errorf("get foreground window failed: %v", err)
