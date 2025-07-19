@@ -340,7 +340,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					var i int
 					var checksPassed bool
 					var windowSwitched = false
-					//_ = switchWindow(pid, controlCl, logger) //switching window
+					_ = switchWindow(pid, controlCl, logger) //switching window
 					logger.Info("tick2")
 					for {
 						logger.Info("tick3")
@@ -365,7 +365,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 												<-runStack[pid].waitCh
 												_ = switchWindow(pid, controlCl, logger)
 												windowSwitched = true
-
 											} else {
 												runStack[anotherPid].runMutex.Unlock()
 											}
@@ -619,7 +618,7 @@ func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLog
 		logger.Errorf("get foreground window failed: %v", err)
 		return false
 	}
-	if curPid == pid {
+	if curPid == 0 || curPid == pid {
 		return true
 	}
 	if controlCl != nil {
