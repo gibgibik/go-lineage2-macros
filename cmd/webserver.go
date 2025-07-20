@@ -340,9 +340,9 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					var i int
 					var checksPassed bool
 					var windowSwitched = false
-					//if runStack[pid].stackType == stackTypeMain {
-					//	_ = switchWindow(pid, controlCl, logger) //switching window
-					//}
+					if runStack[pid].stackType == stackTypeMain {
+						_ = switchWindow(pid, controlCl, logger) //switching window
+					}
 					logger.Info("tick2")
 					for {
 						logger.Info("tick3")
@@ -372,8 +372,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											}
 										}
 										logger.Info("press ", runAction.item.Binding)
-										//controlCl.SendKey(0, runAction.item.Binding)
-										//controlCl.EndKey()
+										controlCl.SendKey(0, runAction.item.Binding)
+										controlCl.EndKey()
 										if runAction.item.DelaySeconds > 0 {
 											time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
 										}
@@ -408,7 +408,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									continue
 								} else {
 									if controlErr == nil {
-										//controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
+										controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
 										for _, bound := range bounds {
 											if service.PlayerStat.Target.HpPercent > 0 {
 												break
@@ -485,8 +485,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									}
 								}
 								logger.Info("press ", runAction.item.Binding)
-								//controlCl.SendKey(0, runAction.item.Binding)
-								//controlCl.EndKey()
+								controlCl.SendKey(0, runAction.item.Binding)
+								controlCl.EndKey()
 								if runAction.item.DelaySeconds > 0 {
 									time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
 								}
@@ -615,49 +615,31 @@ func makeChecks(runStack map[uint32]*stackStruct, pid uint32, checksPassed bool,
 }
 
 func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLogger) bool {
-	//curPid, err := service.GetForegroundWindowPid()
-	//if err != nil {
-	//	logger.Errorf("get foreground window failed: %v", err)
-	//	return false
-	//}
-	//if curPid == 0 || curPid == pid {
-	//	return true
-	//}
+	curPid, err := service.GetForegroundWindowPid()
+	if err != nil {
+		logger.Errorf("get foreground window failed: %v", err)
+		return false
+	}
+	if curPid == 0 || curPid == pid {
+		return true
+	}
 	if controlCl != nil {
-		controlCl.SendKey(ch9329.ModLeftAlt, "tab")
-		//time.Sleep(time.Millisecond * 50)
-		//controlCl.SendKey(0, "tab")
-		//time.Sleep(time.Millisecond * 50)
-
-		//time.Sleep(time.Millisecond * 50)
-
-		//time.Sleep(time.Millisecond * 300)
-		//controlCl.cl.SendKey(0, "")
-		//time.Sleep(time.Millisecond * 300)
+		controlCl.SendKey(ch9329.ModRightAlt, "tab")
 		controlCl.EndKey()
 		time.Sleep(time.Millisecond * 50)
-		controlCl.SendKey(ch9329.ModLeftAlt, "")
+		controlCl.SendKey(0, "enter")
 		controlCl.EndKey()
-
-		return true
-		//controlCl.cl.SendKey(ch9329.ModRightAlt, "")
-		//time.Sleep(time.Millisecond * 50)
-		//controlCl.cl.EndKey()
-		//time.Sleep(time.Millisecond * 50)
-		//controlCl.cl.EndKey()
-		//controlCl.cl.SendKey(ch9329.ModLeftAlt, "")
-		//controlCl.cl.EndKey()
-		//time.Sleep(time.Millisecond * 50)
+		time.Sleep(time.Millisecond * 50)
 	}
-	//curPid, err = service.GetForegroundWindowPid()
-	//if err != nil {
-	//	logger.Errorf("get foreground window failed: %v", err)
-	//	return false
-	//}
-	//if curPid != pid {
-	//	logger.Errorf("alt tab failed, current pid is %d, window is %d", curPid, pid)
-	//	return false
-	//}
+	curPid, err = service.GetForegroundWindowPid()
+	if err != nil {
+		logger.Errorf("get foreground window failed: %v", err)
+		return false
+	}
+	if curPid != pid {
+		logger.Errorf("alt tab failed, current pid is %d, window is %d", curPid, pid)
+		return false
+	}
 
 	return true
 }
