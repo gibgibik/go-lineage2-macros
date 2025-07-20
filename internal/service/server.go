@@ -73,7 +73,6 @@ func FindBounds(logger *zap.SugaredLogger) ([][]int, error) {
 		return nil, err
 	}
 	var boxes BoundsResult
-	var result BoundsResult
 	err = json.Unmarshal(bounds, &boxes)
 	if err != nil {
 		logger.Error("parse bounds json error: ", err.Error())
@@ -82,7 +81,7 @@ func FindBounds(logger *zap.SugaredLogger) ([][]int, error) {
 	//if len(boxes.Boxes) > 10 {
 	//	boxes.Boxes = boxes.Boxes[:10]
 	//}
-	return result.Boxes, nil
+	return boxes.Boxes, nil
 }
 
 func Init() (InitData, error) {

@@ -622,7 +622,7 @@ func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLog
 	if controlCl != nil {
 		controlCl.SendKey(0, "\\")
 		controlCl.EndKey()
-		time.Sleep(time.Millisecond * 50)
+		time.Sleep(time.Millisecond * 200)
 	}
 	curPid, err = service.GetForegroundWindowPid()
 	if err != nil {
