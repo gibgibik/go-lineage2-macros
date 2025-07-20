@@ -297,7 +297,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		if controlErr != nil {
 			logger.Errorf("control create failed: %v", controlErr)
 		} else {
-			//defer controlCl.Cl.Port.Close()
+			//defer controlCl.cl.Port.Close()
 		}
 		var anotherPid uint32
 		for k := range runStack {
@@ -372,8 +372,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											}
 										}
 										logger.Info("press ", runAction.item.Binding)
-										controlCl.Cl.SendKey(ch9329.ModLeftCtrl, runAction.item.Binding)
-										controlCl.Cl.EndKey()
+										controlCl.SendKey(ch9329.ModLeftCtrl, runAction.item.Binding)
+										controlCl.EndKey()
 										if runAction.item.DelaySeconds > 0 {
 											time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
 										}
@@ -408,24 +408,24 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									continue
 								} else {
 									if controlErr == nil {
-										controlCl.Cl.SendKey(ch9329.ModLeftShift, "z") //stay
+										controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
 										for _, bound := range bounds {
 											if service.PlayerStat.Target.HpPercent > 0 {
 												break
 											}
-											controlCl.Cl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
+											controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
 												X: int((bound[2]-bound[0])/2) + bound[0],
 												Y: bound[1] + 30,
 											}, 0)
-											controlCl.Cl.MouseAbsoluteEnd()
+											controlCl.MouseAbsoluteEnd()
 											//time.Sleep(time.Millisecond * time.Duration(700))
 											time.Sleep(time.Millisecond * time.Duration(randNum(100, 150)))
 										}
-										controlCl.Cl.EndKey()
+										controlCl.EndKey()
 										if service.PlayerStat.Target.HpPercent == 0 {
-											controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(480, 320), 0)
-											controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(580, 320), 0)
-											controlCl.Cl.MouseAbsoluteEnd()
+											controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(480, 320), 0)
+											controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(580, 320), 0)
+											controlCl.MouseAbsoluteEnd()
 											time.Sleep(time.Millisecond * 200)
 										}
 									}
@@ -452,8 +452,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										}
 									}
 									logger.Info("press ", runAction.item.Binding)
-									controlCl.Cl.MouseActionAbsolute(ch9329.MousePressRight, point, 0)
-									controlCl.Cl.MouseAbsoluteEnd()
+									controlCl.MouseActionAbsolute(ch9329.MousePressRight, point, 0)
+									controlCl.MouseAbsoluteEnd()
 									if runAction.item.DelaySeconds > 0 {
 										time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
 									}
@@ -485,8 +485,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									}
 								}
 								logger.Info("press ", runAction.item.Binding)
-								controlCl.Cl.SendKey(ch9329.ModLeftCtrl, runAction.item.Binding)
-								controlCl.Cl.EndKey()
+								controlCl.SendKey(ch9329.ModLeftCtrl, runAction.item.Binding)
+								controlCl.EndKey()
 								if runAction.item.DelaySeconds > 0 {
 									time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
 								}
@@ -508,12 +508,12 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									}
 								}
 								logger.Info("press ", runAction.item.Binding)
-								controlCl.Cl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960 + randNum(-150, 150), 540 + randNum(-150, 150)}, 0)
+								controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960 + randNum(-150, 150), 540 + randNum(-150, 150)}, 0)
 								time.Sleep(time.Second * 3)
-								controlCl.Cl.SendKey(ch9329.ModLeftCtrl, runAction.item.Binding)
-								controlCl.Cl.EndKey()
-								controlCl.Cl.SendKey(0, "esc")
-								controlCl.Cl.EndKey()
+								controlCl.SendKey(ch9329.ModLeftCtrl, runAction.item.Binding)
+								controlCl.EndKey()
+								controlCl.SendKey(0, "esc")
+								controlCl.EndKey()
 								if runAction.item.DelaySeconds > 0 {
 									time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
 								}
@@ -624,22 +624,22 @@ func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLog
 		return true
 	}
 	if controlCl != nil {
-		controlCl.Cl.SendKey(ch9329.ModLeftAlt, "")
+		controlCl.SendKey(ch9329.ModLeftAlt, "")
 		//time.Sleep(time.Millisecond * 50)
-		controlCl.Cl.SendKey(ch9329.ModLeftAlt, "tab")
-		controlCl.Cl.SendKey(ch9329.ModLeftAlt, "")
+		controlCl.SendKey(ch9329.ModLeftAlt, "tab")
+		controlCl.SendKey(ch9329.ModLeftAlt, "")
 		//time.Sleep(time.Millisecond * 300)
-		//controlCl.Cl.SendKey(0, "")
+		//controlCl.cl.SendKey(0, "")
 		//time.Sleep(time.Millisecond * 300)
-		controlCl.Cl.EndKey()
+		controlCl.EndKey()
 		time.Sleep(time.Millisecond * 50)
-		//controlCl.Cl.SendKey(ch9329.ModRightAlt, "")
+		//controlCl.cl.SendKey(ch9329.ModRightAlt, "")
 		//time.Sleep(time.Millisecond * 50)
-		//controlCl.Cl.EndKey()
+		//controlCl.cl.EndKey()
 		//time.Sleep(time.Millisecond * 50)
-		//controlCl.Cl.EndKey()
-		//controlCl.Cl.SendKey(ch9329.ModLeftAlt, "")
-		//controlCl.Cl.EndKey()
+		//controlCl.cl.EndKey()
+		//controlCl.cl.SendKey(ch9329.ModLeftAlt, "")
+		//controlCl.cl.EndKey()
 		//time.Sleep(time.Millisecond * 50)
 	}
 	curPid, err = service.GetForegroundWindowPid()
