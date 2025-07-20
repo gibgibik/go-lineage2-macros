@@ -643,15 +643,15 @@ func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLog
 		//controlCl.cl.EndKey()
 		//time.Sleep(time.Millisecond * 50)
 	}
-	curPid, err = service.GetForegroundWindowPid()
-	if err != nil {
-		logger.Errorf("get foreground window failed: %v", err)
-		return false
-	}
-	if curPid != pid {
-		logger.Errorf("alt tab failed, current pid is %d, window is %d", curPid, pid)
-		return false
-	}
+	//curPid, err = service.GetForegroundWindowPid()
+	//if err != nil {
+	//	logger.Errorf("get foreground window failed: %v", err)
+	//	return false
+	//}
+	//if curPid != pid {
+	//	logger.Errorf("alt tab failed, current pid is %d, window is %d", curPid, pid)
+	//	return false
+	//}
 
 	return true
 }
