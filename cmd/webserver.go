@@ -340,9 +340,9 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					var i int
 					var checksPassed bool
 					var windowSwitched = false
-					if runStack[pid].stackType == stackTypeMain {
-						_ = switchWindow(pid, controlCl, logger) //switching window
-					}
+					//if runStack[pid].stackType == stackTypeMain {
+					//	_ = switchWindow(pid, controlCl, logger) //switching window
+					//}
 					logger.Info("tick2")
 					for {
 						logger.Info("tick3")
@@ -372,8 +372,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											}
 										}
 										logger.Info("press ", runAction.item.Binding)
-										controlCl.SendKey(ch9329.ModLeftCtrl, runAction.item.Binding)
-										controlCl.EndKey()
+										//controlCl.SendKey(0, runAction.item.Binding)
+										//controlCl.EndKey()
 										if runAction.item.DelaySeconds > 0 {
 											time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
 										}
@@ -408,7 +408,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									continue
 								} else {
 									if controlErr == nil {
-										controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
+										//controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
 										for _, bound := range bounds {
 											if service.PlayerStat.Target.HpPercent > 0 {
 												break
@@ -485,8 +485,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									}
 								}
 								logger.Info("press ", runAction.item.Binding)
-								controlCl.SendKey(ch9329.ModLeftCtrl, runAction.item.Binding)
-								controlCl.EndKey()
+								//controlCl.SendKey(0, runAction.item.Binding)
+								//controlCl.EndKey()
 								if runAction.item.DelaySeconds > 0 {
 									time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
 								}
@@ -510,7 +510,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								logger.Info("press ", runAction.item.Binding)
 								controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960 + randNum(-150, 150), 540 + randNum(-150, 150)}, 0)
 								time.Sleep(time.Second * 3)
-								controlCl.SendKey(ch9329.ModLeftCtrl, runAction.item.Binding)
+								controlCl.SendKey(0, runAction.item.Binding)
 								controlCl.EndKey()
 								controlCl.SendKey(0, "esc")
 								controlCl.EndKey()
