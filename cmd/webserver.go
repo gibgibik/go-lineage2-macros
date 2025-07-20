@@ -633,6 +633,7 @@ func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLog
 		//time.Sleep(time.Millisecond * 300)
 		controlCl.EndKey()
 		time.Sleep(time.Millisecond * 50)
+		return true
 		//controlCl.cl.SendKey(ch9329.ModRightAlt, "")
 		//time.Sleep(time.Millisecond * 50)
 		//controlCl.cl.EndKey()
