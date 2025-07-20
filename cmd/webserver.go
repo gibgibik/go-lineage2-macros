@@ -481,8 +481,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									}
 								}
 								logger.Info("press ", runAction.item.Binding)
-								//controlCl.SendKey(0, runAction.item.Binding)
-								//controlCl.EndKey()
+								controlCl.SendKey(0, runAction.item.Binding)
+								controlCl.EndKey()
 								if runAction.item.DelaySeconds > 0 {
 									time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
 								}
