@@ -615,14 +615,14 @@ func makeChecks(runStack map[uint32]*stackStruct, pid uint32, checksPassed bool,
 }
 
 func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLogger) bool {
-	curPid, err := service.GetForegroundWindowPid()
-	if err != nil {
-		logger.Errorf("get foreground window failed: %v", err)
-		return false
-	}
-	if curPid == 0 || curPid == pid {
-		return true
-	}
+	//curPid, err := service.GetForegroundWindowPid()
+	//if err != nil {
+	//	logger.Errorf("get foreground window failed: %v", err)
+	//	return false
+	//}
+	//if curPid == 0 || curPid == pid {
+	//	return true
+	//}
 	if controlCl != nil {
 		//controlCl.SendKey(ch9329.ModLeftAlt, "")
 		controlCl.SendKey(ch9329.ModLeftAlt, "tab")
