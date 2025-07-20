@@ -330,7 +330,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					logger.Info("wait end")
 					continue
 				default:
-					logger.Info("tick")
 					err := initStacks(body.Pid, r, logger)
 					if err != nil {
 						logger.Error("init stacks error: " + err.Error())
@@ -343,13 +342,10 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					if runStack[pid].stackType == stackTypeMain {
 						_ = switchWindow(pid, controlCl, logger) //switching window
 					}
-					logger.Info("tick2")
 					for {
-						logger.Info("tick3")
 						if i >= len(runStack[pid].stack) {
 							break
 						}
-						logger.Info("tick4")
 
 						runAction := &runStack[pid].stack[i]
 						if runAction.item.Action == service.ActionStop {
@@ -485,8 +481,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									}
 								}
 								logger.Info("press ", runAction.item.Binding)
-								controlCl.SendKey(0, runAction.item.Binding)
-								controlCl.EndKey()
+								//controlCl.SendKey(0, runAction.item.Binding)
+								//controlCl.EndKey()
 								if runAction.item.DelaySeconds > 0 {
 									time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
 								}
@@ -526,9 +522,9 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
 					}
 					if windowSwitched {
-						runStack[anotherPid].waitCh <- struct{}{}
 						windowSwitched = false
 						_ = switchWindow(anotherPid, controlCl, logger)
+						runStack[anotherPid].waitCh <- struct{}{}
 					}
 					logger.Info("end interation")
 					//run stack
@@ -624,10 +620,7 @@ func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLog
 		return true
 	}
 	if controlCl != nil {
-		controlCl.SendKey(ch9329.ModRightAlt, "tab")
-		controlCl.EndKey()
-		time.Sleep(time.Millisecond * 50)
-		controlCl.SendKey(0, "enter")
+		controlCl.SendKey(0, "\\")
 		controlCl.EndKey()
 		time.Sleep(time.Millisecond * 50)
 	}
