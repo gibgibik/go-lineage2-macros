@@ -97,7 +97,7 @@ function App() {
                                                                                 value={index}>{`${index} - ${pidsData[index]}`}</MenuItem>)}
                             </Select>
                         </FormControl>
-                        <Button color={'error'} onClick={() => stopMacrosAction(parseInt(currentPid))} disabled={!disabledStart}>Stop</Button>
+                        <Button color={'error'} onClick={() => stopMacrosAction(parseInt(currentPid))} disabled={runningMacrosState[currentPid]}>Stop</Button>
                         <Button onClick={startMacrosAction} disabled={disabledStart} >Start</Button>
                     </ButtonGroup>
                 </Grid>
