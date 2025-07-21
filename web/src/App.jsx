@@ -60,7 +60,7 @@ function App() {
         }
     }
     useEffect(() => {
-        console.log(profile, currentPid, runningMacrosState);
+        console.log(!profile || !runningMacrosState[currentPid]);
         setDisabledStart(!profile || !runningMacrosState[currentPid]);
     }, [profile, currentPid]);
     useEffect(() => {
