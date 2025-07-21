@@ -29,3 +29,8 @@ export const stopMacros = (pid) => {
 export const init = () => {
     return api.get('/init');
 }
+
+export const pauseMacros = (pid) => {
+    return api.post('/pause', {pid}).then((response) => {
+    })
+}

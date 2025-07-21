@@ -209,6 +209,23 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	mux.HandleFunc("/ws", wsHandler)
 	mux.HandleFunc("/api/profile/", templateHandler)
 	mux.HandleFunc("/api/start/", startHandler(ctx, cnf))
+	mux.HandleFunc("/api/pause", func(writer http.ResponseWriter, request *http.Request) {
+		var pb pidBody
+		defer request.Body.Close()
+		if err := json.NewDecoder(request.Body).Decode(&pb); err != nil {
+			createRequestError(writer, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+		if _, ok := runStack[pb.Pid]; !ok {
+			createRequestError(writer, "Invalid PID", http.StatusBadRequest)
+			return
+		}
+		if !runStack[pb.Pid].runMutex.TryLock() {
+			runStack[pb.Pid].waitCh <- struct{}{}
+		} else {
+			runStack[pb.Pid].runMutex.Unlock()
+		}
+	})
 	mux.HandleFunc("/api/stop", func(writer http.ResponseWriter, request *http.Request) {
 		var pb pidBody
 		defer request.Body.Close()
@@ -335,7 +352,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					return
 				case <-runStack[pid].waitCh:
 					logger.Info("wait start")
-					runStack[anotherPid].waitCh <- struct{}{}
+					if !runStack[anotherPid].runMutex.TryLock() {
+						runStack[anotherPid].waitCh <- struct{}{}
+					} else {
+						runStack[anotherPid].runMutex.Unlock()
+					}
 					<-runStack[pid].waitCh
 					logger.Info("wait end")
 					continue

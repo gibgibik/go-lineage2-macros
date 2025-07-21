@@ -18,7 +18,7 @@ import {
 import {Log} from "./Log.jsx";
 import {Macros} from "./Macros.jsx";
 import {useEffect, useState} from "react";
-import {init, startMacros, stopMacros} from "./api.js";
+import {init, pauseMacros, startMacros, stopMacros} from "./api.js";
 import {Profiles} from "./Profile.jsx";
 
 const theme = createTheme({
@@ -49,6 +49,15 @@ function App() {
         } finally {
         }
     }
+    const pauseMacrosAction = () => {
+        const stFunc = async () => {
+            await pauseMacros(parseInt(currentPid));
+        }
+        try {
+            stFunc();
+        } finally {
+        }
+    }
     const stopMacrosAction = (pid) => {
         const stFunc = async () => {
             await stopMacros(pid);
@@ -60,8 +69,7 @@ function App() {
         }
     }
     useEffect(() => {
-        console.log(!profile || !runningMacrosState[currentPid]);
-        setDisabledStart(!profile || !runningMacrosState[currentPid]);
+        setDisabledStart(!profile || runningMacrosState[currentPid]);
     }, [profile, currentPid]);
     useEffect(() => {
         init().then(({data: {runningMacrosState = {}, profilesList, PidsData: pidsData}}) => {
@@ -100,6 +108,7 @@ function App() {
                         </FormControl>
                         <Button color={'error'} onClick={() => stopMacrosAction(parseInt(currentPid))} disabled={runningMacrosState[currentPid]}>Stop</Button>
                         <Button onClick={startMacrosAction} disabled={disabledStart} >Start</Button>
+                        <Button onClick={pauseMacrosAction} disabled={!disabledStart} color={'success'} >Pause</Button>
                     </ButtonGroup>
                 </Grid>
             </Grid>
