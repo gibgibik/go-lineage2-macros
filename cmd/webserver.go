@@ -389,11 +389,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										logger.Error("makecheck failed")
 									} else {
 										if !windowSwitched && runStack[pid].stackType == stackTypeSecondary {
+											_ = switchWindow(pid, controlCl, logger)
+											windowSwitched = true
 											if !runStack[anotherPid].runMutex.TryLock() {
 												runStack[anotherPid].waitCh <- struct{}{}
 												<-runStack[pid].waitCh
-												_ = switchWindow(pid, controlCl, logger)
-												windowSwitched = true
 											} else {
 												runStack[anotherPid].runMutex.Unlock()
 											}
@@ -469,11 +469,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							} else {
 								if point, ok := service.AssistPartyMemberMap[runAction.item.Additional]; ok {
 									if !windowSwitched && runStack[pid].stackType == stackTypeSecondary {
+										windowSwitched = true
+										_ = switchWindow(pid, controlCl, logger)
 										if !runStack[anotherPid].runMutex.TryLock() {
 											runStack[anotherPid].waitCh <- struct{}{}
 											<-runStack[pid].waitCh
-											windowSwitched = true
-											_ = switchWindow(pid, controlCl, logger)
 										} else {
 											runStack[anotherPid].runMutex.Unlock()
 										}
@@ -501,11 +501,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								logger.Error("makecheck failed")
 							} else {
 								if !windowSwitched && runStack[pid].stackType == stackTypeSecondary {
+									windowSwitched = true
+									_ = switchWindow(pid, controlCl, logger)
 									if !runStack[anotherPid].runMutex.TryLock() {
 										runStack[anotherPid].waitCh <- struct{}{}
 										<-runStack[pid].waitCh
-										windowSwitched = true
-										_ = switchWindow(pid, controlCl, logger)
 									} else {
 										runStack[anotherPid].runMutex.Unlock()
 
@@ -525,11 +525,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								logger.Error("makecheck failed")
 							} else {
 								if !windowSwitched && runStack[pid].stackType == stackTypeSecondary {
+									windowSwitched = true
+									_ = switchWindow(pid, controlCl, logger)
 									if !runStack[anotherPid].runMutex.TryLock() {
 										runStack[anotherPid].waitCh <- struct{}{}
 										<-runStack[pid].waitCh
-										windowSwitched = true
-										_ = switchWindow(pid, controlCl, logger)
 									} else {
 										runStack[anotherPid].runMutex.Unlock()
 									}
@@ -559,8 +559,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					}
 					logger.Info("end interation")
 					//run stack
-					//time.Sleep(time.Millisecond * time.Duration(randNum(200, 300)))
-					time.Sleep(time.Second)
+					time.Sleep(time.Millisecond * time.Duration(randNum(200, 300)))
+					//time.Sleep(time.Second)
 				}
 			}
 		}()
