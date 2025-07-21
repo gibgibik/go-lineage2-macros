@@ -229,13 +229,13 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	mux.HandleFunc("/api/init", func(writer http.ResponseWriter, request *http.Request) {
 		initData, _ := service.Init()
 		response := struct {
-			IsMacrosRunning bool     `json:"isMacrosRunning"`
-			ProfilesList    []string `json:"profilesList"`
-			PidsData        map[uint32]string
+			RunningMacrosState map[uint32]bool `json:"runningMacrosState"`
+			ProfilesList       []string        `json:"profilesList"`
+			PidsData           map[uint32]string
 		}{
-			IsMacrosRunning: false, //@todo detect?
-			ProfilesList:    service.GetProfilesList(),
-			PidsData:        initData.PidsData,
+			RunningMacrosState: make(map[uint32]bool),
+			ProfilesList:       service.GetProfilesList(),
+			PidsData:           initData.PidsData,
 		}
 		var minPid uint32
 		for pid := range response.PidsData {
@@ -253,6 +253,15 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 					str.stackType = stackTypeSecondary
 				}
 				runStack[pid] = &str
+			}
+		} else {
+			for pid := range runStack {
+				if !runStack[pid].runMutex.TryLock() {
+					response.RunningMacrosState[pid] = true
+				} else {
+					response.RunningMacrosState[pid] = false
+					runStack[pid].runMutex.Unlock()
+				}
 			}
 		}
 		res, _ := json.Marshal(response)
@@ -288,6 +297,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		}
 		logger := r.Context().Value("logger").(*zap.SugaredLogger).With("pid", pid)
 		if !runStack[pid].runMutex.TryLock() {
+			runStack[pid].waitCh <- struct{}{}
 			logger.Error("already running")
 			createRequestError(w, "already running", http.StatusServiceUnavailable)
 			return

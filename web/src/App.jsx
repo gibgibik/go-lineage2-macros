@@ -38,6 +38,7 @@ function App() {
     const [profilesList, setProfilesList] = useState([]);
     const [pidsData, setPidData] = useState([]);
     const [currentPid, setCurrentPid] = useState(null);
+    const [runningMacrosState, setRunningMacrosState] = useState({});
     const startMacrosAction = () => {
         setDisabledStart(true);
         const stFunc = async () => {
@@ -59,13 +60,13 @@ function App() {
         }
     }
     useEffect(() => {
-        setDisabledStart(!profile || !currentPid);
+        setDisabledStart(!profile || !runningMacrosState[currentPid]);
     }, [profile, currentPid]);
     useEffect(() => {
-        init().then(({data: {isMacrosRunning, profilesList, PidsData: pidsData}}) => {
-            console.log('isMacrosRunning', isMacrosRunning);
+        init().then(({data: {runningMacrosState = {}, profilesList, PidsData: pidsData}}) => {
             setProfilesList(profilesList);
-            setDisabledStart(isMacrosRunning || !currentPid || !profile);
+            setRunningMacrosState(runningMacrosState);
+            setDisabledStart(!profile || !runningMacrosState[currentPid]);
             setPidData(pidsData);
         }).catch(e => {
             console.log('init failed', e);
@@ -96,8 +97,8 @@ function App() {
                                                                                 value={index}>{`${index} - ${pidsData[index]}`}</MenuItem>)}
                             </Select>
                         </FormControl>
-                        <Button color={'error'} onClick={() => stopMacrosAction(parseInt(currentPid))} >Stop</Button>
-                        <Button onClick={startMacrosAction} >Start</Button>
+                        <Button color={'error'} onClick={() => stopMacrosAction(parseInt(currentPid))} disabled={!disabledStart}>Stop</Button>
+                        <Button onClick={startMacrosAction} disabled={disabledStart} >Start</Button>
                     </ButtonGroup>
                 </Grid>
             </Grid>
