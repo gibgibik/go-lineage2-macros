@@ -90,7 +90,7 @@ function App() {
                     <Macros profileName={profile}/>
                     <Profiles profilesList={profilesList} setProfile={setProfile} setProfilesList={setProfilesList}/>
                 </Grid>
-                <Grid md={6} xs={12} sx={{mb: 2}}><Log profileName={profile}/>
+                <Grid md={6} xs={12} sx={{mb: 2, mt: 2}}>
                     <ButtonGroup variant="contained" sx={{gap: 4, display: 'flex', justifyContent: 'center'}}>
                         <FormControl sx={{'width': '200px'}}>
                             <InputLabel id={'pid-label'}>Pid</InputLabel>
@@ -110,6 +110,7 @@ function App() {
                         <Button onClick={startMacrosAction} disabled={disabledStart} >Start</Button>
                         <Button onClick={pauseMacrosAction} disabled={!disabledStart} color={'success'} >Pause</Button>
                     </ButtonGroup>
+                    <Log profileName={profile}/>
                 </Grid>
             </Grid>
         </ThemeProvider>
