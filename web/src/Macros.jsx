@@ -36,13 +36,13 @@ const renderItems = ({Items: items = []}, conditions, setConditions) => {
                        slotProps={{inputLabel: {shrink: true}}}
                        onKeyDown={onChangeBinding} defaultValue={!items.length ? '' : items[i]?.Binding || ''}
             />
-            <TextField variant={"outlined"} name={'period_seconds[]'} label={"Period Seconds"}
+            <TextField variant={"outlined"} name={'period_milliseconds[]'} label={"Period"}
                        slotProps={{inputLabel: {shrink: true}}}
-                       defaultValue={!items.length ? '' : items[i]?.period_seconds}
+                       defaultValue={!items.length ? '' : items[i]?.period_milliseconds}
             />
-            <TextField variant={"outlined"} name={'delay_seconds[]'} label={"Delay"}
+            <TextField variant={"outlined"} name={'delay_milliseconds[]'} label={"Delay"}
                        slotProps={{inputLabel: {shrink: true}}}
-                       defaultValue={!items.length ? '' : items[i]?.delay_seconds}
+                       defaultValue={!items.length ? '' : items[i]?.delay_milliseconds}
             />
             <TextField variant={"outlined"} name={'additional[]'} label={"Additional"}
                        slotProps={{inputLabel: {shrink: true}}}
@@ -91,8 +91,8 @@ export const Macros = ({profileName}) => {
             obj.items.push({
                 'action': formData.getAll('actions[]')[i],
                 'binding': formData.getAll('bindings[]')[i],
-                'delay_seconds': parseInt(formData.getAll('delay_seconds[]')[i]),
-                'period_seconds': parseInt(formData.getAll('period_seconds[]')[i]),
+                'delay_milliseconds': parseInt(formData.getAll('delay_milliseconds[]')[i]),
+                'period_milliseconds': parseInt(formData.getAll('period_milliseconds[]')[i]),
                 'additional': formData.getAll('additional[]')[i],
                 'conditions': conditions[i].filter(item => typeof item === 'object'),
                 'conditions_combinator': conditions[i].filter(item => typeof item === 'string')[0] || "",

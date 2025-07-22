@@ -380,9 +380,9 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 
 						runAction := &runStack[pid].stack[i]
 						if runAction.item.Action == service.ActionStop {
-							if runAction.lastRun.Unix() < 0 {
+							if runAction.lastRun.IsZero() {
 								runStack[pid].stack[i].lastRun = time.Now()
-							} else if runAction.item.PeriodSeconds > 0 && (runAction.lastRun.Unix()+int64(runAction.item.PeriodSeconds)) < time.Now().Unix() {
+							} else if runAction.item.PeriodMilliseconds > 0 && (runAction.lastRun.UnixMilli()+int64(runAction.item.PeriodMilliseconds)) < time.Now().UnixMilli() {
 								if service.PlayerStat.Target.HpPercent == 0 {
 									checksPassed = makeChecks(runStack, pid, checksPassed, controlCl, logger)
 									if !checksPassed {
@@ -402,8 +402,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										controlCl.SendKey(0, runAction.item.Binding)
 										time.Sleep(time.Millisecond * 50)
 										controlCl.EndKey()
-										if runAction.item.DelaySeconds > 0 {
-											time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
+										if runAction.item.DelayMilliseconds > 0 {
+											time.Sleep(time.Millisecond * time.Duration(runAction.item.DelayMilliseconds))
 										}
 									}
 									time.Sleep(time.Second * 10)
@@ -414,7 +414,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							i++
 							continue
 						}
-						if runAction.item.PeriodSeconds > 0 && runAction.lastRun.Unix() > (time.Now().Unix()-int64(runAction.item.PeriodSeconds)) {
+						if runAction.item.PeriodMilliseconds > 0 && runAction.lastRun.UnixMilli() > (time.Now().UnixMilli()-int64(runAction.item.PeriodMilliseconds)) {
 							i++
 							continue
 						}
@@ -447,7 +447,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 												Y: bound[1] + 30,
 											}, 0)
 											controlCl.MouseAbsoluteEnd()
-											//time.Sleep(time.Millisecond * time.Duration(700))
 											time.Sleep(time.Millisecond * time.Duration(randNum(400, 500)))
 										}
 										controlCl.EndKey()
@@ -483,8 +482,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									logger.Info("press ", runAction.item.Binding)
 									controlCl.MouseActionAbsolute(ch9329.MousePressRight, point, 0)
 									controlCl.MouseAbsoluteEnd()
-									if runAction.item.DelaySeconds > 0 {
-										time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
+									if runAction.item.DelayMilliseconds > 0 {
+										time.Sleep(time.Millisecond * time.Duration(runAction.item.DelayMilliseconds))
 									}
 									runStack[pid].stack[i].lastRun = time.Now()
 									//@todo need delay?
@@ -517,8 +516,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								controlCl.SendKey(0, runAction.item.Binding)
 								time.Sleep(time.Millisecond * 50)
 								controlCl.EndKey()
-								if runAction.item.DelaySeconds > 0 {
-									time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
+								if runAction.item.DelayMilliseconds > 0 {
+									time.Sleep(time.Millisecond * time.Duration(runAction.item.DelayMilliseconds))
 								}
 							}
 						}
@@ -547,8 +546,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								controlCl.SendKey(0, "esc")
 								time.Sleep(time.Millisecond * 50)
 								controlCl.EndKey()
-								if runAction.item.DelaySeconds > 0 {
-									time.Sleep(time.Second * time.Duration(runAction.item.DelaySeconds))
+								if runAction.item.DelayMilliseconds > 0 {
+									time.Sleep(time.Millisecond * time.Duration(runAction.item.DelayMilliseconds))
 								}
 							}
 						}

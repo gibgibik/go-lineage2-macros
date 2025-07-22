@@ -1,3 +1,4 @@
 .idea
 out/*
 var/profiles/*.json
+test.go
