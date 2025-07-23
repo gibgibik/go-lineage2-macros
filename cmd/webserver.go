@@ -439,7 +439,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							i++
 							continue
 						}
-						if ok, err := service.CheckCondition(runAction.item.ConditionsCombinator, runAction.item.Conditions, playerStat); !ok {
+						if ok, err := service.CheckCondition(runAction.item.ConditionsCombinator, runAction.item.Conditions, playerStat, service.PlayerStats.Party, logger); !ok {
 							i++
 							if err != nil {
 								logger.Error("check condition error: " + err.Error())

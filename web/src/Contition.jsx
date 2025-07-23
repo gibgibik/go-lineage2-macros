@@ -9,6 +9,14 @@ const fields = [
     {name: 'my_mp', label: 'My MP'},
     {name: 'since_last_success_target', label: 'Since Last Success Target'},
     {name: 'full_target_hp_unchanged_since', label: 'Full Target Hp Unchanged'},
+    {name: 'party_member_hp_1', label: 'Party Member 1 HP'},
+    {name: 'party_member_hp_2', label: 'Party Member 2 HP'},
+    {name: 'party_member_hp_3', label: 'Party Member 3 HP'},
+    {name: 'party_member_hp_4', label: 'Party Member 4 HP'},
+    {name: 'party_member_hp_5', label: 'Party Member 5 HP'},
+    {name: 'party_member_hp_6', label: 'Party Member 6 HP'},
+    {name: 'party_member_hp_7', label: 'Party Member 7 HP'},
+    {name: 'party_member_hp_8', label: 'Party Member 8 HP'}
 ];
 
 const controlElements = {
