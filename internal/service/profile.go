@@ -36,8 +36,8 @@ type ProfileTemplate struct {
 type ProfileTemplateItem struct {
 	Action               string
 	Binding              string
-	PeriodMilliseconds   int `json:"period_milliseconds"`
-	DelayMilliseconds    int `json:"delay_milliseconds"`
+	PeriodMilliseconds   int64 `json:"period_milliseconds"`
+	DelayMilliseconds    int64 `json:"delay_milliseconds"`
 	Additional           string
 	Conditions           []Condition
 	ConditionsCombinator string `json:"conditions_combinator"`

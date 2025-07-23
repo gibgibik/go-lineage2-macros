@@ -435,7 +435,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							i++
 							continue
 						}
-						if runAction.item.PeriodMilliseconds > 0 && runAction.lastRun.UnixMilli() > (time.Now().UnixMilli()-int64(runAction.item.PeriodMilliseconds)) {
+						if runAction.item.PeriodMilliseconds > 0 && runAction.lastRun.UnixMilli() > (time.Now().UnixMilli()-runAction.item.PeriodMilliseconds) {
 							i++
 							continue
 						}
