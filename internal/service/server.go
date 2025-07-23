@@ -1,19 +1,20 @@
 package service
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	http2 "net/http"
+	"sync"
 	"time"
 
-	"github.com/gibgibik/go-lineage2-macros/internal/core/entity"
 	"github.com/gibgibik/go-lineage2-macros/internal/core/http"
+	"github.com/gibgibik/go-lineage2-server/pkg/entity"
 	"go.uber.org/zap"
 )
 
 var (
-	PlayerStat                 *entity.PlayerStat
+	PlayerStats                entity.StatStr
+	PlayerStatsMutex           sync.Mutex
 	targetHpWasPresentAt       time.Time
 	fullTargetHpUnchangedSince time.Time
 )
@@ -30,39 +31,39 @@ type ForeGroundWindowInfo struct {
 	Pid uint32 `json:"pid"`
 }
 
-func StartPlayerStatUpdate(ctx context.Context, logger *zap.SugaredLogger) {
-	var err error
-	logger.Debug("player stat update start")
-	for {
-		select {
-		case <-ctx.Done():
-			logger.Info("player stat update stopped")
-			return
-		default:
-			PlayerStat, err = http.HttpCl.Get("")
-			if PlayerStat == nil {
-				continue
-			}
-			if PlayerStat.Target.HpPercent > 0 {
-				targetHpWasPresentAt = time.Now()
-			}
-			if PlayerStat.Target.HpPercent >= 99 {
-				if fullTargetHpUnchangedSince.IsZero() {
-					fullTargetHpUnchangedSince = time.Now()
-				}
-			} else {
-				fullTargetHpUnchangedSince = time.Now()
-			}
-			PlayerStat.Target.HpWasPresentAt = targetHpWasPresentAt.Unix()
-			PlayerStat.Target.FullHpUnchangedSince = fullTargetHpUnchangedSince.Unix()
-			if err != nil {
-				logger.Error("player pull stat error: ", err.Error())
-				continue
-			}
-			time.Sleep(time.Millisecond * 100)
-		}
-	}
-}
+//func StartPlayerStatUpdate(ctx context.Context, logger *zap.SugaredLogger) {
+//	var err error
+//	logger.Debug("player stat update start")
+//	for {
+//		select {
+//		case <-ctx.Done():
+//			logger.Info("player stat update stopped")
+//			return
+//		default:
+//			PlayerStats, err = http.HttpCl.Get("")
+//			if PlayerStats == nil {
+//				continue
+//			}
+//			if PlayerStats.Target.HpPercent > 0 {
+//				targetHpWasPresentAt = time.Now()
+//			}
+//			if PlayerStats.Target.HpPercent >= 99 {
+//				if fullTargetHpUnchangedSince.IsZero() {
+//					fullTargetHpUnchangedSince = time.Now()
+//				}
+//			} else {
+//				fullTargetHpUnchangedSince = time.Now()
+//			}
+//			PlayerStats.Target.HpWasPresentAt = targetHpWasPresentAt.Unix()
+//			PlayerStats.Target.FullHpUnchangedSince = fullTargetHpUnchangedSince.Unix()
+//			if err != nil {
+//				logger.Error("player pull stat error: ", err.Error())
+//				continue
+//			}
+//			time.Sleep(time.Millisecond * 100)
+//		}
+//	}
+//}
 
 func FindBounds(logger *zap.SugaredLogger) ([][]int, error) {
 	var err error

@@ -13,6 +13,10 @@ github.com/gibgibik/go-ch9329 v0.0.0-20250709213257-c7da828fd82d h1:QerZspbDlULX
 github.com/gibgibik/go-ch9329 v0.0.0-20250709213257-c7da828fd82d/go.mod h1:a7XFTvOIqC7R38poUPiqAkQHlUczOi+i/rIpCK9vcac=
 github.com/gibgibik/go-ch9329 v0.0.0-20250720195236-864b1f2b4be4 h1:tlK8MV3mgquOVbVE8wODUG2EVgNyFVLVpBqbt+cWB0g=
 github.com/gibgibik/go-ch9329 v0.0.0-20250720195236-864b1f2b4be4/go.mod h1:a7XFTvOIqC7R38poUPiqAkQHlUczOi+i/rIpCK9vcac=
+github.com/gibgibik/go-lineage2-server v0.0.0-20250723063620-7e1c53f48aec h1:+Tm9dg6SO/hdT4BntELl0UnQikI655ZfLdK1UsRCt1E=
+github.com/gibgibik/go-lineage2-server v0.0.0-20250723063620-7e1c53f48aec/go.mod h1:sqwkerhCrPZInFrPoyhElDcNbyWl9kf+baBRgmzEDaY=
+github.com/gibgibik/go-lineage2-server v0.0.0-20250723065107-b7cbde0052a4 h1:997ya3jq4ZdCO3fEiVx2KCXHmwE5RPL1pgY90cCgoOE=
+github.com/gibgibik/go-lineage2-server v0.0.0-20250723065107-b7cbde0052a4/go.mod h1:sqwkerhCrPZInFrPoyhElDcNbyWl9kf+baBRgmzEDaY=
 github.com/go-viper/mapstructure/v2 v2.2.1 h1:ZAaOCxANMuZx5RCeg0mBdEZk7DZasvvZIxtHqx8aGss=
 github.com/go-viper/mapstructure/v2 v2.2.1/go.mod h1:oJDH3BJKyqBA2TXFhDsKDGDTlndYOZ6rGS0BRZIxGhM=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=

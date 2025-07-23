@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gibgibik/go-lineage2-macros/internal/core/entity"
+	"github.com/gibgibik/go-lineage2-server/pkg/entity"
 )
 
 func CheckCondition(conditionsCombinator string, conditions []Condition, stat *entity.PlayerStat) (bool, error) {
@@ -40,15 +40,15 @@ func CheckCondition(conditionsCombinator string, conditions []Condition, stat *e
 			}
 		case "since_last_success_target":
 			if conditionsCombinator == ConditionCombinatorOr {
-				result = result || (checkOperatorCondition(float64(time.Now().Unix()-int64(cval)), float64(stat.Target.HpWasPresentAt), condition.Operator))
+				result = result || (checkOperatorCondition(float64(time.Now().UnixMilli()-int64(cval)), float64(stat.Target.HpWasPresentAt), condition.Operator))
 			} else {
-				result = result && checkOperatorCondition(float64(time.Now().Unix()-int64(cval)), float64(stat.Target.HpWasPresentAt), condition.Operator)
+				result = result && checkOperatorCondition(float64(time.Now().UnixMilli()-int64(cval)), float64(stat.Target.HpWasPresentAt), condition.Operator)
 			}
 		case "full_target_hp_unchanged_since":
 			if conditionsCombinator == ConditionCombinatorOr {
-				result = result || (checkOperatorCondition(float64(time.Now().Unix()-int64(cval)), float64(stat.Target.FullHpUnchangedSince), condition.Operator))
+				result = result || (checkOperatorCondition(float64(time.Now().UnixMilli()-int64(cval)), float64(stat.Target.FullHpUnchangedSince), condition.Operator))
 			} else {
-				result = result && checkOperatorCondition(float64(time.Now().Unix()-int64(cval)), float64(stat.Target.FullHpUnchangedSince), condition.Operator)
+				result = result && checkOperatorCondition(float64(time.Now().UnixMilli()-int64(cval)), float64(stat.Target.FullHpUnchangedSince), condition.Operator)
 			}
 		}
 	}

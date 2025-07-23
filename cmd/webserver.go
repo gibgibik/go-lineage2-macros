@@ -20,6 +20,7 @@ import (
 	"github.com/gibgibik/go-ch9329/pkg/ch9329"
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
 	"github.com/gibgibik/go-lineage2-macros/internal/service"
+	"github.com/gibgibik/go-lineage2-server/pkg/entity"
 	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -129,7 +130,6 @@ func createWebServerCommand(logger *zap.SugaredLogger) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cnf := cmd.Context().Value("cnf").(*core.Config)
 			handle := httpServerStart(cmd.Context(), cnf, logger)
-			go service.StartPlayerStatUpdate(cmd.Context(), logger)
 			for {
 				select {
 				case <-cmd.Context().Done():
@@ -284,6 +284,24 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 		res, _ := json.Marshal(response)
 		writer.Write(res)
 	})
+	mux.HandleFunc("/api/stats", func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodPost {
+			createRequestError(writer, "Invalid Method", http.StatusMethodNotAllowed)
+			return
+		}
+		body, err := io.ReadAll(request.Body)
+		if err != nil {
+			logger.Error("stat body read error ", err.Error())
+			return
+		}
+		service.PlayerStatsMutex.Lock()
+		defer service.PlayerStatsMutex.Unlock()
+		err = json.Unmarshal(body, &service.PlayerStats)
+		if err != nil {
+			logger.Error("stat json unmarshal error ", err.Error())
+			return
+		}
+	})
 	mux.Handle("/", http.FileServer(http.Dir("./web/dist")))
 	handle.Handler = withCORS(mux)
 	go func() {
@@ -377,13 +395,16 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						if i >= len(runStack[pid].stack) {
 							break
 						}
-
+						var playerStat *entity.PlayerStat
+						if val, ok := service.PlayerStats.Player[pid]; ok {
+							playerStat = &val
+						}
 						runAction := &runStack[pid].stack[i]
 						if runAction.item.Action == service.ActionStop {
 							if runAction.lastRun.IsZero() {
 								runStack[pid].stack[i].lastRun = time.Now()
 							} else if runAction.item.PeriodMilliseconds > 0 && (runAction.lastRun.UnixMilli()+int64(runAction.item.PeriodMilliseconds)) < time.Now().UnixMilli() {
-								if service.PlayerStat.Target.HpPercent == 0 {
+								if playerStat.Target.HpPercent == 0 {
 									checksPassed = makeChecks(runStack, pid, checksPassed, controlCl, logger)
 									if !checksPassed {
 										logger.Error("makecheck failed")
@@ -418,7 +439,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							i++
 							continue
 						}
-						if ok, err := service.CheckCondition(runAction.item.ConditionsCombinator, runAction.item.Conditions, service.PlayerStat); !ok {
+						if ok, err := service.CheckCondition(runAction.item.ConditionsCombinator, runAction.item.Conditions, playerStat); !ok {
 							i++
 							if err != nil {
 								logger.Error("check condition error: " + err.Error())
@@ -439,7 +460,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
 										time.Sleep(time.Millisecond * 50)
 										for _, bound := range bounds {
-											if service.PlayerStat.Target.HpPercent > 0 {
+											if playerStat.Target.HpPercent > 0 {
 												break
 											}
 											controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
@@ -450,7 +471,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											time.Sleep(time.Millisecond * time.Duration(randNum(400, 500)))
 										}
 										controlCl.EndKey()
-										if service.PlayerStat.Target.HpPercent == 0 {
+										if playerStat.Target.HpPercent == 0 {
 											controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(480, 320), 0)
 											controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(580, 320), 0)
 											controlCl.MouseAbsoluteEnd()
@@ -552,7 +573,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							}
 						}
 						runStack[pid].stack[i].lastRun = time.Now()
-						//message := fmt.Sprintf("%s %s <span style='color:red'>Target HP: [%.2f%%]</span>", runAction.item.Action, runAction.item.Binding, service.PlayerStat.Target.HpPercent)
+						//message := fmt.Sprintf("%s %s <span style='color:red'>Target HP: [%.2f%%]</span>", runAction.item.Action, runAction.item.Binding, service.PlayerStats.Target.HpPercent)
 						//logger.Info(message)
 						i++
 						time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
