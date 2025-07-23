@@ -206,6 +206,7 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 		},
 	}
 	mux := http.NewServeMux() // Create
+	_, _ = service.Init()
 	mux.HandleFunc("/ws", wsHandler)
 	mux.HandleFunc("/api/profile/", templateHandler)
 	mux.HandleFunc("/api/start/", startHandler(ctx, cnf))
