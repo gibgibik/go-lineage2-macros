@@ -460,6 +460,14 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
 										time.Sleep(time.Millisecond * 50)
 										for _, bound := range bounds.Boxes {
+											if playerStat.Target.HpPercent > 0 {
+												break
+											}
+											controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
+												X: int((bound[2]-bound[0])/2) + bound[0],
+												Y: bound[1] + 30,
+											}, 0)
+											controlCl.MouseAbsoluteEnd()
 											if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 												logger.Info("target is " + currentTarget)
 												if currentTarget == "Gibik" {
@@ -469,15 +477,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 													time.Sleep(time.Millisecond * 50)
 												}
 											}
-											if playerStat.Target.HpPercent > 0 {
-												break
-											}
-											controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
-												X: int((bound[2]-bound[0])/2) + bound[0],
-												Y: bound[1] + 30,
-											}, 0)
-											controlCl.MouseAbsoluteEnd()
-											time.Sleep(time.Millisecond * time.Duration(randNum(400, 500)))
+											//time.Sleep(time.Millisecond * time.Duration(randNum(400, 500)))
 										}
 										controlCl.EndKey()
 										if playerStat.Target.HpPercent == 0 {
