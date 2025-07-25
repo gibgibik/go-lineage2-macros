@@ -457,7 +457,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									continue
 								} else {
 									if controlErr == nil {
-										controlCl.SendKey(ch9329.ModLeftShift, "") //stay
+										controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
 										time.Sleep(time.Millisecond * 50)
 										for _, bound := range bounds.Boxes {
 											if playerStat.Target.HpPercent > 0 {
