@@ -459,7 +459,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									if controlErr == nil {
 										controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
 										time.Sleep(time.Millisecond * 50)
-										controlCl.EndKey()
 										for _, bound := range bounds.Boxes {
 											if playerStat.Target.HpPercent > 0 {
 												break
@@ -474,12 +473,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 												if currentTarget == "Gibik" || (currentTarget != "Tarlk Basilisk" && currentTarget != "Hunter Gargoyle" && currentTarget != "Elter Tarlk Basilisk") {
 													controlCl.SendKey(0, "esc")
 													time.Sleep(time.Millisecond * 50)
-													controlCl.EndKey()
-													time.Sleep(time.Millisecond * 50)
 												}
 											}
 											//time.Sleep(time.Millisecond * time.Duration(randNum(400, 500)))
 										}
+										controlCl.EndKey()
 										if playerStat.Target.HpPercent == 0 {
 											controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(480, 320), 0)
 											controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(580, 320), 0)
