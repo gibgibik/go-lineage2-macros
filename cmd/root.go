@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gibgibik/go-lineage2-macros/cmd/web"
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
 	"github.com/gibgibik/go-lineage2-macros/internal/core/http"
 	"github.com/spf13/cobra"
@@ -49,7 +50,7 @@ func Execute() error {
 			zap.InfoLevel,
 		),
 		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), zapcore.DebugLevel),
-		zapcore.NewCore(zapcore.NewConsoleEncoder(webEncoder), zapcore.AddSync(BaseWsSender{}), zapcore.InfoLevel),
+		zapcore.NewCore(zapcore.NewConsoleEncoder(webEncoder), zapcore.AddSync(web.BaseWsSender{}), zapcore.InfoLevel),
 	)
 	logger := zap.New(cZ)
 	cnf, err := core.InitConfig()
@@ -67,7 +68,7 @@ func Execute() error {
 			return cmd.Usage()
 		},
 	}
-	rootCmd.AddCommand(createWebServerCommand(logger.Sugar()))
+	rootCmd.AddCommand(web.CreateWebServerCommand(logger.Sugar()))
 	go func() {
 		defer cancel()
 		err = rootCmd.ExecuteContext(context.WithValue(ctx, "cnf", cnf))
