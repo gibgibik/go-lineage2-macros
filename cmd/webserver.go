@@ -534,7 +534,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								if runAction.item.Action == service.ActionAttack {
 									if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 										logger.Info("target is " + currentTarget)
-										if currentTarget == "Gibik" || (currentTarget != "Tarlk Basilisk" && currentTarget != "Hunter Gargoyle" && currentTarget != "Elter Tarlk Basilisk") {
+										if currentTarget == "Gibik" || (currentTarget != "Tarlk Basilisk" && currentTarget != "Hunter Gargoyle" && currentTarget != "Elder Tarlk Basilisk") {
 											controlCl.SendKey(0, "esc")
 											time.Sleep(time.Millisecond * 50)
 											controlCl.EndKey()
