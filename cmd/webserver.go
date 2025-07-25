@@ -580,7 +580,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									_ = switchWindow(pid, controlCl, logger)
 								}
 								//logger.Info("press ", runAction.item.Binding)
-								controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960 + randNum(-150, 150), 540 + randNum(-150, 150)}, 0)
+								controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960, 540 + 300}, 0)
 								time.Sleep(time.Second * 3)
 								controlCl.SendKey(0, runAction.item.Binding)
 								time.Sleep(time.Millisecond * 50)
