@@ -461,6 +461,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										time.Sleep(time.Millisecond * 50)
 										for _, bound := range bounds.Boxes {
 											if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
+												logger.Info("target is " + currentTarget)
 												if currentTarget == "Gibik" {
 													controlCl.SendKey(0, "esc")
 													time.Sleep(time.Millisecond * 50)
