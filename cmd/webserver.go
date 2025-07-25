@@ -404,9 +404,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							break
 						}
 						var playerStat *entity.PlayerStat
+						service.PlayerStatsMutex.Lock()
 						if val, ok := service.PlayerStats.Player[pid]; ok {
 							playerStat = &val
 						}
+						service.PlayerStatsMutex.Unlock()
 						runAction := &runStack[pid].stack[i]
 						if runAction.item.Action == service.ActionStop {
 							if runAction.lastRun.IsZero() {
@@ -447,12 +449,16 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							i++
 							continue
 						}
+						service.PlayerStatsMutex.Lock()
 						if ok, err := service.CheckCondition(runAction.item.ConditionsCombinator, runAction.item.Conditions, playerStat, service.PlayerStats.Party, logger); !ok {
+							service.PlayerStatsMutex.Unlock()
 							i++
 							if err != nil {
 								logger.Error("check condition error: " + err.Error())
 							}
 							continue
+						} else {
+							service.PlayerStatsMutex.Unlock()
 						}
 						if runAction.item.Action == service.ActionAITargetNext {
 							if runStack[pid].stackType == stackTypeSecondary {
