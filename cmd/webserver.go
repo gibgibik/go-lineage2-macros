@@ -468,10 +468,9 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 												Y: bound[1] + 30,
 											}, 0)
 											controlCl.MouseAbsoluteEnd()
-											time.Sleep(time.Millisecond * 200)
 											if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 												logger.Info("target is " + currentTarget)
-												if currentTarget == "Gibik" {
+												if currentTarget == "Gibik" || (currentTarget != "Tarlk Basilisk" && currentTarget != "Hunter Gargoyle" && currentTarget != "Elter Tarlk Basilisk") {
 													controlCl.SendKey(0, "esc")
 													time.Sleep(time.Millisecond * 50)
 													controlCl.EndKey()
@@ -535,15 +534,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								if runAction.item.Action == service.ActionAttack {
 									if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 										logger.Info("target is " + currentTarget)
-										if currentTarget == "Gibik" {
+										if currentTarget == "Gibik" || (currentTarget != "Tarlk Basilisk" && currentTarget != "Hunter Gargoyle" && currentTarget != "Elter Tarlk Basilisk") {
 											controlCl.SendKey(0, "esc")
 											time.Sleep(time.Millisecond * 50)
 											controlCl.EndKey()
 											time.Sleep(time.Millisecond * 50)
-											i++
-											continue
-										}
-										if currentTarget != "Tarlk Basilisk" && currentTarget != "Hunter Gargoyle" && currentTarget != "Elter Tarlk Basilisk" {
 											i++
 											continue
 										}
