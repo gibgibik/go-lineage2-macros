@@ -419,7 +419,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											_ = switchWindow(pid, controlCl, logger)
 											windowSwitched = true
 										}
-										logger.Info("press ", runAction.item.Binding)
+										//logger.Info("press ", runAction.item.Binding)
 										controlCl.SendKey(0, runAction.item.Binding)
 										time.Sleep(time.Millisecond * 50)
 										controlCl.EndKey()
@@ -509,7 +509,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										windowSwitched = true
 										_ = switchWindow(pid, controlCl, logger)
 									}
-									logger.Info("press ", runAction.item.Binding)
+									//logger.Info("press ", runAction.item.Binding)
 									controlCl.MouseActionAbsolute(ch9329.MousePressRight, point, 0)
 									controlCl.MouseAbsoluteEnd()
 									if runAction.item.DelayMilliseconds > 0 {
@@ -531,6 +531,19 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							if !checksPassed {
 								logger.Error("makecheck failed")
 							} else {
+								if runAction.item.Action == service.ActionAttack {
+									if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
+										logger.Info("target is " + currentTarget)
+										if currentTarget == "Gibik" {
+											controlCl.SendKey(0, "esc")
+											time.Sleep(time.Millisecond * 50)
+											controlCl.EndKey()
+											time.Sleep(time.Millisecond * 50)
+										}
+										i++
+										continue
+									}
+								}
 								if !windowSwitched && runStack[pid].stackType == stackTypeSecondary {
 									if !runStack[anotherPid].runMutex.TryLock() {
 										runStack[anotherPid].waitCh <- struct{}{}
@@ -542,7 +555,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									windowSwitched = true
 									_ = switchWindow(pid, controlCl, logger)
 								}
-								logger.Info("press ", runAction.item.Binding)
+								//logger.Info("press ", runAction.item.Binding)
 								controlCl.SendKey(0, runAction.item.Binding)
 								time.Sleep(time.Millisecond * 50)
 								controlCl.EndKey()
@@ -566,7 +579,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									windowSwitched = true
 									_ = switchWindow(pid, controlCl, logger)
 								}
-								logger.Info("press ", runAction.item.Binding)
+								//logger.Info("press ", runAction.item.Binding)
 								controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960 + randNum(-150, 150), 540 + randNum(-150, 150)}, 0)
 								time.Sleep(time.Second * 3)
 								controlCl.SendKey(0, runAction.item.Binding)
@@ -592,7 +605,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						_ = switchWindow(anotherPid, controlCl, logger)
 						runStack[anotherPid].waitCh <- struct{}{}
 					}
-					logger.Info("end interation")
+					//logger.Info("end interation")
 					//run stack
 					time.Sleep(time.Millisecond * time.Duration(randNum(200, 300)))
 					//time.Sleep(time.Second)
