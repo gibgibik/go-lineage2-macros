@@ -459,7 +459,13 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									if controlErr == nil {
 										controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
 										time.Sleep(time.Millisecond * 50)
-										for _, bound := range bounds {
+										for _, bound := range bounds.Boxes {
+											if bounds.TargetName == "Gibik" {
+												controlCl.SendKey(0, "esc")
+												time.Sleep(time.Millisecond * 50)
+												controlCl.EndKey()
+												time.Sleep(time.Millisecond * 50)
+											}
 											if playerStat.Target.HpPercent > 0 {
 												break
 											}

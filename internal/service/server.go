@@ -20,7 +20,8 @@ var (
 )
 
 type BoundsResult struct {
-	Boxes [][]int `json:"boxes"`
+	TargetName string  `json:"target_name"`
+	Boxes      [][]int `json:"boxes"`
 }
 
 type InitData struct {
@@ -65,7 +66,7 @@ type ForeGroundWindowInfo struct {
 //	}
 //}
 
-func FindBounds(logger *zap.SugaredLogger) ([][]int, error) {
+func FindBounds(logger *zap.SugaredLogger) (*BoundsResult, error) {
 	var err error
 	logger.Info("get bounds start")
 	bounds, err := http.HttpCl.RawRequest("findBounds", http2.MethodGet, nil)
@@ -82,7 +83,7 @@ func FindBounds(logger *zap.SugaredLogger) ([][]int, error) {
 	//if len(boxes.Boxes) > 10 {
 	//	boxes.Boxes = boxes.Boxes[:10]
 	//}
-	return boxes.Boxes, nil
+	return &boxes, nil
 }
 
 func Init() (InitData, error) {
