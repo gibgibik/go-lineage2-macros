@@ -370,6 +370,9 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					return
 				case <-runStack[pid].waitCh:
 					logger.Info("wait start")
+					controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960, 560}, 0)
+					time.Sleep(time.Millisecond * 50)
+					controlCl.MouseAbsoluteEnd()
 					if !runStack[anotherPid].runMutex.TryLock() {
 						runStack[anotherPid].waitCh <- struct{}{}
 					} else {
@@ -471,7 +474,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											time.Sleep(time.Millisecond * 50)
 											if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 												logger.Info("target is " + currentTarget)
-												if currentTarget == "Gibik" || (currentTarget != "Tarlk Basilisk" && currentTarget != "Hunter Gargoyle" && currentTarget != "Elter Tarlk Basilisk") {
+												if currentTarget == "Gibik" || (currentTarget != "Cave Servant" && currentTarget != "Shackle") {
 													//controlCl.SendKey(0, "esc")
 													time.Sleep(time.Millisecond * 50)
 												} else {
@@ -534,7 +537,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								if runAction.item.Action == service.ActionAttack {
 									if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 										logger.Info("target is " + currentTarget)
-										if currentTarget == "Gibik" || (currentTarget != "Tarlk Basilisk" && currentTarget != "Hunter Gargoyle" && currentTarget != "Elder Tarlk Basilisk") {
+										if currentTarget == "Gibik" || (currentTarget != "Cave Servant" && currentTarget != "Shackle") {
 											controlCl.SendKey(0, "esc")
 											time.Sleep(time.Millisecond * 50)
 											controlCl.EndKey()
@@ -581,6 +584,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								}
 								//logger.Info("press ", runAction.item.Binding)
 								controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960, 540 + 300}, 0)
+								time.Sleep(time.Millisecond * 50)
+								controlCl.MouseAbsoluteEnd()
 								time.Sleep(time.Second * 3)
 								controlCl.SendKey(0, runAction.item.Binding)
 								time.Sleep(time.Millisecond * 50)
