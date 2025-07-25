@@ -20,8 +20,7 @@ var (
 )
 
 type BoundsResult struct {
-	TargetName string  `json:"target_name"`
-	Boxes      [][]int `json:"boxes"`
+	Boxes [][]int `json:"boxes"`
 }
 
 type InitData struct {
@@ -84,6 +83,23 @@ func FindBounds(logger *zap.SugaredLogger) (*BoundsResult, error) {
 	//	boxes.Boxes = boxes.Boxes[:10]
 	//}
 	return &boxes, nil
+}
+
+func GetCurrentTarget(logger *zap.SugaredLogger) (string, error) {
+	var err error
+	result, err := http.HttpCl.RawRequest("getCurrentTarget", http2.MethodGet, nil)
+	if err != nil {
+		return "", err
+	}
+	var name struct {
+		Name string `json:"name"`
+	}
+	err = json.Unmarshal(result, &name)
+	if err != nil {
+		logger.Error("parse bounds json error: ", err.Error())
+		return "", nil
+	}
+	return name.Name, nil
 }
 
 func Init() (InitData, error) {
