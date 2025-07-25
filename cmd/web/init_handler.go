@@ -3,7 +3,6 @@ package web
 import (
 	"encoding/json"
 	"net/http"
-	"sync"
 
 	"github.com/gibgibik/go-lineage2-macros/internal/service"
 )
@@ -27,9 +26,9 @@ func initHandler() func(writer http.ResponseWriter, request *http.Request) {
 			}
 		}
 		if len(pidsStack) == 0 {
-			pidsStack = make(map[uint32]*stackStruct, 0)
+			pidsStack = make(map[uint32]*pidStack, 0)
 			for pid := range response.PidsData {
-				str := stackStruct{runMutex: &sync.Mutex{}, stack: []runStackStruct{}, stopCh: make(chan struct{}), reloadCh: make(chan struct{}), waitCh: make(chan struct{}), webWaitCh: make(chan struct{})}
+				str := pidStack{stack: []runStackStruct{}, stopCh: make(chan struct{}), reloadCh: make(chan struct{}), waitCh: make(chan struct{}), webWaitCh: make(chan struct{})}
 				if minPid == pid {
 					str.stackType = stackTypeMain
 				} else {
@@ -39,11 +38,11 @@ func initHandler() func(writer http.ResponseWriter, request *http.Request) {
 			}
 		} else {
 			for pid := range pidsStack {
-				if !pidsStack[pid].runMutex.TryLock() {
+				if !pidsStack[pid].TryLock() {
 					response.RunningMacrosState[pid] = true
 				} else {
 					response.RunningMacrosState[pid] = false
-					pidsStack[pid].runMutex.Unlock()
+					pidsStack[pid].Unlock()
 				}
 			}
 		}

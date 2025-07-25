@@ -17,10 +17,10 @@ func stopHandler() func(writer http.ResponseWriter, request *http.Request) {
 			createRequestError(writer, "Invalid PID", http.StatusBadRequest)
 			return
 		}
-		if !pidsStack[pb.Pid].runMutex.TryLock() {
+		if !pidsStack[pb.Pid].TryLock() {
 			pidsStack[pb.Pid].stopCh <- struct{}{}
 		} else {
-			pidsStack[pb.Pid].runMutex.Unlock()
+			pidsStack[pb.Pid].Unlock()
 		}
 	}
 }

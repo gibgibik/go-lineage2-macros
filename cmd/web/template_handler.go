@@ -28,10 +28,10 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 		return
 	}
 	for k := range pidsStack {
-		if !pidsStack[k].runMutex.TryLock() {
+		if !pidsStack[k].TryLock() {
 			pidsStack[k].reloadCh <- struct{}{}
 		} else {
-			pidsStack[k].runMutex.Unlock()
+			pidsStack[k].Unlock()
 		}
 	}
 }

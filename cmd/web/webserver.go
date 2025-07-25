@@ -9,8 +9,6 @@ import (
 	"math/rand/v2"
 	"net"
 	"net/http"
-	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -33,9 +31,9 @@ const (
 	stackTypeSecondary
 )
 
-type stackStruct struct {
+type pidStack struct {
+	*sync.Mutex
 	stackType uint8
-	runMutex  *sync.Mutex
 	stopCh    chan struct{}
 	reloadCh  chan struct{}
 	waitCh    chan struct{}
@@ -53,7 +51,7 @@ var (
 			return true
 		},
 	}
-	pidsStack          map[uint32]*stackStruct
+	pidsStack          map[uint32]*pidStack
 	messagesStack      []string
 	messagesStackMutex sync.Mutex
 )
@@ -80,21 +78,6 @@ func (ws BaseWsSender) Sync() error {
 func (ws BaseWsSender) Write(p []byte) (n int, err error) {
 	sendMessage(string(p))
 	return 0, nil
-}
-
-func parseCondition(s string) *Condition {
-	s = strings.ReplaceAll(s, "%", "")
-	reg := regexp.MustCompile("(HP|MP)\\s(>|<|=)\\s(\\d+)")
-	matches := reg.FindSubmatch([]byte(s))
-	if len(matches) != 4 {
-		return &Condition{}
-	}
-	value, _ := strconv.ParseFloat(string(matches[3]), 64)
-	return &Condition{
-		attr:  string(matches[1]),
-		sign:  string(matches[2]),
-		value: value,
-	}
 }
 
 func initStacks(pid uint32, r *http.Request, logger *zap.SugaredLogger) error {
@@ -179,6 +162,7 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	mux.HandleFunc("/api/stop", stopHandler())
 	mux.HandleFunc("/api/init", initHandler())
 	mux.HandleFunc("/api/stats", statHandler(logger))
+	mux.HandleFunc("/api/preset", getPresetsListHandler(logger))
 	mux.Handle("/", http.FileServer(http.Dir("./web/dist")))
 	handle.Handler = withCORS(mux)
 	go func() {
@@ -208,7 +192,7 @@ func createRequestError(w http.ResponseWriter, err string, code int) {
 	_, _ = w.Write([]byte(err))
 }
 
-func makeChecks(runStack map[uint32]*stackStruct, pid uint32, checksPassed bool, controlCl *service.Control, logger *zap.SugaredLogger) bool {
+func makeChecks(runStack map[uint32]*pidStack, pid uint32, checksPassed bool, controlCl *service.Control, logger *zap.SugaredLogger) bool {
 	if controlCl == nil {
 		logger.Error("control cl is nil")
 		return false
