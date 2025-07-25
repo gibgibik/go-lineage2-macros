@@ -543,6 +543,10 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											i++
 											continue
 										}
+										if currentTarget != "Tarlk Basilisk" && currentTarget != "Hunter Gargoyle" && currentTarget != "Elter Tarlk Basilisk" {
+											i++
+											continue
+										}
 									}
 								}
 								if !windowSwitched && runStack[pid].stackType == stackTypeSecondary {
