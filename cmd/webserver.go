@@ -539,9 +539,9 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											time.Sleep(time.Millisecond * 50)
 											controlCl.EndKey()
 											time.Sleep(time.Millisecond * 50)
+											i++
+											continue
 										}
-										i++
-										continue
 									}
 								}
 								if !windowSwitched && runStack[pid].stackType == stackTypeSecondary {
