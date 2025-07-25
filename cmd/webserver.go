@@ -43,6 +43,7 @@ type stackStruct struct {
 	stopCh    chan struct{}
 	reloadCh  chan struct{}
 	waitCh    chan struct{}
+	webWaitCh chan struct{}
 	stack     []runStackStruct
 }
 
@@ -221,7 +222,7 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 			return
 		}
 		if !runStack[pb.Pid].runMutex.TryLock() {
-			runStack[pb.Pid].waitCh <- struct{}{}
+			runStack[pb.Pid].webWaitCh <- struct{}{}
 		} else {
 			runStack[pb.Pid].runMutex.Unlock()
 		}
@@ -263,7 +264,7 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 		if len(runStack) == 0 {
 			runStack = make(map[uint32]*stackStruct, 0)
 			for pid := range response.PidsData {
-				str := stackStruct{runMutex: &sync.Mutex{}, stack: []runStackStruct{}, stopCh: make(chan struct{}), reloadCh: make(chan struct{}), waitCh: make(chan struct{})}
+				str := stackStruct{runMutex: &sync.Mutex{}, stack: []runStackStruct{}, stopCh: make(chan struct{}), reloadCh: make(chan struct{}), waitCh: make(chan struct{}), webWaitCh: make(chan struct{})}
 				if minPid == pid {
 					str.stackType = stackTypeMain
 				} else {
@@ -368,6 +369,10 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					cp.stack = []runStackStruct{}
 					runStack[pid] = cp
 					return
+				case <-runStack[pid].webWaitCh:
+					logger.Info("pause from web context")
+					<-runStack[pid].webWaitCh
+					logger.Info("continue from web context")
 				case <-runStack[pid].waitCh:
 					logger.Info("wait start")
 					controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960, 560}, 0)
