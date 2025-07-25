@@ -457,7 +457,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									continue
 								} else {
 									if controlErr == nil {
-										controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
+										controlCl.SendKey(ch9329.ModLeftShift, "") //stay
 										time.Sleep(time.Millisecond * 50)
 										for _, bound := range bounds.Boxes {
 											if playerStat.Target.HpPercent > 0 {
@@ -470,10 +470,10 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											controlCl.MouseAbsoluteEnd()
 											if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 												logger.Info("target is " + currentTarget)
-												if currentTarget == "Gibik" || (currentTarget != "Tarlk Basilisk" && currentTarget != "Hunter Gargoyle" && currentTarget != "Elter Tarlk Basilisk") {
-													controlCl.SendKey(0, "esc")
-													time.Sleep(time.Millisecond * 50)
-												}
+												//if currentTarget == "Gibik" || (currentTarget != "Tarlk Basilisk" && currentTarget != "Hunter Gargoyle" && currentTarget != "Elter Tarlk Basilisk") {
+												//	controlCl.SendKey(0, "esc")
+												//	time.Sleep(time.Millisecond * 50)
+												//}
 											}
 											//time.Sleep(time.Millisecond * time.Duration(randNum(400, 500)))
 										}
