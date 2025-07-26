@@ -22,7 +22,7 @@ import (
 
 type runStackStruct struct {
 	sync.Mutex
-	item    service.ProfileTemplateItem
+	item    service.ProfilePreset
 	lastRun time.Time
 }
 
@@ -81,21 +81,26 @@ func (ws BaseWsSender) Write(p []byte) (n int, err error) {
 }
 
 func initStacks(pid uint32, r *http.Request, logger *zap.SugaredLogger) error {
-	profileData, err := service.GetProfileData(strings.Trim(r.RequestURI, "/"), logger)
-	if err != nil {
-		return err
+	pathPieces := strings.SplitN(strings.Trim(r.RequestURI, "/"), "/", 4)
+	if len(pathPieces) < 3 {
+		logger.Infof("invalid request", strings.Trim(r.RequestURI, "/"))
+		return errors.New("invalid request")
 	}
+	//profileData, err := service.GetProfileData(pathPieces[2], logger)
+	//if err != nil {
+	//	return err
+	//}
 	if len(pidsStack[pid].stack) == 0 {
-		for _, val := range profileData.Items {
-			if val.Action == "" {
-				continue
-			}
-			cp := pidsStack[pid]
-			cp.stack = append(pidsStack[pid].stack, runStackStruct{
-				item: val,
-			})
-			pidsStack[pid] = cp
-		}
+		//for _, val := range profileData.Items {
+		//	if val..pAction == "" {
+		//		continue
+		//	}
+		//	cp := pidsStack[pid]
+		//	cp.stack = append(pidsStack[pid].stack, runStackStruct{
+		//		item: val,
+		//	})
+		//	pidsStack[pid] = cp
+		//}
 
 	}
 	if len(pidsStack[pid].stack) == 0 {
@@ -156,6 +161,7 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	}
 	mux := http.NewServeMux() // Create
 	mux.HandleFunc("/ws", wsHandler)
+	mux.HandleFunc("/api/profile", getProfilesListHandler(logger))
 	mux.HandleFunc("/api/profile/", templateHandler)
 	mux.HandleFunc("/api/start/", startHandler(ctx, cnf))
 	mux.HandleFunc("/api/pause", pauseHandler())

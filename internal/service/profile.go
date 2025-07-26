@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/gibgibik/go-lineage2-macros/internal/preset"
 	"go.uber.org/zap"
 )
 
@@ -29,8 +30,13 @@ const (
 )
 
 type ProfileTemplate struct {
-	Items   []ProfileTemplateItem
-	Profile string
+	Items []ProfilePreset `json:"items"`
+	Name  string          `json:"name"`
+}
+
+type ProfilePreset struct {
+	Preset   preset.Preset `json:"preset"`
+	IsActive bool          `json:"is_active"`
 }
 
 type ProfileTemplateItem struct {
@@ -51,13 +57,8 @@ type Condition struct {
 	Value       string `json:"value"`
 }
 
-func GetProfileData(path string, logger *zap.SugaredLogger) (*ProfileTemplate, error) {
-	pathPieces := strings.SplitN(path, "/", 4)
-	if len(pathPieces) < 3 {
-		logger.Infof("invalid request", path)
-		return nil, errors.New("invalid request")
-	}
-	fileName := getProfilePath(pathPieces[2])
+func GetProfileData(profileName string, logger *zap.SugaredLogger) (*ProfileTemplate, error) {
+	fileName := getProfilePath(profileName)
 	fh, err := os.OpenFile(fileName, os.O_RDWR, 0600)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, err
@@ -91,7 +92,7 @@ func SaveProfileData(body io.Reader, logger *zap.SugaredLogger) error {
 		return err
 	}
 	//@todo validation, save as is for now
-	fileName := getProfilePath(templateBody.Profile)
+	fileName := getProfilePath(templateBody.Name)
 	tb, err := json.Marshal(templateBody)
 	if err != nil {
 		logger.Error(err.Error())
@@ -102,7 +103,7 @@ func SaveProfileData(body io.Reader, logger *zap.SugaredLogger) error {
 		logger.Error(err.Error())
 		return err
 	}
-	logger.Info("profile saved: ", templateBody.Profile)
+	logger.Info("profile saved: ", templateBody.Name)
 	return nil
 }
 
