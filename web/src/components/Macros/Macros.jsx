@@ -1,7 +1,9 @@
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import {Box, Button, ButtonGroup, TextField} from "@mui/material";
 import {MacrosAction} from "./MacrosAction.jsx";
 import {Condition} from "../../Contition.jsx";
+import {savePreset} from "../../api.js";
+import {NotificationContext} from "../Alert/NotificationContext.jsx";
 
 const INPUT_COUNT = 20;
 const onChangeBinding = (event) => {
@@ -58,7 +60,8 @@ const renderItems = ({Items: items = []}, conditions, setConditions) => {
 
     return result;
 }
-export const Macros = ({presetName, setPreset}) => {
+export const Macros = ({presetId, presetName, setPreset}) => {
+    const {setAlert} = useContext(NotificationContext);
     const [submitDisabled, disableSubmit] = useState(false);
     const [formItemsData, setFormItemsData] = useState([]);
     const [formItems, setFormItems] = useState([]);
@@ -89,7 +92,7 @@ export const Macros = ({presetName, setPreset}) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const obj = {items: [], profile: profileName};
+        const obj = {items: [], preset: presetName};
         for (let i = 0; i < INPUT_COUNT; i++) {
             obj.items.push({
                 'action': formData.getAll('actions[]')[i],
@@ -103,19 +106,20 @@ export const Macros = ({presetName, setPreset}) => {
         }
 
         disableSubmit(true);
-        await saveProfile(profileName, obj);
+        try {
+            await savePreset(presetId, obj);
+        } catch (error) {
+            setAlert(error.message);
+        }
         disableSubmit(false);
     }
     return (<Box>
         <form onSubmit={handleSubmit}>
             <Box sx={{m: 2, display: 'flex'}} alignItems={'center'}>
                 <TextField name={'preset'} value={presetName} sx={{minWidth: '30vw', mr: 2}} onChange={setPreset}/>
-                <Button variant="contained" color="primary" onClick={handleSubmit}>Save</Button>
+                <Button type={"submit"} disabled={submitDisabled}>Save</Button>
             </Box>
             {formItems}
-            <ButtonGroup variant="contained" sx={{gap: 4, display: 'flex', justifyContent: 'center'}}>
-                <Button type={"submit"} disabled={submitDisabled}>Save</Button>
-            </ButtonGroup>
         </form>
     </Box>)
         ;

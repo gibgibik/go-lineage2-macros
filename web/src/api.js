@@ -38,3 +38,8 @@ export const pauseMacros = (pid) => {
 export const getPresetsList = () => {
     return api.get('/preset');
 }
+
+export const savePreset = (presetId, formData) => {
+    return api.post('/preset/' + presetId, formData).then((response) => {
+    })
+}

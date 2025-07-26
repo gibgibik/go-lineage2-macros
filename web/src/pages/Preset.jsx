@@ -74,7 +74,7 @@ export const Preset = ({value, index, ...other}) => {
                     </Grid>
                 </Grid>
                 <Grid size={9}>
-                    {presetId && <Macros presetName={presetsList[presetId].name} setPreset={(newPreset) => {
+                    {presetId && <Macros presetId={presetId} presetName={presetsList[presetId].name} setPreset={(newPreset) => {
                         setPresetsList({
                             ...presetsList,
                             [presetId.toString()]: {...presetsList[presetId].id, name: newPreset.target.value}
