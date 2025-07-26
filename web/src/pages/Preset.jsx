@@ -5,8 +5,6 @@ import {getPresetsList} from "../api.js";
 import {NotificationContext} from "../components/Alert/NotificationContext.jsx";
 import {Macros} from "../components/Macros/Macros.jsx";
 
-const NEW_ID_NAME = 'New';
-
 export const Preset = ({value, index, ...other}) => {
     if (value !== index) {
         return null;
@@ -44,11 +42,12 @@ export const Preset = ({value, index, ...other}) => {
     };
 
     const addNew = () => {
-        if (Object.keys(presetsList).find((idx) => presetsList[idx].name === NEW_ID_NAME)) {
+        const val = prompt("Enter New Preset");
+        if (Object.keys(presetsList).find((idx) => presetsList[idx].name === val)) {
             return;
         }
         const now = Date.now();
-        setPresetsList({...presetsList, [now]: {name: NEW_ID_NAME, id: now}});
+        setPresetsList({...presetsList, [now]: {name: val, id: now}});
         setPresetId(now);
     }
     return (
@@ -81,13 +80,7 @@ export const Preset = ({value, index, ...other}) => {
                 </Grid>
                 <Grid size={9}>
                     {presetId &&
-                        <Macros presetId={presetId} loadPresets={loadPresets} presetName={presetsList[presetId].name} data={presetsList[presetId]} setPreset={(newPreset) => {
-                            setPresetsList({
-                                ...presetsList,
-                                [presetId.toString()]: {...presetsList[presetId].id, name: newPreset.target.value}
-                            });
-                            return true;
-                        }}/>}
+                        <Macros presetId={presetId} loadPresets={loadPresets} presetName={presetsList[presetId].name} data={presetsList[presetId]} />}
                 </Grid>
             </Grid>
         </Box>

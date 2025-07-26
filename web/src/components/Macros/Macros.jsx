@@ -65,7 +65,7 @@ const renderItems = ({id, items = []}, conditions, setConditions) => {
 
     return result;
 }
-export const Macros = ({presetId, loadPresets, presetName, setPreset, data = []}) => {
+export const Macros = ({presetId, loadPresets, presetName, data = []}) => {
     const {setAlert, setSuccess} = useContext(NotificationContext);
     const [submitDisabled, disableSubmit] = useState(false);
     const [formItems, setFormItems] = useState([]);
@@ -123,7 +123,6 @@ export const Macros = ({presetId, loadPresets, presetName, setPreset, data = []}
     return (<Box>
         <form onSubmit={handleSubmit}>
             <Box sx={{m: 2, display: 'flex'}} alignItems={'center'}>
-                <TextField name={'name'} value={presetName} sx={{minWidth: '30vw', mr: 2}} onChange={setPreset}/>
                 <Button type={"submit"} disabled={submitDisabled}>Save</Button>
             </Box>
             {formItems}

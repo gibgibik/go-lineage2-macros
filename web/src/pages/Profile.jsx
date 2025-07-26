@@ -1,7 +1,7 @@
 import React, {useContext, useEffect, useState} from "react";
 import {Box, Button, Grid, ListItemButton, ListItemText} from "@mui/material";
 import List from '@mui/material/List';
-import {getProfilesList} from "../api.js";
+import {getPresetsList, getProfilesList} from "../api.js";
 import {NotificationContext} from "../components/Alert/NotificationContext.jsx";
 import {Macros} from "../components/Macros/Macros.jsx";
 import {ProfilePreset} from "../components/ProfilePreset/ProfilePreset.jsx";
@@ -16,7 +16,9 @@ export const Profile = ({value, index, ...other}) => {
 
     const [profileName, setProfileName] = useState(null);
     const [profiles, setProfiles] = useState({});
-    const loadProfiles = () => {
+    const [activePreset, setActivePreset] = useState(null);
+    const [presetsList, setPresetsList] = useState([]);
+    const loadData = () => {
         const fetchProfiles = async () => {
             try {
                 const {data} = await getProfilesList();
@@ -32,8 +34,20 @@ export const Profile = ({value, index, ...other}) => {
             }
         }
         fetchProfiles();
+        const fetchPresets = async () => {
+            try {
+                const {data} = await getPresetsList();
+                setPresetsList(data.reduce((acc, item) => {
+                    acc[item.id] = item;
+                    return acc;
+                }, {}));
+            } catch (error) {
+                setAlert(error.response?.data);
+            }
+        }
+        fetchPresets();
     }
-    useEffect(() => loadProfiles(), []);
+    useEffect(() => loadData(), []);
     const handleListItemClick = (profileName) => {
         setProfileName(profileName);
     };
@@ -46,8 +60,7 @@ export const Profile = ({value, index, ...other}) => {
         setProfiles({...profiles, [value]: {name: value}});
         setProfileName(value);
     }
-    // {name, items: [{is_active, preset: {items, name, id}}]}
-    console.log(profiles);
+    console.log(activePreset);
     return (
         <Box
             role="tabpanel"
@@ -56,7 +69,7 @@ export const Profile = ({value, index, ...other}) => {
             aria-labelledby={`simple-tab-${index}`}
             {...other}
         >
-            <Grid container sx={{width: '100%'}} spacing={2}>
+            <Grid container sx={{width: '100%'}}>
                 <Grid size={3} sx={{borderRight: '1px solid #ddd'}}>
                     <List sx={{
                         width: '100%',
@@ -77,7 +90,25 @@ export const Profile = ({value, index, ...other}) => {
                     </Grid>
                 </Grid>
                 <Grid size={2} sx={{borderRight: '1px solid #ddd'}}>
-                    {profileName && <ProfilePreset data={profiles[profileName]} setProfiles={setProfiles} profiles={profiles}/>}
+                    {profileName &&
+                        <ProfilePreset data={profiles[profileName]} setProfiles={setProfiles} profiles={profiles}
+                                       setActivePreset={setActivePreset} presetsList={presetsList} setPresetsList={setPresetsList}/>}
+                </Grid>
+                <Grid size={7}>
+                    {activePreset &&
+                        <Macros presetId={activePreset} loadPresets={() => {
+                            console.log('todo save')
+                        }} presetName={presetsList[activePreset].name} data={presetsList[activePreset]}
+                                setPreset={(newPreset) => {
+                                    setPresetsList({
+                                        ...presetsList,
+                                        [presetId.toString()]: {
+                                            ...presetsList[activePreset].id,
+                                            name: newPreset.target.value
+                                        }
+                                    });
+                                    return true;
+                                }}/>}
                 </Grid>
             </Grid>
         </Box>

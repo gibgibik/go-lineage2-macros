@@ -15,7 +15,7 @@ import {getPresetsList} from "../../api.js";
 import {NotificationContext} from "../Alert/NotificationContext.jsx";
 
 
-export const ProfilePreset = ({data, setProfiles, profiles}) => {
+export const ProfilePreset = ({data, setProfiles, profiles, setActivePreset, presetsList, setPresetsList}) => {
     useEffect(() => {
         const fetchPresets = async () => {
             try {
@@ -30,7 +30,6 @@ export const ProfilePreset = ({data, setProfiles, profiles}) => {
         }
         fetchPresets();
     }, []);
-    const [presetsList, setPresetsList] = useState([]);
     const [presetValue, setPresetValue] = useState('');
     const [chosenPresetList, setChosenPresetList] = useState({});
     const [chosenPreset, setChosenPreset] = useState(null);
@@ -49,6 +48,7 @@ export const ProfilePreset = ({data, setProfiles, profiles}) => {
     };
     const handlePresetChange = (val) => {
         setChosenPreset(val);
+        setActivePreset(val);
     };
     return <Box>
         <List sx={{width: '100%'}}>
