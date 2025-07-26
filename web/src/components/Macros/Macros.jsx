@@ -21,7 +21,7 @@ const onChangeBinding = (event) => {
     return false;
 }
 
-const renderItems = ({items = []}, conditions, setConditions) => {
+const renderItems = ({id, items = []}, conditions, setConditions) => {
     const result = []
     for (let i = 0; i < INPUT_COUNT; i++) {
         let preparedConditions = {rules: []};
@@ -31,23 +31,28 @@ const renderItems = ({items = []}, conditions, setConditions) => {
         } else {
             preparedConditions.rules = !items.length ? [] : items[i]?.Conditions || []
         }
+        console.log('rerender');
         // const preparedConditions = {rules: []}
         result.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
             <MacrosAction name={'actions[]'} initValue={!items.length ? '' : items[i]?.Action || ''}/>
             <TextField variant={"outlined"} name={'bindings[]'} label="Binding"
                        slotProps={{inputLabel: {shrink: true}}}
+                       key={'binding_' + id}
                        onKeyDown={onChangeBinding} defaultValue={!items.length ? '' : items[i]?.Binding || ''}
             />
             <TextField variant={"outlined"} name={'period_milliseconds[]'} label={"Period"}
+                       key={'period_' + id}
                        slotProps={{inputLabel: {shrink: true}}}
                        defaultValue={!items.length ? '' : items[i]?.period_milliseconds}
             />
             <TextField variant={"outlined"} name={'delay_milliseconds[]'} label={"Delay"}
+                       key={'delay_' + id}
                        slotProps={{inputLabel: {shrink: true}}}
                        defaultValue={!items.length ? '' : items[i]?.delay_milliseconds}
             />
             <TextField variant={"outlined"} name={'additional[]'} label={"Additional"}
                        slotProps={{inputLabel: {shrink: true}}}
+                       key={'additional_' + id}
                        defaultValue={!items.length ? '' : items[i]?.Additional}
             />
             <Condition conditions={preparedConditions} fullWidth={true}
@@ -60,14 +65,15 @@ const renderItems = ({items = []}, conditions, setConditions) => {
 
     return result;
 }
-export const Macros = ({presetId, presetName, setPreset, data = []}) => {
+export const Macros = ({presetId, loadPresets, presetName, setPreset, data = []}) => {
     const {setAlert, setSuccess} = useContext(NotificationContext);
     const [submitDisabled, disableSubmit] = useState(false);
     const [formItems, setFormItems] = useState([]);
     const [conditions, setConditions] = useState([]);
     useEffect(() => {
+        console.log(data);
         setFormItems(renderItems(data, conditions, setConditions));
-    }, []);
+    }, [presetId]);
     // useEffect(() => {
     //     setFormItems(renderItems(formItemsData, setConditions));
     // }, [formItemsData, setConditions]);
@@ -112,6 +118,7 @@ export const Macros = ({presetId, presetName, setPreset, data = []}) => {
         }
         disableSubmit(false);
         setSuccess('Saved');
+        loadPresets();
     }
     return (<Box>
         <form onSubmit={handleSubmit}>

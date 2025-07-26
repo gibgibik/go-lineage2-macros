@@ -15,7 +15,7 @@ export const Preset = ({value, index, ...other}) => {
 
     const [presetId, setPresetId] = useState(null);
     const [presetsList, setPresetsList] = useState({});
-    useEffect(() => {
+    const loadPresets = () => {
         const fetchPresets = async () => {
             try {
                 const {data} = await getPresetsList();
@@ -28,7 +28,8 @@ export const Preset = ({value, index, ...other}) => {
             }
         }
         fetchPresets();
-    }, []);
+    }
+    useEffect(() => loadPresets(), []);
     // useEffect(() => {
     //     console.log(presetsList);
     // }, [presetsList])
@@ -43,7 +44,7 @@ export const Preset = ({value, index, ...other}) => {
     };
 
     const addNew = () => {
-        if (presetsList.find((preset) => preset.name === NEW_ID_NAME)) {
+        if (Object.keys(presetsList).find((idx) => presetsList[idx].name === NEW_ID_NAME)) {
             return;
         }
         const now = Date.now();
@@ -63,12 +64,12 @@ export const Preset = ({value, index, ...other}) => {
                     <List sx={{
                         width: '100%',
                     }}>
-                        {Object.keys(presetsList).map((presetId) => {
-                            return (<ListItemButton href="#simple-list" selected={presetId == presetsList[presetId].id}
-                                                    key={presetId}
-                                                    onClick={(event) => handleListItemClick(event, presetsList[presetId].id)}
+                        {Object.keys(presetsList).map((pId) => {
+                            return (<ListItemButton href="#simple-list" selected={presetId == pId}
+                                                    key={pId}
+                                                    onClick={(event) => handleListItemClick(event, presetsList[pId].id)}
                                                     sx={{width: '100%'}}>
-                                <ListItemText primary={presetsList[presetId].name}/>
+                                <ListItemText primary={presetsList[pId].name}/>
                             </ListItemButton>);
                         })}
                     </List>
@@ -80,7 +81,7 @@ export const Preset = ({value, index, ...other}) => {
                 </Grid>
                 <Grid size={9}>
                     {presetId &&
-                        <Macros presetId={presetId} presetName={presetsList[presetId].name} data={presetsList[presetId]} setPreset={(newPreset) => {
+                        <Macros presetId={presetId} loadPresets={loadPresets} presetName={presetsList[presetId].name} data={presetsList[presetId]} setPreset={(newPreset) => {
                             setPresetsList({
                                 ...presetsList,
                                 [presetId.toString()]: {...presetsList[presetId].id, name: newPreset.target.value}
