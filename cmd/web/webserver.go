@@ -163,6 +163,7 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	mux.HandleFunc("/api/init", initHandler())
 	mux.HandleFunc("/api/stats", statHandler(logger))
 	mux.HandleFunc("/api/preset", getPresetsListHandler(logger))
+	mux.HandleFunc("/api/preset/", savePresetHandler(logger))
 	mux.Handle("/", http.FileServer(http.Dir("./web/dist")))
 	handle.Handler = withCORS(mux)
 	go func() {

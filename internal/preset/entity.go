@@ -29,9 +29,9 @@ const (
 )
 
 type Preset struct {
-	Items []Item
-	Name  string
-	Id    uint32
+	Items []Item `json:"items"`
+	Name  string `json:"name"`
+	Id    int    `json:"id"`
 }
 
 type Item struct {

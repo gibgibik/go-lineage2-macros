@@ -21,7 +21,7 @@ const onChangeBinding = (event) => {
     return false;
 }
 
-const renderItems = ({Items: items = []}, conditions, setConditions) => {
+const renderItems = ({items = []}, conditions, setConditions) => {
     const result = []
     for (let i = 0; i < INPUT_COUNT; i++) {
         let preparedConditions = {rules: []};
@@ -60,14 +60,13 @@ const renderItems = ({Items: items = []}, conditions, setConditions) => {
 
     return result;
 }
-export const Macros = ({presetId, presetName, setPreset}) => {
-    const {setAlert} = useContext(NotificationContext);
+export const Macros = ({presetId, presetName, setPreset, data = []}) => {
+    const {setAlert, setSuccess} = useContext(NotificationContext);
     const [submitDisabled, disableSubmit] = useState(false);
-    const [formItemsData, setFormItemsData] = useState([]);
     const [formItems, setFormItems] = useState([]);
     const [conditions, setConditions] = useState([]);
     useEffect(() => {
-        setFormItems(renderItems([], conditions, setConditions));
+        setFormItems(renderItems(data, conditions, setConditions));
     }, []);
     // useEffect(() => {
     //     setFormItems(renderItems(formItemsData, setConditions));
@@ -92,7 +91,7 @@ export const Macros = ({presetId, presetName, setPreset}) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const obj = {items: [], preset: presetName};
+        const obj = {items: [], name: presetName};
         for (let i = 0; i < INPUT_COUNT; i++) {
             obj.items.push({
                 'action': formData.getAll('actions[]')[i],
@@ -112,11 +111,12 @@ export const Macros = ({presetId, presetName, setPreset}) => {
             setAlert(error.message);
         }
         disableSubmit(false);
+        setSuccess('Saved');
     }
     return (<Box>
         <form onSubmit={handleSubmit}>
             <Box sx={{m: 2, display: 'flex'}} alignItems={'center'}>
-                <TextField name={'preset'} value={presetName} sx={{minWidth: '30vw', mr: 2}} onChange={setPreset}/>
+                <TextField name={'name'} value={presetName} sx={{minWidth: '30vw', mr: 2}} onChange={setPreset}/>
                 <Button type={"submit"} disabled={submitDisabled}>Save</Button>
             </Box>
             {formItems}

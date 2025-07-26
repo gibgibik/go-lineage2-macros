@@ -19,14 +19,19 @@ export const Preset = ({value, index, ...other}) => {
         const fetchPresets = async () => {
             try {
                 const {data} = await getPresetsList();
-                setPresetsList(data);
-                console.log(data);
+                setPresetsList(data.reduce((acc, item) => {
+                    acc[item.id] = item;
+                    return acc;
+                }, {}));
             } catch (error) {
                 setAlert(error.response?.data);
             }
         }
         fetchPresets();
     }, []);
+    // useEffect(() => {
+    //     console.log(presetsList);
+    // }, [presetsList])
     useEffect(() => {
         if (!presetId) {
             return;
@@ -61,7 +66,7 @@ export const Preset = ({value, index, ...other}) => {
                         {Object.keys(presetsList).map((presetId) => {
                             return (<ListItemButton href="#simple-list" selected={presetId == presetsList[presetId].id}
                                                     key={presetId}
-                                                    onClick={(event) => handleListItemClick(event, presetsList[presetId].name)}
+                                                    onClick={(event) => handleListItemClick(event, presetsList[presetId].id)}
                                                     sx={{width: '100%'}}>
                                 <ListItemText primary={presetsList[presetId].name}/>
                             </ListItemButton>);
@@ -74,13 +79,14 @@ export const Preset = ({value, index, ...other}) => {
                     </Grid>
                 </Grid>
                 <Grid size={9}>
-                    {presetId && <Macros presetId={presetId} presetName={presetsList[presetId].name} setPreset={(newPreset) => {
-                        setPresetsList({
-                            ...presetsList,
-                            [presetId.toString()]: {...presetsList[presetId].id, name: newPreset.target.value}
-                        });
-                        return true;
-                    }}/>}
+                    {presetId &&
+                        <Macros presetId={presetId} presetName={presetsList[presetId].name} data={presetsList[presetId]} setPreset={(newPreset) => {
+                            setPresetsList({
+                                ...presetsList,
+                                [presetId.toString()]: {...presetsList[presetId].id, name: newPreset.target.value}
+                            });
+                            return true;
+                        }}/>}
                 </Grid>
             </Grid>
         </Box>
