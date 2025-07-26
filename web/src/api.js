@@ -36,5 +36,5 @@ export const pauseMacros = (pid) => {
 }
 
 export const getPresetsList = () => {
-    return api.post('/preset');
+    return api.get('/preset');
 }

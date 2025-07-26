@@ -1,28 +1,50 @@
 import React, {useContext, useEffect, useState} from "react";
-import {Box, Button, Grid, ListItemButton, ListItemText, TextField} from "@mui/material";
+import {Box, Button, Grid, ListItemButton, ListItemText} from "@mui/material";
 import List from '@mui/material/List';
 import {getPresetsList} from "../api.js";
 import {NotificationContext} from "../components/Alert/NotificationContext.jsx";
+import {Macros} from "../components/Macros/Macros.jsx";
+
+const NEW_ID_NAME = 'New';
 
 export const Preset = ({value, index, ...other}) => {
     if (value !== index) {
         return null;
     }
-    const {setAlert, setSuccess} = useContext(NotificationContext);
+    const {setAlert} = useContext(NotificationContext);
 
-    const [selectedIndex, setSelectedIndex] = useState(1);
-    const [presetsList, setPresetsList] = useState([]);
+    const [presetId, setPresetId] = useState(null);
+    const [presetsList, setPresetsList] = useState({});
     useEffect(() => {
         const fetchPresets = async () => {
-            const presets = getPresetsList();
-
+            try {
+                const {data} = await getPresetsList();
+                setPresetsList(data);
+                console.log(data);
+            } catch (error) {
+                setAlert(error.response?.data);
+            }
         }
-        console.log('first load');
+        fetchPresets();
     }, []);
+    useEffect(() => {
+        if (!presetId) {
+            return;
+        }
+
+    }, [presetId]);
     const handleListItemClick = (event, index) => {
-        setSelectedIndex(index);
+        setPresetId(index);
     };
 
+    const addNew = () => {
+        if (presetsList.find((preset) => preset.name === NEW_ID_NAME)) {
+            return;
+        }
+        const now = Date.now();
+        setPresetsList({...presetsList, [now]: {name: NEW_ID_NAME, id: now}});
+        setPresetId(now);
+    }
     return (
         <Box
             role="tabpanel"
@@ -32,26 +54,33 @@ export const Preset = ({value, index, ...other}) => {
             {...other}
         >
             <Grid container sx={{width: '100%'}} spacing={2}>
-                <Grid size={2} sx={{borderRight: '1px solid #ddd'}}>
+                <Grid size={3} sx={{borderRight: '1px solid #ddd'}}>
                     <List sx={{
                         width: '100%',
                     }}>
-                        <ListItemButton component="a" href="#simple-list" selected={selectedIndex === 0}
-                                        onClick={(event) => handleListItemClick(event, 0)} sx={{width: '100%'}}>
-                            <ListItemText primary="Spam"/>
-                        </ListItemButton>
-                        <ListItemButton component="a" href="#simple-list" selected={selectedIndex === 1}
-                                        onClick={(event) => handleListItemClick(event, 1)}>
-                            <ListItemText primary="Spam"/>
-                        </ListItemButton>
+                        {Object.keys(presetsList).map((presetId) => {
+                            return (<ListItemButton href="#simple-list" selected={presetId == presetsList[presetId].id}
+                                                    key={presetId}
+                                                    onClick={(event) => handleListItemClick(event, presetsList[presetId].name)}
+                                                    sx={{width: '100%'}}>
+                                <ListItemText primary={presetsList[presetId].name}/>
+                            </ListItemButton>);
+                        })}
                     </List>
-                    <Grid sx={{paddingLeft: 2, paddingRight: 2}} container alignItems={'center'} justifyContent={'center'} spacing={2}>
-                        <TextField value={""} style={{width:'100%'}}/>
-                        <Button variant={"contained"}>Add</Button>
+                    <Grid sx={{paddingLeft: 2, paddingRight: 2}} container alignItems={'center'}
+                          justifyContent={'center'} spacing={2}>
+                        {/*<TextField value={""} style={{width:'100%'}}/>*/}
+                        <Button variant={"contained"} onClick={addNew}>Add</Button>
                     </Grid>
                 </Grid>
-                <Grid size={10} >
-                    as
+                <Grid size={9}>
+                    {presetId && <Macros presetName={presetsList[presetId].name} setPreset={(newPreset) => {
+                        setPresetsList({
+                            ...presetsList,
+                            [presetId.toString()]: {...presetsList[presetId].id, name: newPreset.target.value}
+                        });
+                        return true;
+                    }}/>}
                 </Grid>
             </Grid>
         </Box>

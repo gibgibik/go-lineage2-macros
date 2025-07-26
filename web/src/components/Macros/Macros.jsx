@@ -1,8 +1,7 @@
+import {useEffect, useState} from "react";
 import {Box, Button, ButtonGroup, TextField} from "@mui/material";
 import {MacrosAction} from "./MacrosAction.jsx";
-import {getProfile, saveProfile} from "./api.js";
-import React, {useEffect, useState} from "react";
-import {Condition} from "./Contition.jsx";
+import {Condition} from "../../Contition.jsx";
 
 const INPUT_COUNT = 20;
 const onChangeBinding = (event) => {
@@ -26,10 +25,11 @@ const renderItems = ({Items: items = []}, conditions, setConditions) => {
         let preparedConditions = {rules: []};
         if (items.length && items[i] && (items[i]?.conditions_combinator || '') !== '') {
             preparedConditions.rules = items[i]['Conditions'].flatMap((item, index) => index < items[i]['Conditions'].length - 1 ? [item, items[i]?.conditions_combinator] : [item]);
-            // preparedConditions.rules = items[i]['Conditions'];
+            preparedConditions.rules = items[i]['Conditions'];
         } else {
             preparedConditions.rules = !items.length ? [] : items[i]?.Conditions || []
         }
+        // const preparedConditions = {rules: []}
         result.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
             <MacrosAction name={'actions[]'} initValue={!items.length ? '' : items[i]?.Action || ''}/>
             <TextField variant={"outlined"} name={'bindings[]'} label="Binding"
@@ -58,31 +58,34 @@ const renderItems = ({Items: items = []}, conditions, setConditions) => {
 
     return result;
 }
-export const Macros = ({profileName}) => {
+export const Macros = ({presetName, setPreset}) => {
     const [submitDisabled, disableSubmit] = useState(false);
     const [formItemsData, setFormItemsData] = useState([]);
     const [formItems, setFormItems] = useState([]);
     const [conditions, setConditions] = useState([]);
+    useEffect(() => {
+        setFormItems(renderItems([], conditions, setConditions));
+    }, []);
     // useEffect(() => {
     //     setFormItems(renderItems(formItemsData, setConditions));
     // }, [formItemsData, setConditions]);
-    useEffect(() => {
-        async function initProfile() {
-            try {
-                const data = await getProfile(profileName);
-                if (data) {
-                    setFormItemsData(data);
-                    setFormItems(renderItems(data, conditions, setConditions));
-                } else {
-                    setFormItems(renderItems([], conditions, setConditions));
-                }
-            } catch (error) {
-                setFormItems(renderItems([], conditions, setConditions));
-            }
-        }
-
-        initProfile();
-    }, [profileName]);
+    // useEffect(() => {
+    //     async function initProfile() {
+    //         try {
+    //             const data = await getProfile(profileName);
+    //             if (data) {
+    //                 setFormItemsData(data);
+    //                 setFormItems(renderItems(data, conditions, setConditions));
+    //             } else {
+    //                 setFormItems(renderItems([], conditions, setConditions));
+    //             }
+    //         } catch (error) {
+    //             setFormItems(renderItems([], conditions, setConditions));
+    //         }
+    //     }
+    //
+    //     initProfile();
+    // }, [profileName]);
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -105,6 +108,10 @@ export const Macros = ({profileName}) => {
     }
     return (<Box>
         <form onSubmit={handleSubmit}>
+            <Box sx={{m: 2, display: 'flex'}} alignItems={'center'}>
+                <TextField name={'preset'} value={presetName} sx={{minWidth: '30vw', mr: 2}} onChange={setPreset}/>
+                <Button variant="contained" color="primary" onClick={handleSubmit}>Save</Button>
+            </Box>
             {formItems}
             <ButtonGroup variant="contained" sx={{gap: 4, display: 'flex', justifyContent: 'center'}}>
                 <Button type={"submit"} disabled={submitDisabled}>Save</Button>

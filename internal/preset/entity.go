@@ -31,6 +31,7 @@ const (
 type Preset struct {
 	Items []Item
 	Name  string
+	Id    uint32
 }
 
 type Item struct {
@@ -52,16 +53,21 @@ type Condition struct {
 }
 
 const (
-	PathPrefix = "var/preset/"
+	PathPrefix = "var/presets/"
 )
 
-func GetList(logger *zap.SugaredLogger) ([]Item, error) {
+func GetList(logger *zap.SugaredLogger) ([]Preset, error) {
 	entries, err := os.ReadDir(PathPrefix)
 	if err != nil {
 		return nil, err
 	}
-	result := make([]Item, 0)
+	result := make([]Preset, 0)
+	logger.Info(entries)
 	for _, entry := range entries {
+		pieces := strings.Split(entry.Name(), ".")
+		if len(pieces) != 2 || pieces[1] != "json" {
+			continue
+		}
 		f, err := os.Open(PathPrefix + entry.Name())
 		if err != nil {
 			return nil, err
@@ -70,7 +76,7 @@ func GetList(logger *zap.SugaredLogger) ([]Item, error) {
 		if err != nil {
 			return nil, err
 		}
-		var item Item
+		var item Preset
 		err = json.Unmarshal(b, &item)
 		if err != nil {
 			return nil, err
