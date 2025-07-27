@@ -5,7 +5,7 @@ import '@fontsource/roboto/700.css';
 import './App.css'
 import CssBaseline from '@mui/material/CssBaseline';
 import {Box, createTheme, Tab, Tabs, ThemeProvider} from "@mui/material";
-import React from "react";
+import React, {useState} from "react";
 import {Preset} from "./pages/Preset.jsx";
 import {Running} from "./pages/Running.jsx";
 import {Profile} from "./pages/Profile.jsx";
@@ -22,10 +22,10 @@ const theme = createTheme({
 
 function App() {
     const [currentTab, setTab] = React.useState(0);
-
     const handleChangeTab = (event, newValue) => {
         setTab(newValue);
     };
+    const [profileName, setProfileName] = useState(null);
 
     return (
         <ThemeProvider theme={theme}>
@@ -38,8 +38,8 @@ function App() {
                         <Tab label="Presets"/>
                     </Tabs>
                 </Box>
-                <Running value={currentTab} index={0}/>
-                <Profile value={currentTab} index={1}/>
+                <Running value={currentTab} index={0} profileName={profileName}/>
+                <Profile value={currentTab} index={1} profileName={profileName} setProfileName={setProfileName}/>
                 <Preset value={currentTab} index={2}/>
             </AlertProvider>
         </ThemeProvider>

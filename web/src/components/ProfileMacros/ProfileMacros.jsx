@@ -20,7 +20,7 @@ export const ProfileMacros = ({isBatchRun, profileName, profiles, setProfiles, .
     }
     return <Box>
         <FormGroup sx={{m: 2}}>
-            <FormControlLabel control={<Checkbox defaultChecked onChange={isActiveChangeHandler} checked={isBatchRun}/>} label="Batch run(based on first item conditions)" />
+            <FormControlLabel control={<Checkbox onChange={isActiveChangeHandler} checked={isBatchRun}/>} label="Batch run(based on first item conditions)" />
         </FormGroup>
         <Macros {...props} />
     </Box>;

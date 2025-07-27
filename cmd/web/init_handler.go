@@ -38,12 +38,7 @@ func initHandler() func(writer http.ResponseWriter, request *http.Request) {
 			}
 		} else {
 			for pid := range pidsStack {
-				if !pidsStack[pid].TryLock() {
-					response.RunningMacrosState[pid] = true
-				} else {
-					response.RunningMacrosState[pid] = false
-					pidsStack[pid].Unlock()
-				}
+				response.RunningMacrosState[pid] = pidsStack[pid] == nil
 			}
 		}
 		res, _ := json.Marshal(response)

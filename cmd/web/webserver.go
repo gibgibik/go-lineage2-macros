@@ -32,7 +32,7 @@ const (
 )
 
 type pidStack struct {
-	*sync.Mutex
+	sync.Mutex
 	stackType uint8
 	stopCh    chan struct{}
 	reloadCh  chan struct{}
@@ -172,6 +172,7 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	mux.HandleFunc("/api/init", initHandler())
 	mux.HandleFunc("/api/preset", getPresetsListHandler(logger))
 	mux.HandleFunc("/api/preset/", savePresetHandler(logger))
+	mux.HandleFunc("/api/stats", statHandler(logger))
 	mux.Handle("/", http.FileServer(http.Dir("./web/dist")))
 	handle.Handler = withCORS(mux)
 	go func() {

@@ -9,13 +9,12 @@ import {ProfileMacros} from "../components/ProfileMacros/ProfileMacros.jsx";
 
 const NEW_PROFILE_NAME = 'New';
 
-export const Profile = ({value, index, ...other}) => {
+export const Profile = ({value, index, profileName, setProfileName, ...other}) => {
     if (value !== index) {
         return null;
     }
     const {setAlert, setSuccess} = useContext(NotificationContext);
 
-    const [profileName, setProfileName] = useState(null);
     const [profiles, setProfiles] = useState({});
     const [activePreset, setActivePreset] = useState(null);
     const [presetsList, setPresetsList] = useState([]);
@@ -57,7 +56,7 @@ export const Profile = ({value, index, ...other}) => {
         if (typeof profiles[value] !== 'undefined') {
             return;
         }
-        setProfiles({...profiles, [value]: {name: value}});
+        setProfiles({...profiles, [value]: {name: value, items: []}});
         setProfileName(value);
     }
     const save = () => {

@@ -89,7 +89,7 @@ export const Macros = ({presetId, onSave, presetName, data = []}) => {
         }
 
         disableSubmit(true);
-        onSave(formData);
+        onSave(obj);
         disableSubmit(false);
     }
     return (<Box>

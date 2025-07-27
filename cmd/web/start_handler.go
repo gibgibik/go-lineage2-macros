@@ -319,6 +319,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							_ = switchWindow(anotherPid, controlCl, logger)
 							pidsStack[anotherPid].waitCh <- struct{}{}
 						}
+						logger.Info("tick")
 						//logger.Info("end interation")
 						//run stack
 						time.Sleep(time.Millisecond * time.Duration(randNum(200, 300)))

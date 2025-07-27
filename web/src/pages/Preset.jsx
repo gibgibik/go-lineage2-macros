@@ -53,7 +53,7 @@ export const Preset = ({value, index, ...other}) => {
     const macrosSave = (presetData) => {
         const save = async () => {
             try {
-                await savePreset(presetId, presetData);
+                await savePreset(presetId, {...presetData, id: presetId});
             } catch (error) {
                 setAlert(error.message);
                 return;
