@@ -31,7 +31,6 @@ const renderItems = ({id, items = []}, conditions, setConditions) => {
         } else {
             preparedConditions.rules = !items.length ? [] : items[i]?.Conditions || []
         }
-        console.log('rerender');
         // const preparedConditions = {rules: []}
         result.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
             <MacrosAction name={'actions[]'} initValue={!items.length ? '' : items[i]?.Action || ''}/>
@@ -71,7 +70,6 @@ export const Macros = ({presetId, onSave, presetName, data = []}) => {
     const [formItems, setFormItems] = useState([]);
     const [conditions, setConditions] = useState([]);
     useEffect(() => {
-        console.log(data);
         setFormItems(renderItems(data, conditions, setConditions));
     }, [presetId]);
     const handleSubmit = async (e) => {
@@ -97,7 +95,7 @@ export const Macros = ({presetId, onSave, presetName, data = []}) => {
     return (<Box>
         <form onSubmit={handleSubmit}>
             <Box sx={{m: 2, display: 'flex'}} alignItems={'center'}>
-                <Button type={"submit"} disabled={submitDisabled}>Save</Button>
+                <Button type={"submit"} disabled={submitDisabled} variant={'contained'}>Save</Button>
             </Box>
             {formItems}
         </form>

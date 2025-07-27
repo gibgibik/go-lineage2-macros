@@ -37,6 +37,7 @@ type ProfileTemplate struct {
 type ProfilePreset struct {
 	Preset   preset.Preset `json:"preset"`
 	IsActive bool          `json:"is_active"`
+	BatchRun bool          `json:"batch_run"`
 }
 
 type ProfileTemplateItem struct {

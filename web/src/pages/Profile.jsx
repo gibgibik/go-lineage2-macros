@@ -1,10 +1,11 @@
-import React, {useContext, useEffect, useState} from "react";
+import React, {useCallback, useContext, useEffect, useMemo, useState} from "react";
 import {Box, Button, Grid, ListItemButton, ListItemText} from "@mui/material";
 import List from '@mui/material/List';
-import {getPresetsList, getProfilesList, savePreset, saveProfile} from "../api.js";
+import {getPresetsList, getProfilesList, saveProfile} from "../api.js";
 import {NotificationContext} from "../components/Alert/NotificationContext.jsx";
 import {Macros} from "../components/Macros/Macros.jsx";
 import {ProfilePreset} from "../components/ProfilePreset/ProfilePreset.jsx";
+import {ProfileMacros} from "../components/ProfileMacros/ProfileMacros.jsx";
 
 const NEW_PROFILE_NAME = 'New';
 
@@ -72,6 +73,12 @@ export const Profile = ({value, index, ...other}) => {
         }
         save();
     }
+    const isBatchRun = useMemo(() => {
+        if (!profileName) {
+            return false;
+        }
+        return !!profiles[profileName].items.find(item => item.preset.id == activePreset && item.batch_run === true);
+    }, [activePreset, profiles]);
     return (
         <Box
             role="tabpanel"
@@ -103,11 +110,12 @@ export const Profile = ({value, index, ...other}) => {
                 <Grid size={2} sx={{borderRight: '1px solid #ddd'}}>
                     {profileName &&
                         <ProfilePreset data={profiles[profileName]} setProfiles={setProfiles} profiles={profiles}
-                                       setActivePreset={setActivePreset} presetsList={presetsList} />}
+                                       setActivePreset={setActivePreset} presetsList={presetsList}/>}
                 </Grid>
                 <Grid size={7}>
                     {activePreset &&
-                        <Macros presetId={activePreset} onSave={save} presetName={presetsList[activePreset].name} data={presetsList[activePreset]} />}
+                        <ProfileMacros presetId={activePreset} profiles={profiles} setProfiles={setProfiles} profileName={profileName} onSave={save} presetName={presetsList[activePreset].name}
+                                       data={presetsList[activePreset]} isBatchRun={isBatchRun} />}
                 </Grid>
             </Grid>
         </Box>

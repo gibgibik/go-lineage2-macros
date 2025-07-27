@@ -27,7 +27,7 @@ export const ProfilePreset = ({data, setProfiles, profiles, setActivePreset, pre
             ...profiles,
             [data.name]: {
                 ...profiles[data.name],
-                items: [...profiles[data.name].items || [], {is_active: true, preset: presetsList[presetValue]}]
+                items: [...profiles[data.name].items || [], {is_active: true, batch_run: false, preset: presetsList[presetValue]}]
             }
         });
     }
@@ -39,19 +39,6 @@ export const ProfilePreset = ({data, setProfiles, profiles, setActivePreset, pre
         setActivePreset(val);
     };
     const isActiveChangeHandler = (event, pId) => {
-        // console.log(profiles);
-        // console.log({
-        //     ...profiles,
-        //     [data.name]: {
-        //         ...profiles[data.name],
-        //         items: [...(profiles[data.name].items || []).map((item) => {
-        //             if (item.preset.id == pId) {
-        //                 item.is_active = event.target.checked;
-        //             }
-        //             return item;
-        //         })],
-        //     }
-        // });
         setProfiles({
             ...profiles,
             [data.name]: {
@@ -73,6 +60,7 @@ export const ProfilePreset = ({data, setProfiles, profiles, setActivePreset, pre
             ...chosenPresetList, ...data.items.reduce((acc, cur) => {
                 acc[cur.preset.id] = cur.preset;
                 acc[cur.preset.id].is_active = cur.is_active;
+                acc[cur.preset.id].batch_run = cur.batch_run;
                 return acc
             }, {})
         });
