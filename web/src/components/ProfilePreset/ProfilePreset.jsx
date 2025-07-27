@@ -2,6 +2,7 @@ import List from '@mui/material/List';
 import {
     Box,
     Button,
+    Checkbox,
     FormControl,
     Grid,
     InputLabel,
@@ -22,7 +23,8 @@ export const ProfilePreset = ({data, setProfiles, profiles, setActivePreset, pre
             return
         }
         setChosenPresetList({...chosenPresetList, [presetValue]: presetsList[presetValue]});
-        setProfiles({...profiles,
+        setProfiles({
+            ...profiles,
             [data.name]: {
                 ...profiles[data.name],
                 items: [...profiles[data.name].items || [], {is_active: true, preset: presetsList[presetValue]}]
@@ -36,21 +38,55 @@ export const ProfilePreset = ({data, setProfiles, profiles, setActivePreset, pre
         setChosenPreset(val);
         setActivePreset(val);
     };
+    const isActiveChangeHandler = (event, pId) => {
+        // console.log(profiles);
+        // console.log({
+        //     ...profiles,
+        //     [data.name]: {
+        //         ...profiles[data.name],
+        //         items: [...(profiles[data.name].items || []).map((item) => {
+        //             if (item.preset.id == pId) {
+        //                 item.is_active = event.target.checked;
+        //             }
+        //             return item;
+        //         })],
+        //     }
+        // });
+        setProfiles({
+            ...profiles,
+            [data.name]: {
+                ...profiles[data.name],
+                items: [...(profiles[data.name].items || []).map((item) => {
+                    if (item.preset.id == pId) {
+                        item.is_active = event.target.checked;
+                    }
+                    return item;
+                })],
+            }
+        });
+    }
     useEffect(() => {
-        if (!data) {
+        if (!data?.items) {
             return;
         }
-        setChosenPresetList({...chosenPresetList, ...data.items.reduce((acc, cur) => {acc[cur.preset.id] = cur.preset; return acc}, {})});
+        setChosenPresetList({
+            ...chosenPresetList, ...data.items.reduce((acc, cur) => {
+                acc[cur.preset.id] = cur.preset;
+                acc[cur.preset.id].is_active = cur.is_active;
+                return acc
+            }, {})
+        });
     }, [data]);
     return <Box>
         <List sx={{width: '100%'}}>
             {Object.keys(chosenPresetList).map((pId) => {
-                return (<ListItemButton href="#simple-list" selected={chosenPreset == pId}
-                                        key={pId}
-                                        onClick={(event) => handlePresetChange(pId)}
-                                        sx={{width: '100%'}}>
-                    <ListItemText primary={chosenPresetList[pId].name}/>
-                </ListItemButton>);
+                return (<Box key={pId}>
+                    <ListItemButton href="#simple-list" selected={chosenPreset == pId}
+                                    key={pId}
+                                    onClick={(event) => handlePresetChange(pId)}>
+                        <Checkbox onChange={(e) => isActiveChangeHandler(e, pId)} checked={chosenPresetList[pId].is_active}/>
+                        <ListItemText primary={chosenPresetList[pId].name}/>
+                    </ListItemButton></Box>);
             })}
         </List>
         <Grid sx={{paddingLeft: 2, paddingRight: 2}} container alignItems={'center'} flexDirection={'row'}
