@@ -10,30 +10,13 @@ import {
     MenuItem,
     Select
 } from "@mui/material";
-import React, {useContext, useEffect, useState} from "react";
-import {getPresetsList} from "../../api.js";
-import {NotificationContext} from "../Alert/NotificationContext.jsx";
+import React, {useEffect, useState} from "react";
 
 
-export const ProfilePreset = ({data, setProfiles, profiles, setActivePreset, presetsList, setPresetsList}) => {
-    useEffect(() => {
-        const fetchPresets = async () => {
-            try {
-                const {data} = await getPresetsList();
-                setPresetsList(data.reduce((acc, item) => {
-                    acc[item.id] = item;
-                    return acc;
-                }, {}));
-            } catch (error) {
-                setAlert(error.response?.data);
-            }
-        }
-        fetchPresets();
-    }, []);
+export const ProfilePreset = ({data, setProfiles, profiles, setActivePreset, presetsList}) => {
     const [presetValue, setPresetValue] = useState('');
     const [chosenPresetList, setChosenPresetList] = useState({});
     const [chosenPreset, setChosenPreset] = useState(null);
-    const {setAlert} = useContext(NotificationContext);
     const addNew = () => {
         if (typeof (chosenPresetList?.[presetValue]) !== 'undefined') {
             return
@@ -53,6 +36,12 @@ export const ProfilePreset = ({data, setProfiles, profiles, setActivePreset, pre
         setChosenPreset(val);
         setActivePreset(val);
     };
+    useEffect(() => {
+        if (!data) {
+            return;
+        }
+        setChosenPresetList({...chosenPresetList, ...data.items.reduce((acc, cur) => {acc[cur.preset.id] = cur.preset; return acc}, {})});
+    }, [data]);
     return <Box>
         <List sx={{width: '100%'}}>
             {Object.keys(chosenPresetList).map((pId) => {

@@ -24,11 +24,10 @@ export const Profile = ({value, index, ...other}) => {
                 const {data} = await getProfilesList();
                 if (data) {
                     setProfiles(data.reduce((acc, item) => {
-                        acc[item.id] = item;
+                        acc[item.name] = item;
                         return acc;
                     }, {}));
                 }
-
             } catch (error) {
                 setAlert(error.response?.data);
             }
@@ -104,7 +103,7 @@ export const Profile = ({value, index, ...other}) => {
                 <Grid size={2} sx={{borderRight: '1px solid #ddd'}}>
                     {profileName &&
                         <ProfilePreset data={profiles[profileName]} setProfiles={setProfiles} profiles={profiles}
-                                       setActivePreset={setActivePreset} presetsList={presetsList} setPresetsList={setPresetsList}/>}
+                                       setActivePreset={setActivePreset} presetsList={presetsList} />}
                 </Grid>
                 <Grid size={7}>
                     {activePreset &&
