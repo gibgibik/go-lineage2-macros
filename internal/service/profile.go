@@ -46,16 +46,8 @@ type ProfileTemplateItem struct {
 	PeriodMilliseconds   int64 `json:"period_milliseconds"`
 	DelayMilliseconds    int64 `json:"delay_milliseconds"`
 	Additional           string
-	Conditions           []Condition
+	Conditions           []preset.Condition
 	ConditionsCombinator string `json:"conditions_combinator"`
-}
-
-type Condition struct {
-	Id          string `json:"id"`
-	Field       string `json:"field"`
-	Operator    string `json:"operator"`
-	ValueSource string `json:"value_source"`
-	Value       string `json:"value"`
 }
 
 func GetProfileData(profileName string, logger *zap.SugaredLogger) (*ProfileTemplate, error) {

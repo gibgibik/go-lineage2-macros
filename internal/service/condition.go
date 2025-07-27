@@ -5,11 +5,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gibgibik/go-lineage2-macros/internal/preset"
 	"github.com/gibgibik/go-lineage2-server/pkg/entity"
 	"go.uber.org/zap"
 )
 
-func CheckCondition(conditionsCombinator string, conditions []Condition, stat *entity.PlayerStat, party map[uint8]entity.PartyMember, logger *zap.SugaredLogger) (bool, error) {
+func CheckCondition(conditionsCombinator string, conditions []preset.Condition, stat *entity.PlayerStat, party map[uint8]entity.PartyMember, logger *zap.SugaredLogger) (bool, error) {
 	if stat == nil {
 		return false, errors.New("empty player stat, please check server")
 	}

@@ -7,6 +7,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -42,6 +43,7 @@ type Item struct {
 	Additional           string
 	Conditions           []Condition
 	ConditionsCombinator string `json:"conditions_combinator"`
+	LastRun              time.Time
 }
 
 type Condition struct {

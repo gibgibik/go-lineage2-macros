@@ -16,13 +16,6 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var rootCmd = &cobra.Command{
-	Use: "start",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("start")
-	},
-}
-
 func Execute() error {
 	var err error
 	pe := zap.NewProductionEncoderConfig()

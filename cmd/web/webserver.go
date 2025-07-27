@@ -38,7 +38,7 @@ type pidStack struct {
 	reloadCh  chan struct{}
 	waitCh    chan struct{}
 	webWaitCh chan struct{}
-	stack     []runStackStruct
+	stack     []*runStackStruct
 }
 
 var (
@@ -86,23 +86,26 @@ func initStacks(pid uint32, r *http.Request, logger *zap.SugaredLogger) error {
 		logger.Infof("invalid request", strings.Trim(r.RequestURI, "/"))
 		return errors.New("invalid request")
 	}
-	//profileData, err := service.GetProfileData(pathPieces[2], logger)
-	//if err != nil {
-	//	return err
-	//}
-	if len(pidsStack[pid].stack) == 0 {
-		//for _, val := range profileData.Items {
-		//	if val..pAction == "" {
-		//		continue
-		//	}
-		//	cp := pidsStack[pid]
-		//	cp.stack = append(pidsStack[pid].stack, runStackStruct{
-		//		item: val,
-		//	})
-		//	pidsStack[pid] = cp
-		//}
-
+	profileData, err := service.GetProfileData(pathPieces[2], logger)
+	if err != nil {
+		return err
 	}
+	var profilePresets []*runStackStruct
+	if len(pidsStack[pid].stack) == 0 {
+		for _, val := range profileData.Items {
+			if !val.IsActive {
+				continue
+			}
+			profilePresets = append(profilePresets,
+				&runStackStruct{
+					item: val,
+				})
+		}
+		cp := pidsStack[pid]
+		cp.stack = profilePresets
+		pidsStack[pid] = cp
+	}
+
 	if len(pidsStack[pid].stack) == 0 {
 		logger.Error("no actions available")
 		return errors.New("no actions available")
@@ -167,7 +170,6 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	mux.HandleFunc("/api/pause", pauseHandler())
 	mux.HandleFunc("/api/stop", stopHandler())
 	mux.HandleFunc("/api/init", initHandler())
-	mux.HandleFunc("/api/stats", statHandler(logger))
 	mux.HandleFunc("/api/preset", getPresetsListHandler(logger))
 	mux.HandleFunc("/api/preset/", savePresetHandler(logger))
 	mux.Handle("/", http.FileServer(http.Dir("./web/dist")))

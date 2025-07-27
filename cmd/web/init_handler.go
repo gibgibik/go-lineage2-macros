@@ -28,7 +28,7 @@ func initHandler() func(writer http.ResponseWriter, request *http.Request) {
 		if len(pidsStack) == 0 {
 			pidsStack = make(map[uint32]*pidStack, 0)
 			for pid := range response.PidsData {
-				str := pidStack{stack: []runStackStruct{}, stopCh: make(chan struct{}), reloadCh: make(chan struct{}), waitCh: make(chan struct{}), webWaitCh: make(chan struct{})}
+				str := pidStack{stack: nil, stopCh: make(chan struct{}), reloadCh: make(chan struct{}), waitCh: make(chan struct{}), webWaitCh: make(chan struct{})}
 				if minPid == pid {
 					str.stackType = stackTypeMain
 				} else {
