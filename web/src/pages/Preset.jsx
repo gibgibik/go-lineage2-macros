@@ -1,7 +1,7 @@
 import React, {useContext, useEffect, useState} from "react";
 import {Box, Button, Grid, ListItemButton, ListItemText} from "@mui/material";
 import List from '@mui/material/List';
-import {getPresetsList} from "../api.js";
+import {getPresetsList, savePreset} from "../api.js";
 import {NotificationContext} from "../components/Alert/NotificationContext.jsx";
 import {Macros} from "../components/Macros/Macros.jsx";
 
@@ -9,7 +9,7 @@ export const Preset = ({value, index, ...other}) => {
     if (value !== index) {
         return null;
     }
-    const {setAlert} = useContext(NotificationContext);
+    const {setAlert, setSuccess} = useContext(NotificationContext);
 
     const [presetId, setPresetId] = useState(null);
     const [presetsList, setPresetsList] = useState({});
@@ -50,6 +50,19 @@ export const Preset = ({value, index, ...other}) => {
         setPresetsList({...presetsList, [now]: {name: val, id: now}});
         setPresetId(now);
     }
+    const macrosSave = (presetData) => {
+        const save = async () => {
+            try {
+                await savePreset(presetId, presetData);
+            } catch (error) {
+                setAlert(error.message);
+                return;
+            }
+            setSuccess('Saved');
+            await loadPresets();
+        };
+        save();
+    }
     return (
         <Box
             role="tabpanel"
@@ -80,7 +93,7 @@ export const Preset = ({value, index, ...other}) => {
                 </Grid>
                 <Grid size={9}>
                     {presetId &&
-                        <Macros presetId={presetId} loadPresets={loadPresets} presetName={presetsList[presetId].name} data={presetsList[presetId]} />}
+                        <Macros presetId={presetId} onSave={macrosSave} presetName={presetsList[presetId].name} data={presetsList[presetId]} />}
                 </Grid>
             </Grid>
         </Box>

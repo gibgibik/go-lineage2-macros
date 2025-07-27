@@ -1,7 +1,7 @@
 import React, {useContext, useEffect, useState} from "react";
 import {Box, Button, Grid, ListItemButton, ListItemText} from "@mui/material";
 import List from '@mui/material/List';
-import {getPresetsList, getProfilesList} from "../api.js";
+import {getPresetsList, getProfilesList, savePreset, saveProfile} from "../api.js";
 import {NotificationContext} from "../components/Alert/NotificationContext.jsx";
 import {Macros} from "../components/Macros/Macros.jsx";
 import {ProfilePreset} from "../components/ProfilePreset/ProfilePreset.jsx";
@@ -12,7 +12,7 @@ export const Profile = ({value, index, ...other}) => {
     if (value !== index) {
         return null;
     }
-    const {setAlert} = useContext(NotificationContext);
+    const {setAlert, setSuccess} = useContext(NotificationContext);
 
     const [profileName, setProfileName] = useState(null);
     const [profiles, setProfiles] = useState({});
@@ -60,7 +60,19 @@ export const Profile = ({value, index, ...other}) => {
         setProfiles({...profiles, [value]: {name: value}});
         setProfileName(value);
     }
-    console.log(activePreset);
+    const save = () => {
+        // console.log(profiles[profileName]);
+        // return;
+        const save = async () => {
+            try {
+                await saveProfile(profileName, profiles[profileName]);
+                setSuccess('Saved');
+            } catch (error) {
+                setAlert(error.message);
+            }
+        }
+        save();
+    }
     return (
         <Box
             role="tabpanel"
@@ -96,19 +108,7 @@ export const Profile = ({value, index, ...other}) => {
                 </Grid>
                 <Grid size={7}>
                     {activePreset &&
-                        <Macros presetId={activePreset} loadPresets={() => {
-                            console.log('todo save')
-                        }} presetName={presetsList[activePreset].name} data={presetsList[activePreset]}
-                                setPreset={(newPreset) => {
-                                    setPresetsList({
-                                        ...presetsList,
-                                        [presetId.toString()]: {
-                                            ...presetsList[activePreset].id,
-                                            name: newPreset.target.value
-                                        }
-                                    });
-                                    return true;
-                                }}/>}
+                        <Macros presetId={activePreset} onSave={save} presetName={presetsList[activePreset].name} data={presetsList[activePreset]} />}
                 </Grid>
             </Grid>
         </Box>

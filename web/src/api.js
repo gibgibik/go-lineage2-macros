@@ -11,10 +11,10 @@ const api = axios.create({
 //     })
 // }
 //
-// export const saveProfile = (profileName, formData) => {
-//     return api.post('/profile/' + profileName, formData).then((response) => {
-//     })
-// }
+export const saveProfile = (profileName, formData) => {
+    return api.post('/profile/' + profileName, formData).then((response) => {
+    })
+}
 
 export const startMacros = (profileName, pid) => {
     return api.post('/start/' + profileName, {pid}).then((response) => {
@@ -43,7 +43,7 @@ export const getProfilesList = () => {
     return api.get('/profile?v=1');
 }
 
-export const savePreset = (presetId, formData) => {
-    return api.post('/preset/' + presetId, formData).then((response) => {
+export const savePreset = (presetId, data) => {
+    return api.post('/preset/' + presetId, data).then((response) => {
     })
 }

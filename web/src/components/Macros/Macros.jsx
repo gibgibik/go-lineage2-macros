@@ -65,7 +65,7 @@ const renderItems = ({id, items = []}, conditions, setConditions) => {
 
     return result;
 }
-export const Macros = ({presetId, loadPresets, presetName, data = []}) => {
+export const Macros = ({presetId, onSave, presetName, data = []}) => {
     const {setAlert, setSuccess} = useContext(NotificationContext);
     const [submitDisabled, disableSubmit] = useState(false);
     const [formItems, setFormItems] = useState([]);
@@ -74,26 +74,6 @@ export const Macros = ({presetId, loadPresets, presetName, data = []}) => {
         console.log(data);
         setFormItems(renderItems(data, conditions, setConditions));
     }, [presetId]);
-    // useEffect(() => {
-    //     setFormItems(renderItems(formItemsData, setConditions));
-    // }, [formItemsData, setConditions]);
-    // useEffect(() => {
-    //     async function initProfile() {
-    //         try {
-    //             const data = await getProfile(profileName);
-    //             if (data) {
-    //                 setFormItemsData(data);
-    //                 setFormItems(renderItems(data, conditions, setConditions));
-    //             } else {
-    //                 setFormItems(renderItems([], conditions, setConditions));
-    //             }
-    //         } catch (error) {
-    //             setFormItems(renderItems([], conditions, setConditions));
-    //         }
-    //     }
-    //
-    //     initProfile();
-    // }, [profileName]);
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -111,14 +91,8 @@ export const Macros = ({presetId, loadPresets, presetName, data = []}) => {
         }
 
         disableSubmit(true);
-        try {
-            await savePreset(presetId, obj);
-        } catch (error) {
-            setAlert(error.message);
-        }
+        onSave(formData);
         disableSubmit(false);
-        setSuccess('Saved');
-        loadPresets();
     }
     return (<Box>
         <form onSubmit={handleSubmit}>

@@ -35,6 +35,9 @@ export const ProfilePreset = ({data, setProfiles, profiles, setActivePreset, pre
     const [chosenPreset, setChosenPreset] = useState(null);
     const {setAlert} = useContext(NotificationContext);
     const addNew = () => {
+        if (typeof (chosenPresetList?.[presetValue]) !== 'undefined') {
+            return
+        }
         setChosenPresetList({...chosenPresetList, [presetValue]: presetsList[presetValue]});
         setProfiles({...profiles,
             [data.name]: {
