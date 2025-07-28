@@ -6,6 +6,7 @@ import {NotificationContext} from "../components/Alert/NotificationContext.jsx";
 import {Macros} from "../components/Macros/Macros.jsx";
 import {ProfilePreset} from "../components/ProfilePreset/ProfilePreset.jsx";
 import {ProfileMacros} from "../components/ProfileMacros/ProfileMacros.jsx";
+import {ProfileTarget} from "../components/ProfileTarget/ProfileTarget.jsx";
 
 const NEW_PROFILE_NAME = 'New';
 
@@ -15,6 +16,8 @@ export const Profile = ({value, index, profileName, setProfileName, currentPid, 
     const [profiles, setProfiles] = useState({});
     const [activePreset, setActivePreset] = useState(null);
     const [presetsList, setPresetsList] = useState([]);
+    const [preferredTargets, setPreferredTargets] = useState([]);
+    const [allowedTargets, setAllowedTargets] = useState([]);
     const loadData = () => {
         const fetchProfiles = async () => {
             try {
@@ -61,6 +64,8 @@ export const Profile = ({value, index, profileName, setProfileName, currentPid, 
             try {
                 await saveProfile(profileName, currentPid, {
                     ...profiles[profileName],
+                    preferred_targets: preferredTargets.map((item) => item.value),
+                    allowed_targets: allowedTargets.map((item) => item.value),
                     items: profiles[profileName].items.map((item) => {
                         if (item.preset.name == formData.name) {
                             item.preset = formData;
@@ -115,6 +120,10 @@ export const Profile = ({value, index, profileName, setProfileName, currentPid, 
                     </Grid>
                 </Grid>
                 <Grid size={2} sx={{borderRight: '1px solid #ddd'}}>
+                    <Box>
+                        {profileName && <ProfileTarget preferredTargets={preferredTargets} setPreferredTargets={setPreferredTargets}
+                                       allowedTargets={allowedTargets} setAllowedTargets={setAllowedTargets}/> }
+                    </Box>
                     {profileName &&
                         <ProfilePreset data={profiles[profileName]} setProfiles={setProfiles} profiles={profiles}
                                        setActivePreset={setActivePreset} presetsList={presetsList}/>}

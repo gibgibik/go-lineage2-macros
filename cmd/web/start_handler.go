@@ -9,6 +9,7 @@ import (
 
 	"github.com/gibgibik/go-ch9329/pkg/ch9329"
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
+	"github.com/gibgibik/go-lineage2-macros/internal/npc"
 	"github.com/gibgibik/go-lineage2-macros/internal/service"
 	"github.com/gibgibik/go-lineage2-server/pkg/entity"
 	"go.uber.org/zap"
@@ -186,7 +187,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 												time.Sleep(time.Millisecond * 200)
 												if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 													logger.Info("target is " + currentTarget)
-													if currentTarget != "Tarlk Basilisk" && currentTarget != "Hunter Gargoyle" && currentTarget != "Elder Tarlk Basilisk" {
+													if !core.InArray(currentTarget, pidsStack[pid].preferredTargets) {
 														controlCl.EndKey()
 														time.Sleep(time.Millisecond * 50)
 														controlCl.SendKey(0, "esc")
@@ -253,7 +254,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									if runAction.Action == service.ActionAttack {
 										if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 											logger.Info("target is " + currentTarget)
-											if currentTarget != "Tarlk Basilisk" && currentTarget != "Hunter Gargoyle" && currentTarget != "Elder Tarlk Basilisk" {
+											if _, ok := npc.NpcList[currentTarget]; !ok {
 												controlCl.SendKey(0, "esc")
 												time.Sleep(time.Millisecond * 50)
 												controlCl.EndKey()

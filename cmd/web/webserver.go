@@ -33,12 +33,14 @@ const (
 
 type pidStack struct {
 	sync.Mutex
-	stackType uint8
-	stopCh    chan struct{}
-	reloadCh  chan struct{}
-	waitCh    chan struct{}
-	webWaitCh chan struct{}
-	stack     []*runStackStruct
+	stackType        uint8
+	preferredTargets []string
+	allowedTargets   []string
+	stopCh           chan struct{}
+	reloadCh         chan struct{}
+	waitCh           chan struct{}
+	webWaitCh        chan struct{}
+	stack            []*runStackStruct
 }
 
 var (
@@ -103,6 +105,8 @@ func initStacks(pid uint32, r *http.Request, logger *zap.SugaredLogger) error {
 		}
 		cp := pidsStack[pid]
 		cp.stack = profilePresets
+		cp.allowedTargets = profileData.AllowedTargets
+		cp.preferredTargets = profileData.PreferredTargets
 		pidsStack[pid] = cp
 	}
 
@@ -173,6 +177,7 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	mux.HandleFunc("/api/preset", getPresetsListHandler(logger))
 	mux.HandleFunc("/api/preset/", savePresetHandler(logger))
 	mux.HandleFunc("/api/stats", statHandler(logger))
+	mux.HandleFunc("/api/npc", npcHandler(logger))
 	mux.Handle("/", http.FileServer(http.Dir("./web/dist")))
 	handle.Handler = withCORS(mux)
 	go func() {

@@ -9,7 +9,7 @@ import {
     ListItemButton,
     ListItemText,
     MenuItem,
-    Select
+    Select, Typography
 } from "@mui/material";
 import React, {useEffect, useState} from "react";
 
@@ -70,7 +70,8 @@ export const ProfilePreset = ({data, setProfiles, profiles, setActivePreset, pre
             }, {})
         );
     }, [data]);
-    return <Box>
+    return <Box sx={{m: 2}}>
+        <Typography variant={'h6'}>Presets</Typography>
         <List sx={{width: '100%'}}>
             {Object.keys(chosenPresetList).map((pId) => {
                 return (<Box key={pId}>

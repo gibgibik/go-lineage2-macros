@@ -42,3 +42,7 @@ export const savePreset = (presetId, data) => {
     return api.post('/preset/' + presetId, data).then((response) => {
     })
 }
+
+export const getNpcList = () => {
+    return api.get('/npc');
+}

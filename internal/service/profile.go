@@ -30,8 +30,10 @@ const (
 )
 
 type ProfileTemplate struct {
-	Items []ProfilePreset `json:"items"`
-	Name  string          `json:"name"`
+	Items            []ProfilePreset `json:"items"`
+	Name             string          `json:"name"`
+	PreferredTargets []string        `json:"preferred_targets"`
+	AllowedTargets   []string        `json:"allowed_targets"`
 }
 
 type ProfilePreset struct {
