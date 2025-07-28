@@ -3,6 +3,7 @@ package web
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gibgibik/go-lineage2-macros/internal/service"
@@ -27,8 +28,17 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 		createRequestError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	pieces := strings.Split(r.RequestURI, "/")
+	pid := pieces[len(pieces)-1]
+	pidi, _ := strconv.Atoi(pid)
+	pidii := uint32(pidi)
+	logger.Info("pid ", pidii)
 	for k := range pidsStack {
+		if pidii > 0 && k != pidii {
+			continue
+		}
 		if !pidsStack[k].TryLock() {
+			logger.Info("reload ", k)
 			pidsStack[k].reloadCh <- struct{}{}
 		} else {
 			pidsStack[k].Unlock()

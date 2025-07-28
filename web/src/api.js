@@ -6,8 +6,8 @@ const api = axios.create({
     baseURL: `http://${import.meta.env.VITE_SERVER_DOMAIN}:${import.meta.env.VITE_SERVER_PORT}/api`,
 });
 
-export const saveProfile = (profileName, formData) => {
-    return api.post('/profile/' + profileName, formData).then((response) => {
+export const saveProfile = (profileName, currentPid, formData) => {
+    return api.post(`/profile/${profileName}/${currentPid}`, formData).then((response) => {
     })
 }
 

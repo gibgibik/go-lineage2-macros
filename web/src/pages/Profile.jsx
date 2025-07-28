@@ -9,7 +9,7 @@ import {ProfileMacros} from "../components/ProfileMacros/ProfileMacros.jsx";
 
 const NEW_PROFILE_NAME = 'New';
 
-export const Profile = ({value, index, profileName, setProfileName, ...other}) => {
+export const Profile = ({value, index, profileName, setProfileName, currentPid, ...other}) => {
     const {setAlert, setSuccess} = useContext(NotificationContext);
 
     const [profiles, setProfiles] = useState({});
@@ -59,7 +59,7 @@ export const Profile = ({value, index, profileName, setProfileName, ...other}) =
     const save = (formData) => {
         const save = async () => {
             try {
-                await saveProfile(profileName, {
+                await saveProfile(profileName, currentPid, {
                     ...profiles[profileName],
                     items: profiles[profileName].items.map((item) => {
                         if (item.preset.name == formData.name) {
@@ -124,7 +124,8 @@ export const Profile = ({value, index, profileName, setProfileName, ...other}) =
                         <ProfileMacros presetId={activePreset} profiles={profiles} setProfiles={setProfiles}
                                        profileName={profileName} onSave={save}
                                        presetName={presetsList[activePreset].name}
-                                       data={profiles[profileName]?.items.find(item => item.preset.id == activePreset)?.preset} isBatchRun={isBatchRun}/>}
+                                       data={profiles[profileName]?.items.find(item => item.preset.id == activePreset)?.preset}
+                                       isBatchRun={isBatchRun}/>}
                 </Grid>
             </Grid>
         </Box>

@@ -3,7 +3,7 @@ import {Box, Button, ButtonGroup, Chip, FormControl, InputLabel, MenuItem, Selec
 import {init, pauseMacros, startMacros, stopMacros} from "../api.js";
 
 export const Running = (props) => {
-    const {value, index, profileName, ...other} = props;
+    const {value, index, profileName, currentPid, setCurrentPid, ...other} = props;
     if (value !== index) {
         return null;
     }
@@ -11,7 +11,6 @@ export const Running = (props) => {
         return;
     }
     const [runningMacrosState, setRunningMacrosState] = useState({});
-    const [currentPid, setCurrentPid] = useState(null);
     const [disabledStart, setDisabledStart] = useState(false);
     const [pidsData, setPidData] = useState([]);
     const startMacrosAction = () => {

@@ -26,6 +26,7 @@ function App() {
         setTab(newValue);
     };
     const [profileName, setProfileName] = useState(null);
+    const [currentPid, setCurrentPid] = useState(null);
 
     return (
         <ThemeProvider theme={theme}>
@@ -38,8 +39,8 @@ function App() {
                         <Tab label="Presets"/>
                     </Tabs>
                 </Box>
-                <Running value={currentTab} index={0} profileName={profileName}/>
-                <Profile value={currentTab} index={1} profileName={profileName} setProfileName={setProfileName}/>
+                <Running value={currentTab} index={0} profileName={profileName} currentPid={currentPid} setCurrentPid={setCurrentPid}/>
+                <Profile value={currentTab} index={1} profileName={profileName} setProfileName={setProfileName} currentPid={currentPid}/>
                 <Preset value={currentTab} index={2}/>
             </AlertProvider>
         </ThemeProvider>
