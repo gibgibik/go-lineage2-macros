@@ -187,10 +187,13 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 												if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 													logger.Info("target is " + currentTarget)
 													if currentTarget != "Tarlk Basilisk" && currentTarget != "Hunter Gargoyle" && currentTarget != "Elder Tarlk Basilisk" {
+														controlCl.EndKey()
+														time.Sleep(time.Millisecond * 50)
 														controlCl.SendKey(0, "esc")
 														time.Sleep(time.Millisecond * 50)
 														controlCl.EndKey()
 														time.Sleep(time.Millisecond * 50)
+														controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
 													} else {
 														break
 													}
