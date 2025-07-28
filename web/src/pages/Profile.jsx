@@ -40,6 +40,9 @@ export const Profile = ({value, index, profileName, setProfileName, currentPid, 
                     acc[item.id] = item;
                     return acc;
                 }, {}));
+                if (Array.isArray(data.preferred_targets)) {
+                    setPreferredTargets(data.preferred_targets.map((item) => item.value));
+                }
             } catch (error) {
                 setAlert(error.response?.data);
             }
@@ -121,8 +124,9 @@ export const Profile = ({value, index, profileName, setProfileName, currentPid, 
                 </Grid>
                 <Grid size={2} sx={{borderRight: '1px solid #ddd'}}>
                     <Box>
-                        {profileName && <ProfileTarget preferredTargets={preferredTargets} setPreferredTargets={setPreferredTargets}
-                                       allowedTargets={allowedTargets} setAllowedTargets={setAllowedTargets}/> }
+                        {profileName &&
+                            <ProfileTarget preferredTargets={preferredTargets} setPreferredTargets={setPreferredTargets}
+                                           allowedTargets={allowedTargets} setAllowedTargets={setAllowedTargets}/>}
                     </Box>
                     {profileName &&
                         <ProfilePreset data={profiles[profileName]} setProfiles={setProfiles} profiles={profiles}
