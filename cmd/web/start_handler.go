@@ -183,7 +183,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 													Y: bound[1] + 30,
 												}, 0)
 												controlCl.MouseAbsoluteEnd()
-												time.Sleep(time.Millisecond * 50)
+												time.Sleep(time.Millisecond * 100)
 												if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 													logger.Info("target is " + currentTarget)
 													if currentTarget != "Tarlk Basilisk" && currentTarget != "Hunter Gargoyle" && currentTarget != "Elder Tarlk Basilisk" {
