@@ -75,7 +75,7 @@ export const Macros = ({presetId, onSave, presetName, data = []}) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const obj = {items: [], name: presetName};
+        const obj = {items: [], name: presetName, id: parseInt(presetId)};
         for (let i = 0; i < INPUT_COUNT; i++) {
             obj.items.push({
                 'action': formData.getAll('actions[]')[i],

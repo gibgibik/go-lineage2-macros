@@ -107,10 +107,14 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								playerStat = &val
 							}
 							service.PlayerStatsMutex.Unlock()
-							runAction := profilePreset.item.Preset.Items[i]
+							runAction := &profilePreset.item.Preset.Items[i]
+							if runAction.Action == "" {
+								i++
+								continue
+							}
 							if runAction.Action == service.ActionStop {
 								if runAction.LastRun.IsZero() {
-									pidsStack[pid].stack[i].lastRun = time.Now()
+									runAction.LastRun = time.Now()
 								} else if runAction.PeriodMilliseconds > 0 && (runAction.LastRun.UnixMilli()+int64(runAction.PeriodMilliseconds)) < time.Now().UnixMilli() {
 									if playerStat.Target.HpPercent == 0 {
 										checksPassed = makeChecks(pidsStack, pid, checksPassed, controlCl, logger)
@@ -127,7 +131,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 												_ = switchWindow(pid, controlCl, logger)
 												windowSwitched = true
 											}
-											//logger.Info("press ", runAction.item.Binding)
 											controlCl.SendKey(0, runAction.Binding)
 											time.Sleep(time.Millisecond * 50)
 											controlCl.EndKey()
@@ -147,17 +150,17 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								i++
 								continue
 							}
-							service.PlayerStatsMutex.Lock()
-							if ok, err := service.CheckCondition(runAction.ConditionsCombinator, runAction.Conditions, playerStat, service.PlayerStats.Party, logger); !ok {
-								service.PlayerStatsMutex.Unlock()
-								i++
-								if err != nil {
-									logger.Error("check condition error: " + err.Error())
-								}
-								continue
-							} else {
-								service.PlayerStatsMutex.Unlock()
-							}
+							//service.PlayerStatsMutex.Lock()
+							//if ok, err := service.CheckCondition(runAction.ConditionsCombinator, runAction.Conditions, playerStat, service.PlayerStats.Party, logger); !ok {
+							//	service.PlayerStatsMutex.Unlock()
+							//	i++
+							//	if err != nil {
+							//		logger.Error("check condition error: " + err.Error())
+							//	}
+							//	continue
+							//} else {
+							//	service.PlayerStatsMutex.Unlock()
+							//}
 							if runAction.Action == service.ActionAITargetNext {
 								if pidsStack[pid].stackType == stackTypeSecondary {
 									logger.Error("ainexttarget isn't supported by the bot yet")
@@ -200,7 +203,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											controlCl.EndKey()
 										}
 									}
-									pidsStack[pid].stack[i].lastRun = time.Now()
+									runAction.LastRun = time.Now()
 								}
 								i++
 								continue
@@ -221,13 +224,12 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											windowSwitched = true
 											_ = switchWindow(pid, controlCl, logger)
 										}
-										//logger.Info("press ", runAction.item.Binding)
 										controlCl.MouseActionAbsolute(ch9329.MousePressRight, point, 0)
 										controlCl.MouseAbsoluteEnd()
 										if runAction.DelayMilliseconds > 0 {
 											time.Sleep(time.Millisecond * time.Duration(runAction.DelayMilliseconds))
 										}
-										pidsStack[pid].stack[i].lastRun = time.Now()
+										runAction.LastRun = time.Now()
 										//@todo need delay?
 									} else {
 										logger.Error("wrong additional for assist party member: " + runAction.Additional)
@@ -238,6 +240,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								continue
 							}
 
+							logger.Info("press ", runAction.Action, " ", runAction.Binding)
 							if controlErr == nil {
 								checksPassed = makeChecks(pidsStack, pid, checksPassed, controlCl, logger)
 								if !checksPassed {
@@ -308,7 +311,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									}
 								}
 							}
-							pidsStack[pid].stack[i].lastRun = time.Now()
+							runAction.LastRun = time.Now()
 							//message := fmt.Sprintf("%s %s <span style='color:red'>Target HP: [%.2f%%]</span>", runAction.item.Action, runAction.item.Binding, service.PlayerStats.Target.HpPercent)
 							//logger.Info(message)
 							i++
@@ -319,7 +322,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							_ = switchWindow(anotherPid, controlCl, logger)
 							pidsStack[anotherPid].waitCh <- struct{}{}
 						}
-						logger.Info("tick")
 						//logger.Info("end interation")
 						//run stack
 						time.Sleep(time.Millisecond * time.Duration(randNum(200, 300)))

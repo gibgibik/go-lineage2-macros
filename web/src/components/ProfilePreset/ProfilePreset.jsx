@@ -23,6 +23,7 @@ export const ProfilePreset = ({data, setProfiles, profiles, setActivePreset, pre
             return
         }
         setChosenPresetList({...chosenPresetList, [presetValue]: presetsList[presetValue]});
+
         setProfiles({
             ...profiles,
             [data.name]: {
@@ -60,8 +61,8 @@ export const ProfilePreset = ({data, setProfiles, profiles, setActivePreset, pre
         setChosenPresetList({
             ...chosenPresetList, ...data.items.reduce((acc, cur) => {
                 acc[cur.preset.id] = cur.preset;
-                acc[cur.preset.id].is_active = cur.is_active;
                 acc[cur.preset.id].batch_run = cur.batch_run;
+                acc[cur.preset.id].is_active = cur.is_active;
                 return acc
             }, {})
         });
@@ -69,7 +70,6 @@ export const ProfilePreset = ({data, setProfiles, profiles, setActivePreset, pre
     return <Box>
         <List sx={{width: '100%'}}>
             {Object.keys(chosenPresetList).map((pId) => {
-                console.log(chosenPresetList[pId]);
                 return (<Box key={pId}>
                     <ListItemButton href="#simple-list" selected={chosenPreset == pId}
                                     key={pId}

@@ -22,8 +22,8 @@ import (
 
 type runStackStruct struct {
 	sync.Mutex
-	item    service.ProfilePreset
-	lastRun time.Time
+	item service.ProfilePreset
+	//lastRun time.Time
 }
 
 const (

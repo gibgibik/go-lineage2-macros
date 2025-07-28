@@ -1,4 +1,4 @@
-import React, {useCallback, useContext, useEffect, useMemo, useState} from "react";
+import React, {useContext, useEffect, useMemo, useState} from "react";
 import {Box, Button, Grid, ListItemButton, ListItemText} from "@mui/material";
 import List from '@mui/material/List';
 import {getPresetsList, getProfilesList, saveProfile} from "../api.js";
@@ -10,9 +10,6 @@ import {ProfileMacros} from "../components/ProfileMacros/ProfileMacros.jsx";
 const NEW_PROFILE_NAME = 'New';
 
 export const Profile = ({value, index, profileName, setProfileName, ...other}) => {
-    if (value !== index) {
-        return null;
-    }
     const {setAlert, setSuccess} = useContext(NotificationContext);
 
     const [profiles, setProfiles] = useState({});
@@ -59,12 +56,20 @@ export const Profile = ({value, index, profileName, setProfileName, ...other}) =
         setProfiles({...profiles, [value]: {name: value, items: []}});
         setProfileName(value);
     }
-    const save = () => {
-        // console.log(profiles[profileName]);
-        // return;
+    const save = (formData) => {
         const save = async () => {
             try {
-                await saveProfile(profileName, profiles[profileName]);
+                await saveProfile(profileName, {
+                    ...profiles[profileName],
+                    items: profiles[profileName].items.map((item) => {
+                        if (item.preset.name == formData.name) {
+                            item.preset = formData;
+                            return item;
+                        } else {
+                            return item;
+                        }
+                    })
+                });
                 setSuccess('Saved');
             } catch (error) {
                 setAlert(error.message);
@@ -78,6 +83,9 @@ export const Profile = ({value, index, profileName, setProfileName, ...other}) =
         }
         return !!profiles[profileName].items.find(item => item.preset.id == activePreset && item.batch_run === true);
     }, [activePreset, profiles]);
+    if (value !== index) {
+        return null;
+    }
     return (
         <Box
             role="tabpanel"
@@ -112,9 +120,11 @@ export const Profile = ({value, index, profileName, setProfileName, ...other}) =
                                        setActivePreset={setActivePreset} presetsList={presetsList}/>}
                 </Grid>
                 <Grid size={7}>
-                    {activePreset &&
-                        <ProfileMacros presetId={activePreset} profiles={profiles} setProfiles={setProfiles} profileName={profileName} onSave={save} presetName={presetsList[activePreset].name}
-                                       data={presetsList[activePreset]} isBatchRun={isBatchRun} />}
+                    {activePreset > 0 &&
+                        <ProfileMacros presetId={activePreset} profiles={profiles} setProfiles={setProfiles}
+                                       profileName={profileName} onSave={save}
+                                       presetName={presetsList[activePreset].name}
+                                       data={profiles[profileName]?.items.find(item => item.preset.id == activePreset)?.preset} isBatchRun={isBatchRun}/>}
                 </Grid>
             </Grid>
         </Box>
