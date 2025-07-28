@@ -27,6 +27,7 @@ export const Profile = ({value, index, profileName, setProfileName, currentPid, 
                         acc[item.name] = item;
                         return acc;
                     }, {}));
+                    console.log(data);
                 }
             } catch (error) {
                 setAlert(error.response?.data);
@@ -40,9 +41,6 @@ export const Profile = ({value, index, profileName, setProfileName, currentPid, 
                     acc[item.id] = item;
                     return acc;
                 }, {}));
-                if (Array.isArray(data.preferred_targets)) {
-                    setPreferredTargets(data.preferred_targets.map((item) => item.value));
-                }
             } catch (error) {
                 setAlert(error.response?.data);
             }
@@ -53,7 +51,16 @@ export const Profile = ({value, index, profileName, setProfileName, currentPid, 
     const handleListItemClick = (profileName) => {
         setProfileName(profileName);
     };
-
+    useEffect(() => {
+        if (!profileName) {
+            return;
+        }
+        if (Array.isArray(profiles[profileName].preferred_targets)) {
+            setPreferredTargets(profiles[profileName].preferred_targets.map((item) => {
+                return {title: item, value: item};
+            }));
+        }
+    }, [profileName]);
     const addNew = () => {
         const value = prompt('Enter profile name');
         if (typeof profiles[value] !== 'undefined') {

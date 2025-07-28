@@ -39,6 +39,7 @@ export const ProfileTarget = ({preferredTargets, setPreferredTargets, allowedTar
         sx={{mb: 2}}
         multiple
         options={preferredNpcList}
+        value={preferredTargets}
         disableCloseOnSelect
         getOptionLabel={(option) => option.title}
         onChange={(props, newValue) => {
@@ -64,6 +65,7 @@ export const ProfileTarget = ({preferredTargets, setPreferredTargets, allowedTar
     />
         <Autocomplete
             multiple
+            value={allowedTargets}
             options={allowedNpcList}
             disableCloseOnSelect
             getOptionLabel={(option) => option.title}
