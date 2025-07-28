@@ -150,17 +150,17 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								i++
 								continue
 							}
-							//service.PlayerStatsMutex.Lock()
-							//if ok, err := service.CheckCondition(runAction.ConditionsCombinator, runAction.Conditions, playerStat, service.PlayerStats.Party, logger); !ok {
-							//	service.PlayerStatsMutex.Unlock()
-							//	i++
-							//	if err != nil {
-							//		logger.Error("check condition error: " + err.Error())
-							//	}
-							//	continue
-							//} else {
-							//	service.PlayerStatsMutex.Unlock()
-							//}
+							service.PlayerStatsMutex.Lock()
+							if ok, err := service.CheckCondition(runAction.ConditionsCombinator, runAction.Conditions, playerStat, service.PlayerStats.Party, logger); !ok {
+								service.PlayerStatsMutex.Unlock()
+								i++
+								if err != nil {
+									logger.Error("check condition error: " + err.Error())
+								}
+								continue
+							} else {
+								service.PlayerStatsMutex.Unlock()
+							}
 							if runAction.Action == service.ActionAITargetNext {
 								if pidsStack[pid].stackType == stackTypeSecondary {
 									logger.Error("ainexttarget isn't supported by the bot yet")
@@ -230,7 +230,6 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											time.Sleep(time.Millisecond * time.Duration(runAction.DelayMilliseconds))
 										}
 										runAction.LastRun = time.Now()
-										//@todo need delay?
 									} else {
 										logger.Error("wrong additional for assist party member: " + runAction.Additional)
 									}
