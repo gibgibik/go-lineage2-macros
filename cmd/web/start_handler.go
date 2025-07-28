@@ -315,15 +315,14 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							//logger.Info(message)
 							i++
 							time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
-						}
-						if windowSwitched {
-							windowSwitched = false
-							_ = switchWindow(anotherPid, controlCl, logger)
-							pidsStack[anotherPid].waitCh <- struct{}{}
+							if windowSwitched {
+								windowSwitched = false
+								_ = switchWindow(anotherPid, controlCl, logger)
+								pidsStack[anotherPid].waitCh <- struct{}{}
+							}
 						}
 						//logger.Info("end interation")
 						//run stack
-						time.Sleep(time.Millisecond * time.Duration(randNum(200, 300)))
 						//time.Sleep(time.Second)
 					}
 				}
