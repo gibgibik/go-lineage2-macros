@@ -28,7 +28,11 @@ export const ProfilePreset = ({data, setProfiles, profiles, setActivePreset, pre
             ...profiles,
             [data.name]: {
                 ...profiles[data.name],
-                items: [...profiles[data.name].items || [], {is_active: true, batch_run: false, preset: presetsList[presetValue]}],
+                items: [...profiles[data.name].items || [], {
+                    is_active: true,
+                    batch_run: false,
+                    preset: presetsList[presetValue]
+                }],
                 is_active: true,
             }
         });
@@ -58,14 +62,13 @@ export const ProfilePreset = ({data, setProfiles, profiles, setActivePreset, pre
         if (!data?.items) {
             return;
         }
-        setChosenPresetList({
-            ...chosenPresetList, ...data.items.reduce((acc, cur) => {
+        setChosenPresetList(data.items.reduce((acc, cur) => {
                 acc[cur.preset.id] = cur.preset;
                 acc[cur.preset.id].batch_run = cur.batch_run;
                 acc[cur.preset.id].is_active = cur.is_active;
                 return acc
             }, {})
-        });
+        );
     }, [data]);
     return <Box>
         <List sx={{width: '100%'}}>
@@ -74,7 +77,8 @@ export const ProfilePreset = ({data, setProfiles, profiles, setActivePreset, pre
                     <ListItemButton href="#simple-list" selected={chosenPreset == pId}
                                     key={pId}
                                     onClick={(event) => handlePresetChange(pId)}>
-                        <Checkbox onChange={(e) => isActiveChangeHandler(e, pId)} checked={chosenPresetList[pId]?.is_active}/>
+                        <Checkbox onChange={(e) => isActiveChangeHandler(e, pId)}
+                                  checked={chosenPresetList[pId]?.is_active}/>
                         <ListItemText primary={chosenPresetList[pId].name}/>
                     </ListItemButton></Box>);
             })}
