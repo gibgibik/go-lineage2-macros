@@ -957,6 +957,7 @@ var (
 		"Hatar Ratman Thief":              nil,
 		"Menacing Jackhammer Golem":       nil,
 		"Nightmare Lord":                  nil,
+		"Nightmare Guide":                 nil,
 		"Ossiud":                          nil,
 		"Ragna Orc Sniper":                nil,
 		"Secret Keeper Tree":              nil,
