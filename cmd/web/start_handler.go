@@ -111,7 +111,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							runAction := &profilePreset.item.Preset.Items[i]
 							if runAction.Action == "" {
 								i++
-								time.Sleep(time.Millisecond * 10)
+								time.Sleep(time.Millisecond * 1)
 								continue
 							}
 							if runAction.Action == service.ActionStop {
@@ -146,12 +146,12 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									}
 								}
 								i++
-								time.Sleep(time.Millisecond * 10)
+								time.Sleep(time.Millisecond * 1)
 								continue
 							}
 							if runAction.PeriodMilliseconds > 0 && runAction.LastRun.UnixMilli() > (time.Now().UnixMilli()-runAction.PeriodMilliseconds) {
 								i++
-								time.Sleep(time.Millisecond * 10)
+								time.Sleep(time.Millisecond * 1)
 								continue
 							}
 							service.PlayerStatsMutex.Lock()
@@ -161,7 +161,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								if err != nil {
 									logger.Error("check condition error: " + err.Error())
 								}
-								time.Sleep(time.Millisecond * 10)
+								time.Sleep(time.Millisecond * 1)
 								continue
 							} else {
 								service.PlayerStatsMutex.Unlock()
@@ -174,7 +174,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									if err != nil {
 										logger.Error("find bounds error: " + err.Error())
 										i++
-										time.Sleep(time.Millisecond * 10)
+										time.Sleep(time.Millisecond * 1)
 										continue
 									} else {
 										if controlErr == nil {
@@ -217,7 +217,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									runAction.LastRun = time.Now()
 								}
 								i++
-								time.Sleep(time.Millisecond * 10)
+								time.Sleep(time.Millisecond * 1)
 								continue
 							}
 							if runAction.Action == service.ActionAssistPartyMember {
