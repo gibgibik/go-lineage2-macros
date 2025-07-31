@@ -326,7 +326,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							//message := fmt.Sprintf("%s %s <span style='color:red'>Target HP: [%.2f%%]</span>", runAction.item.Action, runAction.item.Binding, service.PlayerStats.Target.HpPercent)
 							//logger.Info(message)
 							i++
-							time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
+							time.Sleep(time.Millisecond * time.Duration(randNum(5, 20)))
 						}
 						if windowSwitched {
 							windowSwitched = false
