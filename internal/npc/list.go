@@ -958,6 +958,7 @@ var (
 		"Menacing Jackhammer Golem":       nil,
 		"Nightmare Lord":                  nil,
 		"Nightmare Guide":                 nil,
+		"Nightmare Keeper":                nil,
 		"Ossiud":                          nil,
 		"Ragna Orc Sniper":                nil,
 		"Secret Keeper Tree":              nil,
