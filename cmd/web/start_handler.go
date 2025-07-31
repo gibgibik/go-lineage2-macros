@@ -106,6 +106,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							service.PlayerStatsMutex.Lock()
 							if val, ok := service.PlayerStats.Player[pid]; ok {
 								playerStat = &val
+								if playerStat.CP.Percent < 98 {
+									pidsStack[pid].stopCh <- struct{}{}
+									logger.Debug("macros stopped due to not full cp!!!")
+									break
+								}
 							}
 							service.PlayerStatsMutex.Unlock()
 							runAction := &profilePreset.item.Preset.Items[i]
