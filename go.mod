@@ -12,7 +12,7 @@ require (
 require (
 	github.com/creack/goselect v0.1.2 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
-	github.com/gibgibik/go-ch9329 v0.0.0-20250720195236-864b1f2b4be4 // indirect
+	github.com/gibgibik/go-ch9329 v0.0.0-20250731091502-b286803840ed // indirect
 	github.com/gibgibik/go-lineage2-server v0.0.0-20250723071340-fef8a51351eb // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
