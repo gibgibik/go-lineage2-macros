@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gibgibik/go-ch9329/pkg/ch9329"
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
 	"github.com/gibgibik/go-lineage2-macros/internal/service"
 	"github.com/gorilla/websocket"
@@ -228,7 +229,7 @@ func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLog
 		return true
 	}
 	if controlCl != nil {
-		controlCl.SendKey(0, "\\")
+		controlCl.SendKey(ch9329.ModLeftAlt, "tab")
 		time.Sleep(time.Millisecond * 50)
 		controlCl.EndKey()
 		time.Sleep(time.Millisecond * 200)
