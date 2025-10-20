@@ -46,13 +46,6 @@ func Execute() error {
 		zapcore.NewCore(zapcore.NewConsoleEncoder(webEncoder), zapcore.AddSync(web.BaseWsSender{}), zapcore.InfoLevel),
 	)
 	logger := zap.New(cZ)
-	cnf, err := core.InitConfig()
-	if err != nil {
-		return err
-	}
-	http.IniHttpClient(cnf.BaseUrl)
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL)
-	defer cancel()
 	rootCmd := &cobra.Command{
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return nil
@@ -62,6 +55,14 @@ func Execute() error {
 		},
 	}
 	rootCmd.AddCommand(web.CreateWebServerCommand(logger.Sugar()))
+	rootCmd.PersistentFlags().StringP("config", "c", "", "")
+	cnf, err := core.InitConfig()
+	if err != nil {
+		return err
+	}
+	http.IniHttpClient(cnf.BaseUrl)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL)
+	defer cancel()
 	go func() {
 		defer cancel()
 		err = rootCmd.ExecuteContext(context.WithValue(ctx, "cnf", cnf))

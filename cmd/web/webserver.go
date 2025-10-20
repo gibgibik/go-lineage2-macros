@@ -136,6 +136,7 @@ func CreateWebServerCommand(logger *zap.SugaredLogger) *cobra.Command {
 			}
 		},
 	}
+
 	return webServer
 }
 
