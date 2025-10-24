@@ -1,0 +1,7 @@
+web:
+  port: 8088
+base_url: "http://192.168.1.131:2223/"
+control:
+  port: "/dev/ttyUSB0"
+  baud_rate: 9600
+  resolution: [2880, 1800]
