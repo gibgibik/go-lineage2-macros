@@ -25,9 +25,9 @@ const renderItems = ({id, items = []}, conditions, setConditions) => {
     const result = []
     for (let i = 0; i < INPUT_COUNT; i++) {
         let preparedConditions = {rules: []};
-        if (items.length && items[i] && (items[i]?.conditions_combinator || '') !== '') {
+        if (items.length > 0 && items[i] && (items[i]?.conditions_combinator || '') !== '') {
             preparedConditions.rules = items[i]['Conditions'].flatMap((item, index) => index < items[i]['Conditions'].length - 1 ? [item, items[i]?.conditions_combinator] : [item]);
-            preparedConditions.rules = items[i]['Conditions'];
+            // preparedConditions.rules = items[i]['Conditions'];
         } else {
             preparedConditions.rules = !items.length ? [] : items[i]?.Conditions || []
         }

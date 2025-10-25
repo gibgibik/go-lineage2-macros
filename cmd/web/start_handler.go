@@ -9,7 +9,6 @@ import (
 
 	"github.com/gibgibik/go-ch9329/pkg/ch9329"
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
-	"github.com/gibgibik/go-lineage2-macros/internal/npc"
 	"github.com/gibgibik/go-lineage2-macros/internal/service"
 	"github.com/gibgibik/go-lineage2-server/pkg/entity"
 	"go.uber.org/zap"
@@ -211,12 +210,17 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 												}
 												//time.Sleep(time.Millisecond * time.Duration(randNum(400, 500)))
 											}
-											if playerStat.Target.HpPercent == 0 {
-												controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(480, 320), 0)
-												controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(580, 320), 0)
-												controlCl.MouseAbsoluteEnd()
-											}
 											controlCl.EndKey()
+											if playerStat.Target.HpPercent == 0 {
+												//controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(480, 320), 0)
+												//controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(490, 320), 0)
+												//controlCl.MouseAbsoluteEnd()
+												controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(0, 0), 0)
+												time.Sleep(time.Millisecond * 200)
+												controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(5, 0), 0)
+												time.Sleep(time.Millisecond * 100)
+												controlCl.MouseActionAbsolute(0, image.Pt(10, 0), 0)
+											}
 										}
 									}
 									runAction.LastRun = time.Now()
@@ -265,14 +269,14 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									if runAction.Action == service.ActionAttack {
 										if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 											logger.Info("target is " + currentTarget)
-											if _, ok := npc.NpcList[currentTarget]; !ok {
-												controlCl.SendKey(0, "esc")
-												time.Sleep(time.Millisecond * 50)
-												controlCl.EndKey()
-												time.Sleep(time.Millisecond * 50)
-												i++
-												continue
-											}
+											//if _, ok := npc.NpcList[currentTarget]; !ok {
+											//controlCl.SendKey(0, "esc")
+											//time.Sleep(time.Millisecond * 50)
+											//controlCl.EndKey()
+											//time.Sleep(time.Millisecond * 50)
+											//i++
+											//continue
+											//}
 										}
 									}
 									if !windowSwitched && pidsStack[pid].stackType == stackTypeSecondary {
