@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	http2 "net/http"
+	"regexp"
 	"sync"
 	"time"
 
@@ -77,6 +78,7 @@ func FindBounds(logger *zap.SugaredLogger) (*BoundsResult, error) {
 	err = json.Unmarshal(bounds, &boxes)
 	if err != nil {
 		logger.Error("parse bounds json error: ", err.Error())
+		//logger.Info(string(bounds))
 		return nil, nil
 	}
 	//if len(boxes.Boxes) > 10 {
@@ -96,10 +98,11 @@ func GetCurrentTarget(logger *zap.SugaredLogger) (string, error) {
 	}
 	err = json.Unmarshal(result, &name)
 	if err != nil {
-		logger.Error("parse bounds json error: ", err.Error())
+		//logger.Error("current target json error: ", err.Error())
 		return "", nil
 	}
-	return name.Name, nil
+	re := regexp.MustCompile("(Lv..*?|\\s*\\(.*?)$")
+	return re.ReplaceAllString(name.Name, ""), nil
 }
 
 func Init() (InitData, error) {

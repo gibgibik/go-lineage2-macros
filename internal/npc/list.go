@@ -1458,5 +1458,8 @@ var (
 		"Valentine Blue":                  nil,
 		"Wind Rider":                      nil,
 		"Zealot of Shilen":                nil,
+		"Dre Vanul Scout":                 nil,
+		"Dre Vanul":                       nil,
+		"Dre Vanul Disposer":              nil,
 	}
 )

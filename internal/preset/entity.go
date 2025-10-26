@@ -64,7 +64,6 @@ func GetList(logger *zap.SugaredLogger) ([]Preset, error) {
 		return nil, err
 	}
 	result := make([]Preset, 0)
-	logger.Info(entries)
 	for _, entry := range entries {
 		pieces := strings.Split(entry.Name(), ".")
 		if len(pieces) != 2 || pieces[1] != "json" {

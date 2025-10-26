@@ -38,16 +38,7 @@ func (c *Control) EndKey() (n int, err error) {
 }
 
 var (
-	AssistPartyMemberMap = map[string]image.Point{
-		"1": {40, 147},
-		"2": {40, 201},
-		"3": {40, 255},
-		"4": {40, 309},
-		"5": {40, 364},
-		"6": {40, 417},
-		"7": {40, 472},
-		"8": {40, 525},
-	}
+	AssistPartyMemberMap = map[string]image.Point{}
 
 	control *Control
 )

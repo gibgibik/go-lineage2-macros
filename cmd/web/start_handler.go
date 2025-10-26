@@ -9,6 +9,7 @@ import (
 
 	"github.com/gibgibik/go-ch9329/pkg/ch9329"
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
+	"github.com/gibgibik/go-lineage2-macros/internal/npc"
 	"github.com/gibgibik/go-lineage2-macros/internal/service"
 	"github.com/gibgibik/go-lineage2-server/pkg/entity"
 	"go.uber.org/zap"
@@ -42,6 +43,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		} else {
 			//defer controlCl.cl.Port.Close()
 		}
+		initPartyMemberMap(cnf)
 		var anotherPid uint32
 		for k := range pidsStack {
 			if k != pid {
@@ -103,11 +105,15 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							}
 							var playerStat *entity.PlayerStat
 							service.PlayerStatsMutex.Lock()
+
 							if val, ok := service.PlayerStats.Player[pid]; ok {
 								playerStat = &val
 								if playerStat.CP.Percent < 98 {
-									pidsStack[pid].stopCh <- struct{}{}
+									go func() {
+										pidsStack[pid].stopCh <- struct{}{}
+									}()
 									logger.Debug("macros stopped due to not full cp!!!")
+									time.Sleep(time.Second)
 									break
 								}
 							}
@@ -190,13 +196,14 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 												}
 												controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
 													X: int((bound[2]-bound[0])/2) + bound[0],
-													Y: bound[1] + 30,
+													Y: bound[1] + 50,
 												}, 0)
 												controlCl.MouseAbsoluteEnd()
 												time.Sleep(time.Millisecond * 200)
 												if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 													logger.Info("target is " + currentTarget)
-													if !core.InArray(currentTarget, pidsStack[pid].preferredTargets) {
+													//break
+													if len(pidsStack[pid].preferredTargets) > 0 && !core.InArray(currentTarget, pidsStack[pid].preferredTargets) || !core.InArray(currentTarget, pidsStack[pid].allowedTargets) {
 														controlCl.EndKey()
 														time.Sleep(time.Millisecond * 50)
 														controlCl.SendKey(0, "esc")
@@ -269,14 +276,16 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									if runAction.Action == service.ActionAttack {
 										if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 											logger.Info("target is " + currentTarget)
-											//if _, ok := npc.NpcList[currentTarget]; !ok {
-											//controlCl.SendKey(0, "esc")
-											//time.Sleep(time.Millisecond * 50)
-											//controlCl.EndKey()
-											//time.Sleep(time.Millisecond * 50)
-											//i++
-											//continue
-											//}
+											if _, ok := npc.NpcList[currentTarget]; !ok {
+												if len(pidsStack[pid].allowedTargets) > 0 && !core.InArray(currentTarget, pidsStack[pid].allowedTargets) {
+													controlCl.SendKey(0, "esc")
+													time.Sleep(time.Millisecond * 50)
+													controlCl.EndKey()
+													time.Sleep(time.Millisecond * 50)
+													i++
+													continue
+												}
+											}
 										}
 									}
 									if !windowSwitched && pidsStack[pid].stackType == stackTypeSecondary {
@@ -290,7 +299,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										windowSwitched = true
 										_ = switchWindow(pid, controlCl, logger)
 									}
-									//logger.Info("press ", runAction.item.Binding)
+									logger.Info("press ", runAction.Binding)
 									controlCl.SendKey(0, runAction.Binding)
 									time.Sleep(time.Millisecond * 50)
 									controlCl.EndKey()
@@ -349,5 +358,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 				}
 			}
 		}()
+	}
+}
+
+func initPartyMemberMap(cnf *core.Config) {
+	for idx, val := range cnf.AssistPartyMemberMap {
+		service.AssistPartyMemberMap[idx] = image.Point{val[0], val[1]}
 	}
 }

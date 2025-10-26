@@ -16,9 +16,10 @@ type Control struct {
 	Resolution []int `mapstructure:"resolution"`
 }
 type Config struct {
-	WebServer Web    `mapstructure:"web"`
-	InitUrl   string `mapstructure:"init_url"`
-	BaseUrl   string `mapstructure:"base_url"`
+	WebServer            Web              `mapstructure:"web"`
+	InitUrl              string           `mapstructure:"init_url"`
+	BaseUrl              string           `mapstructure:"base_url"`
+	AssistPartyMemberMap map[string][]int `mapstructure:"assist_party_member_map"`
 	Control
 }
 
