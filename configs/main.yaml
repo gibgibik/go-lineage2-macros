@@ -6,7 +6,7 @@ control:
   baud_rate: 9600
   resolution: [ 2560, 1440 ]
 assist_party_member_map:
-  "1": [ 40, 147 ]
+  "1": [ 50, 153 ]
   "2": [ 40, 201 ]
   "3": [ 40, 255 ]
   "4": [ 40, 309 ]

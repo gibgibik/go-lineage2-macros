@@ -3,13 +3,16 @@ package web
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"image"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gibgibik/go-ch9329/pkg/ch9329"
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
 	"github.com/gibgibik/go-lineage2-macros/internal/npc"
+	"github.com/gibgibik/go-lineage2-macros/internal/preset"
 	"github.com/gibgibik/go-lineage2-macros/internal/service"
 	"github.com/gibgibik/go-lineage2-server/pkg/entity"
 	"go.uber.org/zap"
@@ -74,9 +77,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					logger.Info("continue from web context")
 				case <-pidsStack[pid].waitCh:
 					logger.Info("wait start")
-					controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960, 560}, 0)
-					time.Sleep(time.Millisecond * 50)
-					controlCl.MouseAbsoluteEnd()
+					controlCl.SendKey(0, "s")
+					controlCl.EndKey()
 					if !pidsStack[anotherPid].TryLock() {
 						pidsStack[anotherPid].waitCh <- struct{}{}
 					} else {
@@ -89,7 +91,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					err := initStacks(body.Pid, r, logger)
 					if err != nil {
 						logger.Error("init stacks error: " + err.Error())
-						sendMessage("init stacks error: " + err.Error())
+						sendMessage(messageTypeError, "init stacks error: "+err.Error())
 						return
 					}
 					for _, profilePreset := range pidsStack[pid].stack {
@@ -108,14 +110,14 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 
 							if val, ok := service.PlayerStats.Player[pid]; ok {
 								playerStat = &val
-								if playerStat.CP.Percent < 98 {
-									go func() {
-										pidsStack[pid].stopCh <- struct{}{}
-									}()
-									logger.Debug("macros stopped due to not full cp!!!")
-									time.Sleep(time.Second)
-									break
-								}
+								//if playerStat.CP.Percent < 98 && playerStat.CP.Percent > 0 {
+								//	go func() {
+								//		pidsStack[pid].stopCh <- struct{}{}
+								//	}()
+								//	logger.Debug("macros stopped due to not full cp!!!")
+								//	time.Sleep(time.Second)
+								//	break
+								//}
 							}
 							service.PlayerStatsMutex.Unlock()
 							runAction := &profilePreset.item.Preset.Items[i]
@@ -125,38 +127,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								continue
 							}
 							if runAction.Action == service.ActionStop {
-								if runAction.LastRun.IsZero() {
-									runAction.LastRun = time.Now()
-								} else if runAction.PeriodMilliseconds > 0 && (runAction.LastRun.UnixMilli()+int64(runAction.PeriodMilliseconds)) < time.Now().UnixMilli() {
-									if playerStat.Target.HpPercent == 0 {
-										checksPassed = makeChecks(pidsStack, pid, checksPassed, controlCl, logger)
-										if !checksPassed {
-											logger.Error("makecheck failed")
-										} else {
-											if !windowSwitched && pidsStack[pid].stackType == stackTypeSecondary {
-												if !pidsStack[anotherPid].TryLock() {
-													pidsStack[anotherPid].waitCh <- struct{}{}
-													<-pidsStack[pid].waitCh
-												} else {
-													pidsStack[anotherPid].Unlock()
-												}
-												_ = switchWindow(pid, controlCl, logger)
-												windowSwitched = true
-											}
-											controlCl.SendKey(0, runAction.Binding)
-											time.Sleep(time.Millisecond * 50)
-											controlCl.EndKey()
-											if runAction.DelayMilliseconds > 0 {
-												time.Sleep(time.Millisecond * time.Duration(runAction.DelayMilliseconds))
-											}
-										}
-										time.Sleep(time.Second * 10)
-										pidsStack[pid].stopCh <- struct{}{}
-										logger.Debug("macros stopped due to stop!!!")
-									}
-								}
-								i++
-								time.Sleep(time.Millisecond * 1)
+								checksPassed, windowSwitched, i = handleStop(runAction, playerStat, checksPassed, pid, controlCl, logger, windowSwitched, anotherPid, i)
 								continue
 							}
 							if runAction.PeriodMilliseconds > 0 && runAction.LastRun.UnixMilli() > (time.Now().UnixMilli()-runAction.PeriodMilliseconds) {
@@ -191,19 +162,24 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
 											time.Sleep(time.Millisecond * 50)
 											for _, bound := range bounds.Boxes {
-												if playerStat.Target.HpPercent > 0 {
-													break
-												}
 												controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
 													X: int((bound[2]-bound[0])/2) + bound[0],
-													Y: bound[1] + 50,
+													Y: bound[1] + 60,
 												}, 0)
+												time.Sleep(time.Millisecond * 40)
 												controlCl.MouseAbsoluteEnd()
-												time.Sleep(time.Millisecond * 200)
+												//time.Sleep(time.Millisecond * 50)
+												//controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
+												//	X: int((bound[2]-bound[0])/2) + bound[0],
+												//	Y: bound[1] + 40,
+												//}, 0)
+												//time.Sleep(time.Millisecond * 10)
+												//controlCl.MouseAbsoluteEnd()
+												time.Sleep(time.Millisecond * 500)
 												if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 													logger.Info("target is " + currentTarget)
 													//break
-													if len(pidsStack[pid].preferredTargets) > 0 && !core.InArray(currentTarget, pidsStack[pid].preferredTargets) || !core.InArray(currentTarget, pidsStack[pid].allowedTargets) {
+													if currentTarget == "Mechanic Golem" || (len(pidsStack[pid].preferredTargets) > 0 && !core.InArray(currentTarget, pidsStack[pid].preferredTargets)) {
 														controlCl.EndKey()
 														time.Sleep(time.Millisecond * 50)
 														controlCl.SendKey(0, "esc")
@@ -211,7 +187,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 														controlCl.EndKey()
 														time.Sleep(time.Millisecond * 50)
 														controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
-													} else {
+													} else if playerStat.Target.HpPercent > 10 {
 														break
 													}
 												}
@@ -237,33 +213,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								continue
 							}
 							if runAction.Action == service.ActionAssistPartyMember {
-								checksPassed = makeChecks(pidsStack, pid, checksPassed, controlCl, logger)
-								if !checksPassed {
-									logger.Error("makecheck failed")
-								} else {
-									if point, ok := service.AssistPartyMemberMap[runAction.Additional]; ok {
-										if !windowSwitched && pidsStack[pid].stackType == stackTypeSecondary {
-											if !pidsStack[anotherPid].TryLock() {
-												pidsStack[anotherPid].waitCh <- struct{}{}
-												<-pidsStack[pid].waitCh
-											} else {
-												pidsStack[anotherPid].Unlock()
-											}
-											windowSwitched = true
-											_ = switchWindow(pid, controlCl, logger)
-										}
-										controlCl.MouseActionAbsolute(ch9329.MousePressRight, point, 0)
-										controlCl.MouseAbsoluteEnd()
-										if runAction.DelayMilliseconds > 0 {
-											time.Sleep(time.Millisecond * time.Duration(runAction.DelayMilliseconds))
-										}
-										runAction.LastRun = time.Now()
-									} else {
-										logger.Error("wrong additional for assist party member: " + runAction.Additional)
-									}
-								}
-								i++
-								time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
+								checksPassed, windowSwitched, i = handleAssistPartyMember(checksPassed, pid, controlCl, logger, runAction, windowSwitched, anotherPid, i)
 								continue
 							}
 
@@ -277,7 +227,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 											logger.Info("target is " + currentTarget)
 											if _, ok := npc.NpcList[currentTarget]; !ok {
-												if len(pidsStack[pid].allowedTargets) > 0 && !core.InArray(currentTarget, pidsStack[pid].allowedTargets) {
+												if currentTarget == "Mechanic Golem" || (len(pidsStack[pid].allowedTargets) > 0 && !core.InArray(currentTarget, pidsStack[pid].allowedTargets)) {
+													fmt.Println("cancel")
 													controlCl.SendKey(0, "esc")
 													time.Sleep(time.Millisecond * 50)
 													controlCl.EndKey()
@@ -285,6 +236,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 													i++
 													continue
 												}
+
 											}
 										}
 									}
@@ -294,13 +246,27 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											<-pidsStack[pid].waitCh
 										} else {
 											pidsStack[anotherPid].Unlock()
-
 										}
 										windowSwitched = true
 										_ = switchWindow(pid, controlCl, logger)
 									}
 									logger.Info("press ", runAction.Binding)
-									controlCl.SendKey(0, runAction.Binding)
+									if strings.Contains(runAction.Binding, "+") {
+										pieces := strings.Split(runAction.Binding, "+")
+										var modifier byte
+										switch pieces[0] {
+										case "ctrl":
+											modifier = ch9329.ModLeftCtrl
+										case "alt":
+											modifier = ch9329.ModLeftAlt
+										default:
+											modifier = 0
+
+										}
+										controlCl.SendKey(modifier, pieces[1])
+									} else {
+										controlCl.SendKey(0, runAction.Binding)
+									}
 									time.Sleep(time.Millisecond * 50)
 									controlCl.EndKey()
 									if runAction.DelayMilliseconds > 0 {
@@ -309,36 +275,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								}
 							}
 							if runAction.Action == service.ActionUnstuck {
-								checksPassed = makeChecks(pidsStack, pid, checksPassed, controlCl, logger)
-								if !checksPassed {
-									logger.Error("makecheck failed")
-								} else {
-									if !windowSwitched && pidsStack[pid].stackType == stackTypeSecondary {
-										if !pidsStack[anotherPid].TryLock() {
-											pidsStack[anotherPid].waitCh <- struct{}{}
-											<-pidsStack[pid].waitCh
-										} else {
-											pidsStack[anotherPid].Unlock()
-										}
-										windowSwitched = true
-										_ = switchWindow(pid, controlCl, logger)
-									}
-									//logger.Info("press ", runAction.item.Binding)
-									controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960, 540 + 300}, 0)
-									time.Sleep(time.Millisecond * 50)
-									controlCl.MouseAbsoluteEnd()
-									time.Sleep(time.Second * 3)
-									controlCl.SendKey(0, runAction.Binding)
-									time.Sleep(time.Millisecond * 50)
-									controlCl.EndKey()
-									time.Sleep(time.Millisecond * 50)
-									controlCl.SendKey(0, "esc")
-									time.Sleep(time.Millisecond * 50)
-									controlCl.EndKey()
-									if runAction.DelayMilliseconds > 0 {
-										time.Sleep(time.Millisecond * time.Duration(runAction.DelayMilliseconds))
-									}
-								}
+								windowSwitched = handleUnstuck(checksPassed, pid, controlCl, logger, windowSwitched, anotherPid, runAction)
 							}
 							runAction.LastRun = time.Now()
 							//message := fmt.Sprintf("%s %s <span style='color:red'>Target HP: [%.2f%%]</span>", runAction.item.Action, runAction.item.Binding, service.PlayerStats.Target.HpPercent)
@@ -349,7 +286,11 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						if windowSwitched {
 							windowSwitched = false
 							_ = switchWindow(anotherPid, controlCl, logger)
-							pidsStack[anotherPid].waitCh <- struct{}{}
+							if !pidsStack[anotherPid].TryLock() {
+								pidsStack[anotherPid].waitCh <- struct{}{}
+							} else {
+								pidsStack[anotherPid].Unlock()
+							}
 						}
 						//logger.Info("end interation")
 						//run stack
@@ -359,6 +300,107 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 			}
 		}()
 	}
+}
+
+func handleStop(runAction *preset.Item, playerStat *entity.PlayerStat, checksPassed bool, pid uint32, controlCl *service.Control, logger *zap.SugaredLogger, windowSwitched bool, anotherPid uint32, i int) (bool, bool, int) {
+	if runAction.LastRun.IsZero() {
+		runAction.LastRun = time.Now()
+	} else if runAction.PeriodMilliseconds > 0 && (runAction.LastRun.UnixMilli()+int64(runAction.PeriodMilliseconds)) < time.Now().UnixMilli() {
+		if playerStat.Target.HpPercent == 0 {
+			checksPassed = makeChecks(pidsStack, pid, checksPassed, controlCl, logger)
+			if !checksPassed {
+				logger.Error("makecheck failed")
+			} else {
+				if !windowSwitched && pidsStack[pid].stackType == stackTypeSecondary {
+					if !pidsStack[anotherPid].TryLock() {
+						pidsStack[anotherPid].waitCh <- struct{}{}
+						<-pidsStack[pid].waitCh
+					} else {
+						pidsStack[anotherPid].Unlock()
+					}
+					_ = switchWindow(pid, controlCl, logger)
+					windowSwitched = true
+				}
+				controlCl.SendKey(0, runAction.Binding)
+				time.Sleep(time.Millisecond * 50)
+				controlCl.EndKey()
+				if runAction.DelayMilliseconds > 0 {
+					time.Sleep(time.Millisecond * time.Duration(runAction.DelayMilliseconds))
+				}
+			}
+			time.Sleep(time.Second * 10)
+			pidsStack[pid].stopCh <- struct{}{}
+			logger.Debug("macros stopped due to stop!!!")
+		}
+	}
+	i++
+	time.Sleep(time.Millisecond * 1)
+	return checksPassed, windowSwitched, i
+}
+
+func handleAssistPartyMember(checksPassed bool, pid uint32, controlCl *service.Control, logger *zap.SugaredLogger, runAction *preset.Item, windowSwitched bool, anotherPid uint32, i int) (bool, bool, int) {
+	checksPassed = makeChecks(pidsStack, pid, checksPassed, controlCl, logger)
+	if !checksPassed {
+		logger.Error("makecheck failed")
+	} else {
+		if point, ok := service.AssistPartyMemberMap[runAction.Additional]; ok {
+			if !windowSwitched && pidsStack[pid].stackType == stackTypeSecondary {
+				if !pidsStack[anotherPid].TryLock() {
+					pidsStack[anotherPid].waitCh <- struct{}{}
+					<-pidsStack[pid].waitCh
+				} else {
+					pidsStack[anotherPid].Unlock()
+				}
+				windowSwitched = true
+				_ = switchWindow(pid, controlCl, logger)
+			}
+			controlCl.MouseActionAbsolute(ch9329.MousePressRight, point, 0)
+			controlCl.MouseAbsoluteEnd()
+			if runAction.DelayMilliseconds > 0 {
+				time.Sleep(time.Millisecond * time.Duration(runAction.DelayMilliseconds))
+			}
+			runAction.LastRun = time.Now()
+		} else {
+			logger.Error("wrong additional for assist party member: " + runAction.Additional)
+		}
+	}
+	i++
+	time.Sleep(time.Millisecond * time.Duration(randNum(50, 100)))
+	return checksPassed, windowSwitched, i
+}
+
+func handleUnstuck(checksPassed bool, pid uint32, controlCl *service.Control, logger *zap.SugaredLogger, windowSwitched bool, anotherPid uint32, runAction *preset.Item) bool {
+	checksPassed = makeChecks(pidsStack, pid, checksPassed, controlCl, logger)
+	if !checksPassed {
+		logger.Error("makecheck failed")
+	} else {
+		if !windowSwitched && pidsStack[pid].stackType == stackTypeSecondary {
+			if !pidsStack[anotherPid].TryLock() {
+				pidsStack[anotherPid].waitCh <- struct{}{}
+				<-pidsStack[pid].waitCh
+			} else {
+				pidsStack[anotherPid].Unlock()
+			}
+			windowSwitched = true
+			_ = switchWindow(pid, controlCl, logger)
+		}
+		//logger.Info("press ", runAction.item.Binding)
+		controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{960, 540 + 300}, 0)
+		time.Sleep(time.Millisecond * 50)
+		controlCl.MouseAbsoluteEnd()
+		time.Sleep(time.Second * 3)
+		controlCl.SendKey(0, runAction.Binding)
+		time.Sleep(time.Millisecond * 50)
+		controlCl.EndKey()
+		time.Sleep(time.Millisecond * 50)
+		controlCl.SendKey(0, "esc")
+		time.Sleep(time.Millisecond * 50)
+		controlCl.EndKey()
+		if runAction.DelayMilliseconds > 0 {
+			time.Sleep(time.Millisecond * time.Duration(runAction.DelayMilliseconds))
+		}
+	}
+	return windowSwitched
 }
 
 func initPartyMemberMap(cnf *core.Config) {

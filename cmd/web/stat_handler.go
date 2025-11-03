@@ -22,8 +22,8 @@ func statHandler(logger *zap.SugaredLogger) func(writer http.ResponseWriter, req
 		}
 		service.PlayerStatsMutex.Lock()
 		defer service.PlayerStatsMutex.Unlock()
-		//fmt.Println(string(body))
 		err = json.Unmarshal(body, &service.PlayerStats)
+		sendMessage(messageTypePlayerStats, service.PlayerStats.Player)
 		if err != nil {
 			logger.Error("stat json unmarshal error ", err.Error())
 			return

@@ -16,7 +16,7 @@ type HttpClient struct {
 }
 
 func (cl *HttpClient) RawRequest(path string, method string, body io.Reader) (result []byte, err error) {
-	const maxRetries = 10
+	const maxRetries = 1
 	var resp *http.Response
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		if method == http.MethodPost {

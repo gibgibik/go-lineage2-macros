@@ -69,7 +69,7 @@ type ForeGroundWindowInfo struct {
 func FindBounds(logger *zap.SugaredLogger) (*BoundsResult, error) {
 	var err error
 	logger.Info("get bounds start")
-	bounds, err := http.HttpCl.RawRequest("findBounds", http2.MethodGet, nil)
+	bounds, err := http.HttpCl.RawRequest("findBoundsTest", http2.MethodGet, nil)
 	logger.Info("get bounds end")
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func GetCurrentTarget(logger *zap.SugaredLogger) (string, error) {
 		//logger.Error("current target json error: ", err.Error())
 		return "", nil
 	}
-	re := regexp.MustCompile("(Lv..*?|\\s*\\(.*?)$")
+	re := regexp.MustCompile("(L[vy]..*?|\\s*\\(.*?)$")
 	return re.ReplaceAllString(name.Name, ""), nil
 }
 

@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gibgibik/go-ch9329/pkg/ch9329"
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
 	"github.com/gibgibik/go-lineage2-macros/internal/service"
 	"github.com/gorilla/websocket"
@@ -29,6 +31,13 @@ type runStackStruct struct {
 const (
 	stackTypeMain = iota
 	stackTypeSecondary
+)
+
+const (
+	messageTypeError = iota
+	messageTypeText
+	messageTypePlayerStats
+	messageTypeTargetStats
 )
 
 type pidStack struct {
@@ -78,7 +87,7 @@ func (ws BaseWsSender) Sync() error {
 	return nil
 }
 func (ws BaseWsSender) Write(p []byte) (n int, err error) {
-	sendMessage(string(p))
+	sendMessage(messageTypeText, string(p))
 	return 0, nil
 }
 
@@ -193,9 +202,12 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	return handle
 }
 
-func sendMessage(message string) {
+func sendMessage(messageType int, message any) {
 	messagesStackMutex.Lock()
-	messagesStack = append(messagesStack, message)
+	b, _ := json.Marshal(map[int]any{
+		messageType: message,
+	})
+	messagesStack = append(messagesStack, string(b))
 	messagesStackMutex.Unlock()
 }
 
@@ -229,7 +241,8 @@ func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLog
 		return true
 	}
 	if controlCl != nil {
-		controlCl.SendKey(0, "home")
+		//controlCl.SendKey(0, "home")
+		controlCl.SendKey(ch9329.ModLeftAlt, "tab")
 		time.Sleep(time.Millisecond * 50)
 		controlCl.EndKey()
 		time.Sleep(time.Millisecond * 200)

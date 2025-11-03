@@ -1,36 +1,53 @@
 import React, {useEffect, useState} from "react";
 import {Box, Button, ButtonGroup, Chip, FormControl, InputLabel, MenuItem, Select} from "@mui/material";
 import {init, pauseMacros, startMacros, stopMacros} from "../api.js";
+import useWebSocket, {ReadyState} from "react-use-websocket";
 
 export const Running = (props) => {
-    const {value, index, profileName, currentPid, setCurrentPid, ...other} = props;
+    const {value, index, profileName, currentPid, setCurrentPid} = props;
+    const [runningMacrosState, setRunningMacrosState] = useState({});
+    const [disabledStart, setDisabledStart] = useState(false);
+    const [pidsData, setPidData] = useState([]);
+    useWebSocket(`ws://${import.meta.env.VITE_SERVER_DOMAIN}:${import.meta.env.VITE_SERVER_PORT}/ws`, {
+        onOpen: () => console.log('Connected!'),
+        onClose: () => console.log('Disconnected!'),
+        shouldReconnect: () => true,
+        // disableJson: false,
+        onMessage: (message) => {
+            const parsedMessages = JSON.parse(message.data)
+            parsedMessages.forEach(item => {
+                console.log(item);
+            })
+        }
+    });
+    useEffect(() => {
+        init().then(({data: {runningMacrosState = {}, PidsData: pidsData}}) => {
+            setRunningMacrosState(runningMacrosState);
+            // setDisabledStart(!runningMacrosState[currentPid]);
+            setPidData(pidsData);
+        }).catch(e => {
+            console.log('init failed', e);
+            setDisabledStart(true);
+        })
+    }, []);
     if (value !== index) {
         return null;
     }
     if (!profileName) {
         return;
     }
-    const [runningMacrosState, setRunningMacrosState] = useState({});
-    const [disabledStart, setDisabledStart] = useState(false);
-    const [pidsData, setPidData] = useState([]);
     const startMacrosAction = () => {
         setDisabledStart(true);
         const stFunc = async () => {
             await startMacros(profileName, parseInt(currentPid));
         }
-        try {
-            stFunc();
-        } finally {
-        }
+        stFunc();
     }
     const pauseMacrosAction = () => {
         const stFunc = async () => {
             await pauseMacros(parseInt(currentPid));
         }
-        try {
-            stFunc();
-        } finally {
-        }
+        stFunc();
     }
     const stopMacrosAction = (pid) => {
         const stFunc = async () => {
@@ -42,17 +59,6 @@ export const Running = (props) => {
             setDisabledStart(!currentPid);
         }
     }
-    useEffect(() => {
-        init().then(({data: {runningMacrosState = {}, profilesList, PidsData: pidsData}}) => {
-            setRunningMacrosState(runningMacrosState);
-            console.log(runningMacrosState);
-            // setDisabledStart(!runningMacrosState[currentPid]);
-            setPidData(pidsData);
-        }).catch(e => {
-            console.log('init failed', e);
-            setDisabledStart(true);
-        })
-    }, []);
     return (
         <Box sx={{m: 2}}>
             <Chip label={profileName} />
@@ -67,7 +73,7 @@ export const Running = (props) => {
                             setCurrentPid(event.target.value);
                         }}
                         >
-                        {Object.keys(pidsData).map((index) => <MenuItem key={index}
+                        {Object.keys(pidsData || {}).map((index) => <MenuItem key={index}
                                                                         value={index}>{`${index} - ${pidsData[index]}`}</MenuItem>)}
                     </Select>
                 </FormControl>
