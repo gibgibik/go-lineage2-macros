@@ -208,6 +208,9 @@ func sendMessage(messageType int, message any) {
 		messageType: message,
 	})
 	messagesStack = append(messagesStack, string(b))
+	if len(messagesStack) > 5 {
+		messagesStack = messagesStack[4:]
+	}
 	messagesStackMutex.Unlock()
 }
 
@@ -232,6 +235,7 @@ func makeChecks(runStack map[uint32]*pidStack, pid uint32, checksPassed bool, co
 }
 
 func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLogger) bool {
+	return false
 	curPid, err := service.GetForegroundWindowPid()
 	if err != nil {
 		logger.Errorf("get foreground window failed: %v", err)
@@ -243,7 +247,7 @@ func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLog
 	if controlCl != nil {
 		//controlCl.SendKey(0, "home")
 		controlCl.SendKey(ch9329.ModLeftAlt, "tab")
-		time.Sleep(time.Millisecond * 50)
+		time.Sleep(time.Millisecond * 100)
 		controlCl.EndKey()
 		time.Sleep(time.Millisecond * 200)
 	}

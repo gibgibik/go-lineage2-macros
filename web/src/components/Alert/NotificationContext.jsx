@@ -5,19 +5,18 @@ import Notification from "./Alert.jsx";
 export const NotificationContext = createContext();
 
 export const AlertProvider = ({children}) => {
-    const [text, setText] = useState(null);
-    const [severity, setSeverity] = useState(null);
+    const [notification, setNotification] = useState(null);
     const setAlert = (text) => {
-        setText(text)
-        setSeverity('error');
-    }
+        setNotification({ text, severity: 'error', id: Date.now() });
+    };
+
     const setSuccess = (text) => {
-        setText(text)
-        setSeverity('success');
-    }
+        setNotification({ text, severity: 'success', id: Date.now() });
+    };
     return (
         <NotificationContext.Provider value={{setAlert, setSuccess}}>
-            {text && severity && <Notification text={text} severity={severity}/>}
+            {notification && <Notification key={notification.id}  text={notification.text}
+                                           severity={notification.severity}/>}
             {children}
         </NotificationContext.Provider>
     );

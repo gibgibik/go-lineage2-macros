@@ -1,9 +1,7 @@
-import {useContext, useEffect, useState} from "react";
+import {useState} from "react";
 import {Box, Button, ButtonGroup, TextField} from "@mui/material";
 import {MacrosAction} from "./MacrosAction.jsx";
 import {Condition} from "../../Contition.jsx";
-import {savePreset} from "../../api.js";
-import {NotificationContext} from "../Alert/NotificationContext.jsx";
 
 const INPUT_COUNT = 20;
 const onChangeBinding = (event) => {
@@ -65,31 +63,27 @@ const renderItems = ({id, items = []}, conditions, setConditions) => {
     return result;
 }
 export const Macros = ({presetId, onSave, presetName, data = []}) => {
-    const {setAlert, setSuccess} = useContext(NotificationContext);
     const [submitDisabled, disableSubmit] = useState(false);
-    const [formItems, setFormItems] = useState([]);
     const [conditions, setConditions] = useState([]);
-    useEffect(() => {
-        setFormItems(renderItems(data, conditions, setConditions));
-    }, [presetId]);
+    const formItems = renderItems(data, conditions, setConditions);
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const obj = {items: [], name: presetName, id: parseInt(presetId)};
         for (let i = 0; i < INPUT_COUNT; i++) {
             obj.items.push({
-                'action': formData.getAll('actions[]')[i],
-                'binding': formData.getAll('bindings[]')[i],
+                'Action': formData.getAll('actions[]')[i],
+                'Binding': formData.getAll('bindings[]')[i],
                 'delay_milliseconds': parseInt(formData.getAll('delay_milliseconds[]')[i]),
                 'period_milliseconds': parseInt(formData.getAll('period_milliseconds[]')[i]),
-                'additional': formData.getAll('additional[]')[i],
-                'conditions': conditions[i].filter(item => typeof item === 'object'),
+                'Additional': formData.getAll('additional[]')[i],
+                'Conditions': conditions[i].filter(item => typeof item === 'object'),
                 'conditions_combinator': conditions[i].filter(item => typeof item === 'string')[0] || "",
             })
         }
 
         disableSubmit(true);
-        onSave(obj);
+        await onSave(obj);
         disableSubmit(false);
     }
     return (<Box>

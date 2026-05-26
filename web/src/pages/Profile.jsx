@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useMemo, useState} from "react";
+import React, {useCallback, useContext, useEffect, useMemo, useState} from "react";
 import {Box, Button, Grid, ListItemButton, ListItemText} from "@mui/material";
 import List from '@mui/material/List';
 import {getPresetsList, getProfilesList, saveProfile} from "../api.js";
@@ -61,6 +61,16 @@ export const Profile = ({value, index, profileName, setProfileName, currentPid, 
             }));
         }
     }, [profileName]);
+    useEffect(() => {
+        if (!profileName) {
+            return;
+        }
+        if (Array.isArray(profiles[profileName].allowed_targets)) {
+            setAllowedTargets(profiles[profileName].allowed_targets.map((item) => {
+                return {title: item, value: item};
+            }));
+        }
+    }, [profileName]);
     const addNew = () => {
         const value = prompt('Enter profile name');
         if (typeof profiles[value] !== 'undefined') {
@@ -69,10 +79,10 @@ export const Profile = ({value, index, profileName, setProfileName, currentPid, 
         setProfiles({...profiles, [value]: {name: value, items: []}});
         setProfileName(value);
     }
-    const save = (formData) => {
-        const save = async () => {
+    const save = useCallback(formData => {
+        const save = () => {
             try {
-                await saveProfile(profileName, currentPid, {
+                 saveProfile(profileName, currentPid, {
                     ...profiles[profileName],
                     preferred_targets: preferredTargets.map((item) => item.value),
                     allowed_targets: allowedTargets.map((item) => item.value),
@@ -91,7 +101,7 @@ export const Profile = ({value, index, profileName, setProfileName, currentPid, 
             }
         }
         save();
-    }
+    }, [allowedTargets, currentPid, preferredTargets, profileName, profiles, setAlert, setSuccess]);
     const isBatchRun = useMemo(() => {
         if (!profileName) {
             return false;

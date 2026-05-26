@@ -3,7 +3,7 @@ module github.com/gibgibik/go-lineage2-macros
 go 1.24.4
 
 require (
-	github.com/gibgibik/go-ch9329 v0.0.0-20250731091502-b286803840ed
+	github.com/gibgibik/go-ch9329 v0.0.0-20251105125443-e8d2f2e0f62a
 	github.com/gibgibik/go-lineage2-server v0.0.0-20250723071340-fef8a51351eb
 	github.com/gorilla/websocket v1.5.3
 	github.com/spf13/cobra v1.9.1

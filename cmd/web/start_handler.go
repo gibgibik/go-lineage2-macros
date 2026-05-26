@@ -77,8 +77,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					logger.Info("continue from web context")
 				case <-pidsStack[pid].waitCh:
 					logger.Info("wait start")
-					controlCl.SendKey(0, "s")
-					controlCl.EndKey()
+					//controlCl.SendKey(0, "s")
+					//controlCl.EndKey()
 					if !pidsStack[anotherPid].TryLock() {
 						pidsStack[anotherPid].waitCh <- struct{}{}
 					} else {
@@ -101,6 +101,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						if pidsStack[pid].stackType == stackTypeMain {
 							_ = switchWindow(pid, controlCl, logger) //switching window
 						}
+						batchRunChecked := false
 						for {
 							if i >= len(profilePreset.item.Preset.Items) {
 								break
@@ -130,25 +131,36 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								checksPassed, windowSwitched, i = handleStop(runAction, playerStat, checksPassed, pid, controlCl, logger, windowSwitched, anotherPid, i)
 								continue
 							}
-							if runAction.PeriodMilliseconds > 0 && runAction.LastRun.UnixMilli() > (time.Now().UnixMilli()-runAction.PeriodMilliseconds) {
+							if !batchRunChecked && runAction.PeriodMilliseconds > 0 && runAction.LastRun.UnixMilli() > (time.Now().UnixMilli()-runAction.PeriodMilliseconds) {
+								if profilePreset.item.BatchRun == true {
+									break
+								}
 								i++
 								time.Sleep(time.Millisecond * 1)
 								continue
 							}
 							service.PlayerStatsMutex.Lock()
-							if ok, err := service.CheckCondition(runAction.ConditionsCombinator, runAction.Conditions, playerStat, service.PlayerStats.Party, logger); !ok {
-								service.PlayerStatsMutex.Unlock()
-								i++
-								if err != nil {
-									logger.Error("check condition error: " + err.Error())
+							if !batchRunChecked {
+								if ok, err := service.CheckCondition(runAction.ConditionsCombinator, runAction.Conditions, playerStat, service.PlayerStats.Party, logger); !ok {
+									service.PlayerStatsMutex.Unlock()
+									if profilePreset.item.BatchRun == true {
+										break
+									}
+									i++
+									if err != nil {
+										logger.Error("check condition error: " + err.Error())
+									}
+									time.Sleep(time.Millisecond * 1)
+									continue
+								} else {
+									service.PlayerStatsMutex.Unlock()
 								}
-								time.Sleep(time.Millisecond * 1)
-								continue
-							} else {
-								service.PlayerStatsMutex.Unlock()
+							}
+							if i == 0 && profilePreset.item.BatchRun == true {
+								batchRunChecked = true
 							}
 							if runAction.Action == service.ActionAITargetNext {
-								if pidsStack[pid].stackType == stackTypeSecondary {
+								if false && pidsStack[pid].stackType == stackTypeSecondary {
 									logger.Error("ainexttarget isn't supported by the bot yet")
 								} else {
 									bounds, err := service.FindBounds(logger)

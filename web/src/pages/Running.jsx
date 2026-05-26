@@ -8,6 +8,7 @@ export const Running = (props) => {
     const [runningMacrosState, setRunningMacrosState] = useState({});
     const [disabledStart, setDisabledStart] = useState(false);
     const [pidsData, setPidData] = useState([]);
+    const [lastMessage, setLastMessage]= useState('');
     useWebSocket(`ws://${import.meta.env.VITE_SERVER_DOMAIN}:${import.meta.env.VITE_SERVER_PORT}/ws`, {
         onOpen: () => console.log('Connected!'),
         onClose: () => console.log('Disconnected!'),
@@ -16,7 +17,40 @@ export const Running = (props) => {
         onMessage: (message) => {
             const parsedMessages = JSON.parse(message.data)
             parsedMessages.forEach(item => {
-                console.log(item);
+                const parsedMessage = JSON.parse(item)
+                for (const messageType in parsedMessage) {
+                    if (messageType != 2) {
+                        continue;
+                    }
+                    if (parsedMessage[messageType][currentPid] !== undefined) {
+                        let dt = new Date(parsedMessage[messageType][currentPid]['CP']['LastUpdate']);
+                        parsedMessage[messageType][currentPid]['CP']['LastUpdate'] = dt.toLocaleTimeString();
+                        dt = new Date(parsedMessage[messageType][currentPid]['HP']['LastUpdate']);
+                        parsedMessage[messageType][currentPid]['HP']['LastUpdate'] = dt.toLocaleTimeString();
+                        dt = new Date(parsedMessage[messageType][currentPid]['MP']['LastUpdate']);
+
+                        parsedMessage[messageType][currentPid]['MP']['LastUpdate'] = dt.toLocaleTimeString();
+                        dt = new Date(parsedMessage[messageType][currentPid]['Target']['LastUpdate']);
+
+                        parsedMessage[messageType][currentPid]['Target']['LastUpdate'] = dt.toLocaleTimeString();
+                        dt = new Date(parsedMessage[messageType][currentPid]['Target']['HpWasPresentAt']);
+
+                        parsedMessage[messageType][currentPid]['Target']['HpWasPresentAt'] = dt.toLocaleTimeString();
+                        dt = new Date(parsedMessage[messageType][currentPid]['Target']['FullHpUnchangedSince']);
+
+                        parsedMessage[messageType][currentPid]['Target']['FullHpUnchangedSince'] = dt.toLocaleTimeString();
+                        setLastMessage(JSON.stringify(parsedMessage[messageType][currentPid], null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>'));
+                    }
+                    // parsedMessage[messageType].forEach(subItem => {
+                    //     for (const pid in subItem) {
+                    //         if (pid == currentPid) {
+                    //             console.log(subItem[pid])
+                    //         }
+                    //     }
+                    // })
+                }
+                // setLastMessage(JSON.stringify(JSON.parse(item), null, 3));
+                // console.log(item);
             })
         }
     });
@@ -82,6 +116,8 @@ export const Running = (props) => {
                 <Button onClick={startMacrosAction} disabled={disabledStart}>Start</Button>
                 <Button onClick={pauseMacrosAction} disabled={!disabledStart} color={'success'}>Pause</Button>
             </ButtonGroup>
+            <br/>
+            <div dangerouslySetInnerHTML={{ __html:lastMessage }} />
         </Box>
     );
 }
