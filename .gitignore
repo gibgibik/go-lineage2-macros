@@ -2,3 +2,4 @@
 out/*
 var/profiles/*.json
 test.go
+.kiro

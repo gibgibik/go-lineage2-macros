@@ -111,17 +111,20 @@ func Init() (InitData, error) {
 	if err != nil {
 		return InitData{}, err
 	}
-	_ = json.Unmarshal(initData, &result)
+	if err := json.Unmarshal(initData, &result); err != nil {
+		return InitData{}, fmt.Errorf("init unmarshal error: %w", err)
+	}
 	return result, nil
 }
 func GetForegroundWindowPid() (uint32, error) {
 	res, err := http.HttpCl.RawRequest("getForegroundWindowPid", http2.MethodPost, nil)
-	//fmt.Println("get foreground", string(res))
 	if err != nil {
 		fmt.Println("err", err)
 		return 0, err
 	}
 	var result ForeGroundWindowInfo
-	_ = json.Unmarshal(res, &result)
+	if err := json.Unmarshal(res, &result); err != nil {
+		return 0, fmt.Errorf("getForegroundWindowPid unmarshal error: %w", err)
+	}
 	return result.Pid, nil
 }

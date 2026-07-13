@@ -25,10 +25,10 @@ func (cl *HttpClient) RawRequest(path string, method string, body io.Reader) (re
 			resp, err = cl.Client.Get(cl.baseUrl + path)
 		}
 		if err == nil && resp.StatusCode == http.StatusOK {
-			defer resp.Body.Close()
-			res, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
+			res, readErr := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			if readErr != nil {
+				return nil, readErr
 			}
 			return res, nil
 		}

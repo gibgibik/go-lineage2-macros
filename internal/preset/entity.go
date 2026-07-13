@@ -91,22 +91,25 @@ func GetList(logger *zap.SugaredLogger) ([]Preset, error) {
 func GetProfileData(path string, logger *zap.SugaredLogger) (*Preset, error) {
 	pathPieces := strings.SplitN(path, "/", 4)
 	if len(pathPieces) < 3 {
-		logger.Infof("invalid request", path)
+		logger.Infof("invalid request: %s", path)
 		return nil, errors.New("invalid request")
 	}
 	fileName := getProfilePath(pathPieces[2])
 	fh, err := os.OpenFile(fileName, os.O_RDWR, 0600)
-	if errors.Is(err, os.ErrNotExist) {
+	if err != nil {
 		return nil, err
 	}
 	defer fh.Close()
 	buf, err := io.ReadAll(fh)
+	if err != nil {
+		return nil, err
+	}
 	var templateBody *Preset
 	err = json.Unmarshal(buf, &templateBody)
 	if err != nil {
 		return nil, err
 	}
-	return templateBody, err
+	return templateBody, nil
 }
 
 func getProfilePath(profileName string) string {

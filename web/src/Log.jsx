@@ -7,9 +7,11 @@ export const Log = ({profileName}) => {
         onOpen: () => console.log('Connected!'),
         onClose: () => console.log('Disconnected!'),
         shouldReconnect: () => true,
-        // disableJson: false,
         onMessage: (message) => {
-            setMessages((prev) => [...prev, ...JSON.parse(message.data)])
+            setMessages((prev) => {
+                const updated = [...prev, ...JSON.parse(message.data)];
+                return updated.length >= 200 ? updated.slice(-199) : updated;
+            });
         }
     });
     const messageEndRef = useRef(null);
@@ -25,9 +27,7 @@ export const Log = ({profileName}) => {
         [ReadyState.CLOSED]: 'Closed',
         [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
     }[readyState];
-    if (messages.length >= 200) {
-        setMessages(messages.slice(-199));
-    }
+
     return <Paper
         elevation={3}
         sx={{

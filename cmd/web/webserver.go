@@ -63,6 +63,7 @@ var (
 		},
 	}
 	pidsStack          map[uint32]*pidStack
+	pidsStackMu        sync.RWMutex
 	messagesStack      []string
 	messagesStackMutex sync.Mutex
 )
@@ -94,7 +95,7 @@ func (ws BaseWsSender) Write(p []byte) (n int, err error) {
 func initStacks(pid uint32, r *http.Request, logger *zap.SugaredLogger) error {
 	pathPieces := strings.SplitN(strings.Trim(r.RequestURI, "/"), "/", 4)
 	if len(pathPieces) < 3 {
-		logger.Infof("invalid request", strings.Trim(r.RequestURI, "/"))
+		logger.Infof("invalid request: %s", strings.Trim(r.RequestURI, "/"))
 		return errors.New("invalid request")
 	}
 	profileData, err := service.GetProfileData(pathPieces[2], logger)
@@ -129,7 +130,7 @@ func CreateWebServerCommand(logger *zap.SugaredLogger) *cobra.Command {
 	var webServer = &cobra.Command{
 		Use: "web-server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cnf := cmd.Context().Value("cnf").(*core.Config)
+			cnf := cmd.Context().Value(CtxKeyConfig).(*core.Config)
 			handle := httpServerStart(cmd.Context(), cnf, logger)
 			for {
 				select {
@@ -171,9 +172,9 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 		Addr:         ":" + cnf.WebServer.Port,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
-		ErrorLog:     log.New(&core.FwdToZapWriter{logger}, "", 0),
+		ErrorLog:     log.New(&core.FwdToZapWriter{Logger: logger}, "", 0),
 		BaseContext: func(listener net.Listener) context.Context {
-			return context.WithValue(ctx, "logger", logger)
+			return context.WithValue(ctx, CtxKeyLogger, logger)
 		},
 	}
 	mux := http.NewServeMux() // Create
@@ -231,6 +232,15 @@ func makeChecks(runStack map[uint32]*pidStack, pid uint32, checksPassed bool, co
 	if checksPassed {
 		return true
 	}
+	curPid, err := service.GetForegroundWindowPid()
+	if err != nil {
+		logger.Errorf("makeChecks: get foreground window failed: %v", err)
+		return false
+	}
+	if curPid != pid {
+		logger.Errorf("makeChecks: foreground window mismatch, expected %d got %d", pid, curPid)
+		return false
+	}
 	return true
 }
 
@@ -245,7 +255,6 @@ func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLog
 		return true
 	}
 	if controlCl != nil {
-		//controlCl.SendKey(0, "home")
 		controlCl.SendKey(ch9329.ModLeftAlt, "tab")
 		time.Sleep(time.Millisecond * 100)
 		controlCl.EndKey()

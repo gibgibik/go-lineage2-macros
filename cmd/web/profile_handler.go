@@ -11,7 +11,7 @@ import (
 )
 
 func templateHandler(w http.ResponseWriter, r *http.Request) {
-	logger := r.Context().Value("logger").(*zap.SugaredLogger)
+	logger := r.Context().Value(CtxKeyLogger).(*zap.SugaredLogger)
 	if r.Method == "GET" {
 		getTemplateHandler(w, r, logger)
 		return
@@ -48,7 +48,7 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 func getTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
 	pathPieces := strings.SplitN(strings.Trim(r.RequestURI, "/"), "/", 4)
 	if len(pathPieces) < 3 {
-		logger.Infof("invalid request", strings.Trim(r.RequestURI, "/"))
+		logger.Infof("invalid request: %s", strings.Trim(r.RequestURI, "/"))
 		createRequestError(w, "invalid request", http.StatusBadRequest)
 		return
 	}

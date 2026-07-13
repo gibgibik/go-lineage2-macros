@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -31,7 +30,7 @@ func Execute() error {
 	}
 	webEncoder.EncodeTime = zapcore.TimeEncoderOfLayout("15:04:05")
 
-	f, err := os.OpenFile(fmt.Sprintf("var/log/app.log"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+	f, err := os.OpenFile("var/log/app.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
 		panic(err)
 	}
@@ -61,11 +60,11 @@ func Execute() error {
 		return err
 	}
 	http.IniHttpClient(cnf.BaseUrl)
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 	go func() {
 		defer cancel()
-		err = rootCmd.ExecuteContext(context.WithValue(ctx, "cnf", cnf))
+		err = rootCmd.ExecuteContext(context.WithValue(ctx, web.CtxKeyConfig, cnf))
 	}()
 	<-ctx.Done()
 	logger.Info("shutdown start")

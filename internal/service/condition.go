@@ -112,6 +112,6 @@ func checkOperatorCondition(item float64, item2 float64, operator string) bool {
 	case "<":
 		return item < item2
 	default:
-		panic("unsupported operator: " + operator)
+		return false
 	}
 }

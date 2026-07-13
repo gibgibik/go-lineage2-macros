@@ -6,9 +6,6 @@ import {NotificationContext} from "../components/Alert/NotificationContext.jsx";
 import {Macros} from "../components/Macros/Macros.jsx";
 
 export const Preset = ({value, index, ...other}) => {
-    if (value !== index) {
-        return null;
-    }
     const {setAlert, setSuccess} = useContext(NotificationContext);
 
     const [presetId, setPresetId] = useState(null);
@@ -28,9 +25,6 @@ export const Preset = ({value, index, ...other}) => {
         fetchPresets();
     }
     useEffect(() => loadPresets(), []);
-    // useEffect(() => {
-    //     console.log(presetsList);
-    // }, [presetsList])
     useEffect(() => {
         if (!presetId) {
             return;
@@ -63,6 +57,11 @@ export const Preset = ({value, index, ...other}) => {
         };
         save();
     }
+
+    if (value !== index) {
+        return null;
+    }
+
     return (
         <Box
             role="tabpanel"

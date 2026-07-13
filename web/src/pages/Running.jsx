@@ -4,16 +4,16 @@ import {init, pauseMacros, startMacros, stopMacros} from "../api.js";
 import useWebSocket, {ReadyState} from "react-use-websocket";
 
 export const Running = (props) => {
-    const {value, index, profileName, currentPid, setCurrentPid} = props;
+    const {value, index, profileName, currentPid, setCurrentPid, ...other} = props;
     const [runningMacrosState, setRunningMacrosState] = useState({});
     const [disabledStart, setDisabledStart] = useState(false);
     const [pidsData, setPidData] = useState([]);
-    const [lastMessage, setLastMessage]= useState('');
+    const [lastMessage, setLastMessage] = useState('');
+
     useWebSocket(`ws://${import.meta.env.VITE_SERVER_DOMAIN}:${import.meta.env.VITE_SERVER_PORT}/ws`, {
         onOpen: () => console.log('Connected!'),
         onClose: () => console.log('Disconnected!'),
         shouldReconnect: () => true,
-        // disableJson: false,
         onMessage: (message) => {
             const parsedMessages = JSON.parse(message.data)
             parsedMessages.forEach(item => {
@@ -41,58 +41,54 @@ export const Running = (props) => {
                         parsedMessage[messageType][currentPid]['Target']['FullHpUnchangedSince'] = dt.toLocaleTimeString();
                         setLastMessage(JSON.stringify(parsedMessage[messageType][currentPid], null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>'));
                     }
-                    // parsedMessage[messageType].forEach(subItem => {
-                    //     for (const pid in subItem) {
-                    //         if (pid == currentPid) {
-                    //             console.log(subItem[pid])
-                    //         }
-                    //     }
-                    // })
                 }
-                // setLastMessage(JSON.stringify(JSON.parse(item), null, 3));
-                // console.log(item);
             })
         }
     });
+
+    const startMacrosAction = async () => {
+        setDisabledStart(true);
+        try {
+            await startMacros(profileName, parseInt(currentPid));
+        } catch (e) {
+            console.error('startMacros failed', e);
+            setDisabledStart(false);
+        }
+    }
+    const pauseMacrosAction = async () => {
+        try {
+            await pauseMacros(parseInt(currentPid));
+        } catch (e) {
+            console.error('pauseMacros failed', e);
+        }
+    }
+    const stopMacrosAction = async (pid) => {
+        try {
+            await stopMacros(pid);
+        } catch (e) {
+            console.error('stopMacros failed', e);
+        } finally {
+            setDisabledStart(!currentPid);
+        }
+    }
+
     useEffect(() => {
         init().then(({data: {runningMacrosState = {}, PidsData: pidsData}}) => {
             setRunningMacrosState(runningMacrosState);
-            // setDisabledStart(!runningMacrosState[currentPid]);
             setPidData(pidsData);
         }).catch(e => {
             console.log('init failed', e);
             setDisabledStart(true);
         })
     }, []);
+
     if (value !== index) {
         return null;
     }
     if (!profileName) {
-        return;
+        return null;
     }
-    const startMacrosAction = () => {
-        setDisabledStart(true);
-        const stFunc = async () => {
-            await startMacros(profileName, parseInt(currentPid));
-        }
-        stFunc();
-    }
-    const pauseMacrosAction = () => {
-        const stFunc = async () => {
-            await pauseMacros(parseInt(currentPid));
-        }
-        stFunc();
-    }
-    const stopMacrosAction = (pid) => {
-        const stFunc = async () => {
-            await stopMacros(pid);
-        }
-        try {
-            stFunc();
-        } finally {
-            setDisabledStart(!currentPid);
-        }
-    }
+
     return (
         <Box sx={{m: 2}}>
             <Chip label={profileName} />

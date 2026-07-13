@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"os"
 	"regexp"
@@ -55,17 +54,20 @@ type ProfileTemplateItem struct {
 func GetProfileData(profileName string, logger *zap.SugaredLogger) (*ProfileTemplate, error) {
 	fileName := getProfilePath(profileName)
 	fh, err := os.OpenFile(fileName, os.O_RDWR, 0600)
-	if errors.Is(err, os.ErrNotExist) {
+	if err != nil {
 		return nil, err
 	}
 	defer fh.Close()
 	buf, err := io.ReadAll(fh)
+	if err != nil {
+		return nil, err
+	}
 	var templateBody *ProfileTemplate
 	err = json.Unmarshal(buf, &templateBody)
 	if err != nil {
 		return nil, err
 	}
-	return templateBody, err
+	return templateBody, nil
 }
 
 func getProfilePath(profileName string) string {

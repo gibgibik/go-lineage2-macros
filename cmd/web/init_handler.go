@@ -25,10 +25,11 @@ func initHandler() func(writer http.ResponseWriter, request *http.Request) {
 				minPid = pid
 			}
 		}
+		pidsStackMu.Lock()
 		if len(pidsStack) == 0 {
 			pidsStack = make(map[uint32]*pidStack, 0)
 			for pid := range response.PidsData {
-				str := pidStack{stack: nil, stopCh: make(chan struct{}), reloadCh: make(chan struct{}), waitCh: make(chan struct{}), webWaitCh: make(chan struct{})}
+				str := pidStack{stack: nil, stopCh: make(chan struct{}, 1), reloadCh: make(chan struct{}, 1), waitCh: make(chan struct{}, 1), webWaitCh: make(chan struct{}, 1)}
 				if minPid == pid {
 					str.stackType = stackTypeMain
 				} else {
@@ -38,9 +39,13 @@ func initHandler() func(writer http.ResponseWriter, request *http.Request) {
 			}
 		} else {
 			for pid := range pidsStack {
-				response.RunningMacrosState[pid] = pidsStack[pid] == nil
+				response.RunningMacrosState[pid] = !pidsStack[pid].TryLock()
+				if !response.RunningMacrosState[pid] {
+					pidsStack[pid].Unlock()
+				}
 			}
 		}
+		pidsStackMu.Unlock()
 		res, _ := json.Marshal(response)
 		writer.Write(res)
 	}

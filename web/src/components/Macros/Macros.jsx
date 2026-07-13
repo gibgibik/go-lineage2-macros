@@ -1,7 +1,9 @@
-import {useState} from "react";
+import {useContext, useEffect, useRef, useState} from "react";
 import {Box, Button, ButtonGroup, TextField} from "@mui/material";
 import {MacrosAction} from "./MacrosAction.jsx";
 import {Condition} from "../../Contition.jsx";
+import {savePreset} from "../../api.js";
+import {NotificationContext} from "../Alert/NotificationContext.jsx";
 
 const INPUT_COUNT = 20;
 const onChangeBinding = (event) => {
@@ -19,17 +21,15 @@ const onChangeBinding = (event) => {
     return false;
 }
 
-const renderItems = ({id, items = []}, conditions, setConditions) => {
+const renderItems = ({id, items = []}, conditionsRef) => {
     const result = []
     for (let i = 0; i < INPUT_COUNT; i++) {
         let preparedConditions = {rules: []};
         if (items.length > 0 && items[i] && (items[i]?.conditions_combinator || '') !== '' && items[i]['Conditions']) {
             preparedConditions.rules = items[i]['Conditions'].flatMap((item, index) => index < items[i]['Conditions'].length - 1 ? [item, items[i]?.conditions_combinator] : [item]);
-            // preparedConditions.rules = items[i]['Conditions'];
         } else {
             preparedConditions.rules = !items.length ? [] : items[i]?.Conditions || []
         }
-        // const preparedConditions = {rules: []}
         result.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
             <MacrosAction name={'actions[]'} initValue={!items.length ? '' : items[i]?.Action || ''}/>
             <TextField variant={"outlined"} name={'bindings[]'} label="Binding"
@@ -54,8 +54,7 @@ const renderItems = ({id, items = []}, conditions, setConditions) => {
             />
             <Condition conditions={preparedConditions} fullWidth={true}
                        onQueryChange={(data) => {
-                           conditions[i] = data;
-                           setConditions(conditions);
+                           conditionsRef.current[i] = data;
                        }} idx={i}/>
         </Box>);
     }
@@ -63,22 +62,29 @@ const renderItems = ({id, items = []}, conditions, setConditions) => {
     return result;
 }
 export const Macros = ({presetId, onSave, presetName, data = []}) => {
+    const {setAlert, setSuccess} = useContext(NotificationContext);
     const [submitDisabled, disableSubmit] = useState(false);
-    const [conditions, setConditions] = useState([]);
-    const formItems = renderItems(data, conditions, setConditions);
+    const [formItems, setFormItems] = useState([]);
+    const conditionsRef = useRef([]);
+    useEffect(() => {
+        conditionsRef.current = [];
+        setFormItems(renderItems(data, conditionsRef));
+    }, [presetId]);
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const obj = {items: [], name: presetName, id: parseInt(presetId)};
+        const conditions = conditionsRef.current;
         for (let i = 0; i < INPUT_COUNT; i++) {
+            const conditionSlot = conditions[i] || [];
             obj.items.push({
                 'Action': formData.getAll('actions[]')[i],
                 'Binding': formData.getAll('bindings[]')[i],
                 'delay_milliseconds': parseInt(formData.getAll('delay_milliseconds[]')[i]),
                 'period_milliseconds': parseInt(formData.getAll('period_milliseconds[]')[i]),
                 'Additional': formData.getAll('additional[]')[i],
-                'Conditions': conditions[i].filter(item => typeof item === 'object'),
-                'conditions_combinator': conditions[i].filter(item => typeof item === 'string')[0] || "",
+                'Conditions': conditionSlot.filter(item => typeof item === 'object'),
+                'conditions_combinator': conditionSlot.filter(item => typeof item === 'string')[0] || "",
             })
         }
 
