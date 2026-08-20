@@ -69,7 +69,7 @@ type ForeGroundWindowInfo struct {
 func FindBounds(logger *zap.SugaredLogger) (*BoundsResult, error) {
 	var err error
 	logger.Info("get bounds start")
-	bounds, err := http.HttpCl.RawRequest("findBoundsTest", http2.MethodGet, nil)
+	bounds, err := http.HttpCl.RawRequest("findBounds", http2.MethodGet, nil)
 	logger.Info("get bounds end")
 	if err != nil {
 		return nil, err

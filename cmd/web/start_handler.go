@@ -3,7 +3,6 @@ package web
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"image"
 	"net/http"
 	"strings"
@@ -110,12 +109,12 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 
 							if val, ok := service.PlayerStats.Player[pid]; ok {
 								playerStat = &val
-								if playerStat.CP.Percent < 98 {
-									service.PlayerStatsMutex.Unlock()
-									pidsStack[pid].stopCh <- struct{}{}
-									logger.Debug("macros stopped due to not full cp!!!")
-									break
-								}
+								//	if playerStat.CP.Percent < 98 {
+								//		service.PlayerStatsMutex.Unlock()
+								//		pidsStack[pid].stopCh <- struct{}{}
+								//		logger.Debug("macros stopped due to not full cp!!!")
+								//		break
+								//	}
 							}
 							service.PlayerStatsMutex.Unlock()
 							runAction := &profilePreset.item.Preset.Items[i]
@@ -161,6 +160,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									logger.Error("ainexttarget isn't supported by the bot yet")
 								} else {
 									bounds, err := service.FindBounds(logger)
+									logger.Info("find bounds ", bounds)
 									if err != nil {
 										logger.Error("find bounds error: " + err.Error())
 										i++
@@ -172,34 +172,46 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										for _, bound := range bounds.Boxes {
 											controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
 												X: int((bound[2]-bound[0])/2) + bound[0],
-												Y: bound[1] + 60,
+												Y: bound[1] + 30,
 											}, 0)
 											time.Sleep(time.Millisecond * 40)
 											controlCl.MouseAbsoluteEnd()
-											time.Sleep(time.Millisecond * 500)
-											if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
-												logger.Info("target is " + currentTarget)
-												if currentTarget == "Mechanic Golem" || (len(pidsStack[pid].preferredTargets) > 0 && !core.InArray(currentTarget, pidsStack[pid].preferredTargets)) {
-													controlCl.EndKey()
-													time.Sleep(time.Millisecond * 50)
-													controlCl.SendKey(0, "esc")
-													time.Sleep(time.Millisecond * 50)
-													controlCl.EndKey()
-													time.Sleep(time.Millisecond * 50)
-													controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
-												} else if playerStat.Target.HpPercent > 10 {
-													break
-												}
+											time.Sleep(time.Millisecond * 40)
+											//if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
+											//	logger.Info("target is " + currentTarget)
+											//	if currentTarget == "Mechanic Golem" || (len(pidsStack[pid].preferredTargets) > 0 && !core.InArray(currentTarget, pidsStack[pid].preferredTargets)) {
+											//		controlCl.EndKey()
+											//		time.Sleep(time.Millisecond * 50)
+											//		controlCl.SendKey(0, "esc")
+											//		time.Sleep(time.Millisecond * 50)
+											//		controlCl.EndKey()
+											//		time.Sleep(time.Millisecond * 50)
+											//		controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
+											//	} else if playerStat.Target.HpPercent > 10 {
+											//		break
+											//	}
+											//} else
+											if val, ok := service.PlayerStats.Player[pid]; ok {
+												playerStat = &val
+												//	if playerStat.CP.Percent < 98 {
+												//		service.PlayerStatsMutex.Unlock()
+												//		pidsStack[pid].stopCh <- struct{}{}
+												//		logger.Debug("macros stopped due to not full cp!!!")
+												//		break
+												//	}
+											}
+											if playerStat.Target.HpPercent > 0 {
+												break
 											}
 										}
 										controlCl.EndKey()
-										if playerStat.Target.HpPercent == 0 {
-											controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(0, 0), 0)
-											time.Sleep(time.Millisecond * 200)
-											controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(5, 0), 0)
-											time.Sleep(time.Millisecond * 100)
-											controlCl.MouseActionAbsolute(0, image.Pt(10, 0), 0)
-										}
+										//if playerStat.Target.HpPercent == 0 {
+										//	controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(0, 0), 0)
+										//	time.Sleep(time.Millisecond * 200)
+										//	controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(5, 0), 0)
+										//	time.Sleep(time.Millisecond * 100)
+										//	controlCl.MouseActionAbsolute(0, image.Pt(10, 0), 0)
+										//}
 									}
 									runAction.LastRun = time.Now()
 								}
@@ -218,17 +230,18 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								logger.Error("makecheck failed")
 							} else {
 								if runAction.Action == service.ActionAttack {
-									if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
-										logger.Info("target is " + currentTarget)
-										if _, ok := npc.NpcList[currentTarget]; !ok {
-											if currentTarget == "Mechanic Golem" || (len(pidsStack[pid].allowedTargets) > 0 && !core.InArray(currentTarget, pidsStack[pid].allowedTargets)) {
-												fmt.Println("cancel")
-												controlCl.SendKey(0, "esc")
-												time.Sleep(time.Millisecond * 50)
-												controlCl.EndKey()
-												time.Sleep(time.Millisecond * 50)
-												i++
-												continue
+									if len(pidsStack[pid].allowedTargets) > 0 {
+										if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
+											logger.Info("target is " + currentTarget)
+											if _, ok := npc.NpcList[currentTarget]; !ok {
+												if !core.InArray(currentTarget, pidsStack[pid].allowedTargets) {
+													//controlCl.SendKey(0, "esc")
+													//time.Sleep(time.Millisecond * 50)
+													//controlCl.EndKey()
+													//time.Sleep(time.Millisecond * 50)
+													i++
+													continue
+												}
 											}
 										}
 									}

@@ -11,6 +11,9 @@ import (
 )
 
 func CheckCondition(conditionsCombinator string, conditions []preset.Condition, stat *entity.PlayerStat, party map[uint8]entity.PartyMember, logger *zap.SugaredLogger) (bool, error) {
+	if len(conditions) == 0 {
+		return true, nil
+	}
 	if stat == nil {
 		return false, errors.New("empty player stat, please check server")
 	}
@@ -49,6 +52,7 @@ func CheckCondition(conditionsCombinator string, conditions []preset.Condition, 
 				}
 			}
 		case "since_last_success_target":
+			logger.Info("since check ", time.Now().String(), " ", time.UnixMilli(stat.Target.HpWasPresentAt).String(), " ", time.Now().UnixMilli()-stat.Target.HpWasPresentAt)
 			if conditionsCombinator == ConditionCombinatorOr {
 				result = result || (checkOperatorCondition(float64(time.Now().UnixMilli()-int64(cval)), float64(stat.Target.HpWasPresentAt), condition.Operator))
 			} else {
