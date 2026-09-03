@@ -1,6 +1,9 @@
 package core
 
 import (
+	"flag"
+	"fmt"
+
 	"github.com/spf13/viper"
 )
 
@@ -21,7 +24,10 @@ type Config struct {
 }
 
 func InitConfig() (*Config, error) {
-	viper.SetConfigFile("configs/main.yaml")
+	cName := flag.String("config", "configs/main.yaml", "config file")
+	flag.Parse()
+	fmt.Println(*cName)
+	viper.SetConfigFile(*cName)
 	if err := viper.ReadInConfig(); err != nil {
 		return nil, err
 	}

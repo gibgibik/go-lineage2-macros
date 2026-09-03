@@ -82,6 +82,12 @@ export const Running = (props) => {
         })
     }, []);
 
+    useEffect(() => {
+        if (!currentPid || !runningMacrosState) {
+            return;
+        }
+        setDisabledStart(!runningMacrosState[currentPid]);
+    }, [currentPid])
     if (value !== index) {
         return null;
     }
@@ -108,9 +114,9 @@ export const Running = (props) => {
                     </Select>
                 </FormControl>
                 <Button color={'error'} onClick={() => stopMacrosAction(parseInt(currentPid))}
-                        disabled={runningMacrosState[currentPid]}>Stop</Button>
-                <Button onClick={startMacrosAction} disabled={disabledStart}>Start</Button>
-                <Button onClick={pauseMacrosAction} disabled={!disabledStart} color={'success'}>Pause</Button>
+                        disabled={false}>Stop</Button>
+                <Button onClick={startMacrosAction} disabled={!disabledStart}>Start</Button>
+                <Button onClick={pauseMacrosAction} disabled={false} color={'success'}>Pause</Button>
             </ButtonGroup>
             <br/>
             <div dangerouslySetInnerHTML={{ __html:lastMessage }} />

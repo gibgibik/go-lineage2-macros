@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gibgibik/go-ch9329/pkg/ch9329"
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
 	"github.com/gibgibik/go-lineage2-macros/internal/service"
 	"github.com/gorilla/websocket"
@@ -115,7 +114,13 @@ func initStacks(pid uint32, r *http.Request, logger *zap.SugaredLogger) error {
 		}
 		cp := pidsStack[pid]
 		cp.stack = profilePresets
+		for i, t := range profileData.AllowedTargets {
+			profileData.AllowedTargets[i] = strings.ReplaceAll(strings.ToLower(t), " ", "")
+		}
 		cp.allowedTargets = profileData.AllowedTargets
+		for i, t := range profileData.PreferredTargets {
+			profileData.PreferredTargets[i] = strings.ReplaceAll(strings.ToLower(t), " ", "")
+		}
 		cp.preferredTargets = profileData.PreferredTargets
 		pidsStack[pid] = cp
 	}
@@ -245,7 +250,6 @@ func makeChecks(runStack map[uint32]*pidStack, pid uint32, checksPassed bool, co
 }
 
 func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLogger) bool {
-	return false
 	curPid, err := service.GetForegroundWindowPid()
 	if err != nil {
 		logger.Errorf("get foreground window failed: %v", err)
@@ -255,10 +259,11 @@ func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLog
 		return true
 	}
 	if controlCl != nil {
-		controlCl.SendKey(ch9329.ModLeftAlt, "tab")
-		time.Sleep(time.Millisecond * 100)
+		controlCl.SendKey(0, "home")
+		time.Sleep(time.Millisecond * 50)
 		controlCl.EndKey()
 		time.Sleep(time.Millisecond * 200)
+
 	}
 	curPid, err = service.GetForegroundWindowPid()
 	if err != nil {

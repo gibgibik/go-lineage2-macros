@@ -13,6 +13,7 @@ import (
 
 const (
 	ActionAssistPartyMember = "/assistpartymember"
+	ActionFollowPartyMember = "/followpartymember"
 	ActionAssist            = "/assist"
 	ActionAttack            = "/attack"
 	ActionTarget            = "/target"

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	http2 "net/http"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -102,7 +103,7 @@ func GetCurrentTarget(logger *zap.SugaredLogger) (string, error) {
 		return "", nil
 	}
 	re := regexp.MustCompile("(L[vy]..*?|\\s*\\(.*?)$")
-	return re.ReplaceAllString(name.Name, ""), nil
+	return re.ReplaceAllString(strings.ReplaceAll(strings.ToLower(name.Name), " ", ""), ""), nil
 }
 
 func Init() (InitData, error) {
