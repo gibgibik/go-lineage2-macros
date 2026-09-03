@@ -248,6 +248,10 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							}
 
 							if runAction.Action == service.ActionAttack {
+								if playerStat.Target.HpPercent == 0 {
+									i++
+									continue
+								}
 								if len(pidsStack[pid].allowedTargets) > 0 {
 									if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 										logger.Info("target is " + currentTarget)
