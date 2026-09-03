@@ -6,9 +6,13 @@ import useWebSocket, {ReadyState} from "react-use-websocket";
 export const Running = (props) => {
     const {value, index, profileName, currentPid, setCurrentPid, ...other} = props;
     const [runningMacrosState, setRunningMacrosState] = useState({});
-    const [disabledStart, setDisabledStart] = useState(false);
+    const [pausedState, setPausedState] = useState({});
     const [pidsData, setPidData] = useState([]);
     const [lastMessage, setLastMessage] = useState('');
+
+    // Single source of truth: is the currently-selected pid running / paused?
+    const isRunning = !!currentPid && !!runningMacrosState[currentPid];
+    const isPaused = !!currentPid && !!pausedState[currentPid];
 
     useWebSocket(`ws://${import.meta.env.VITE_SERVER_DOMAIN}:${import.meta.env.VITE_SERVER_PORT}/ws`, {
         onOpen: () => console.log('Connected!'),
@@ -47,17 +51,27 @@ export const Running = (props) => {
     });
 
     const startMacrosAction = async () => {
-        setDisabledStart(true);
+        if (!currentPid) {
+            return;
+        }
+        // Optimistically mark as running for the selected pid.
+        setRunningMacrosState(prev => ({...prev, [currentPid]: true}));
+        setPausedState(prev => ({...prev, [currentPid]: false}));
         try {
             await startMacros(profileName, parseInt(currentPid));
         } catch (e) {
             console.error('startMacros failed', e);
-            setDisabledStart(false);
+            setRunningMacrosState(prev => ({...prev, [currentPid]: false}));
         }
     }
     const pauseMacrosAction = async () => {
+        if (!currentPid) {
+            return;
+        }
+        // pause endpoint is a toggle on the backend (pause <-> resume).
         try {
             await pauseMacros(parseInt(currentPid));
+            setPausedState(prev => ({...prev, [currentPid]: !prev[currentPid]}));
         } catch (e) {
             console.error('pauseMacros failed', e);
         }
@@ -65,10 +79,10 @@ export const Running = (props) => {
     const stopMacrosAction = async (pid) => {
         try {
             await stopMacros(pid);
+            setRunningMacrosState(prev => ({...prev, [pid]: false}));
+            setPausedState(prev => ({...prev, [pid]: false}));
         } catch (e) {
             console.error('stopMacros failed', e);
-        } finally {
-            setDisabledStart(!currentPid);
         }
     }
 
@@ -78,16 +92,9 @@ export const Running = (props) => {
             setPidData(pidsData);
         }).catch(e => {
             console.log('init failed', e);
-            setDisabledStart(true);
         })
     }, []);
 
-    useEffect(() => {
-        if (!currentPid || !runningMacrosState) {
-            return;
-        }
-        setDisabledStart(!runningMacrosState[currentPid]);
-    }, [currentPid])
     if (value !== index) {
         return null;
     }
@@ -114,9 +121,11 @@ export const Running = (props) => {
                     </Select>
                 </FormControl>
                 <Button color={'error'} onClick={() => stopMacrosAction(parseInt(currentPid))}
-                        disabled={false}>Stop</Button>
-                <Button onClick={startMacrosAction} disabled={!disabledStart}>Start</Button>
-                <Button onClick={pauseMacrosAction} disabled={false} color={'success'}>Pause</Button>
+                        disabled={!isRunning}>Stop</Button>
+                <Button onClick={startMacrosAction} disabled={!currentPid || isRunning}>Start</Button>
+                <Button onClick={pauseMacrosAction} disabled={!isRunning} color={'success'}>
+                    {isPaused ? 'Resume' : 'Pause'}
+                </Button>
             </ButtonGroup>
             <br/>
             <div dangerouslySetInnerHTML={{ __html:lastMessage }} />
