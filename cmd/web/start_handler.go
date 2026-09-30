@@ -136,28 +136,30 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								time.Sleep(time.Millisecond * 1)
 								continue
 							}
-							if runAction.PeriodMilliseconds > 0 && runAction.LastRun.UnixMilli() > (time.Now().UnixMilli()-runAction.PeriodMilliseconds) {
-								if profilePreset.item.BatchRun == true {
-									break
+							if profilePreset.item.BatchRun == false || i == 0 {
+								if runAction.PeriodMilliseconds > 0 && runAction.LastRun.UnixMilli() > (time.Now().UnixMilli()-runAction.PeriodMilliseconds) {
+									if profilePreset.item.BatchRun == true {
+										break
+									}
+									i++
+									time.Sleep(time.Millisecond * 1)
+									continue
 								}
-								i++
-								time.Sleep(time.Millisecond * 1)
-								continue
-							}
-							service.PlayerStatsMutex.Lock()
-							if ok, err := service.CheckCondition(runAction.ConditionsCombinator, runAction.Conditions, playerStat, service.PlayerStats.Party); !ok {
-								service.PlayerStatsMutex.Unlock()
-								if profilePreset.item.BatchRun == true {
-									break
+								service.PlayerStatsMutex.Lock()
+								if ok, err := service.CheckCondition(runAction.ConditionsCombinator, runAction.Conditions, playerStat, service.PlayerStats.Party); !ok {
+									service.PlayerStatsMutex.Unlock()
+									if profilePreset.item.BatchRun == true {
+										break
+									}
+									i++
+									if err != nil {
+										logger.Error("check condition error: " + err.Error())
+									}
+									time.Sleep(time.Millisecond * 1)
+									continue
+								} else {
+									service.PlayerStatsMutex.Unlock()
 								}
-								i++
-								if err != nil {
-									logger.Error("check condition error: " + err.Error())
-								}
-								time.Sleep(time.Millisecond * 1)
-								continue
-							} else {
-								service.PlayerStatsMutex.Unlock()
 							}
 							if runAction.Action == service.ActionStop {
 								if !pidsStack[pid].TryLock() {
@@ -180,22 +182,21 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										continue
 									} else {
 										_, _ = controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
-										time.Sleep(time.Millisecond * 50)
+										time.Sleep(time.Millisecond * 10)
 										for _, bound := range bounds.Boxes {
 											_, _ = controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
 												X: int((bound[2]-bound[0])/2) + bound[0],
 												Y: bound[1] + 30,
 											}, 0)
-											time.Sleep(time.Millisecond * 40)
+											time.Sleep(time.Millisecond * 10)
 											_, _ = controlCl.MouseAbsoluteEnd()
-											time.Sleep(time.Millisecond * 40)
+											time.Sleep(time.Millisecond * 300)
 											if val, ok := service.PlayerStats.Player[pid]; ok {
 												playerStat = &val
 											}
 											if len(pidsStack[pid].preferredTargets) > 0 {
 												if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
-													logger.Info("prefered target is " + currentTarget)
-													if !bestMatch(currentTarget, pidsStack[pid].allowedTargets, logger) {
+													if !bestMatch(currentTarget, pidsStack[pid].preferredTargets, logger) {
 														_, _ = controlCl.EndKey()
 														time.Sleep(time.Millisecond * 50)
 														_, _ = controlCl.SendKey(0, "esc")
@@ -206,6 +207,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 														i++
 														continue
 													}
+													logger.Info("prefered target is " + currentTarget)
 												}
 											}
 											if playerStat.Target.HpPercent > 0 {
@@ -213,13 +215,13 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											}
 										}
 										_, _ = controlCl.EndKey()
-										//if playerStat.Target.HpPercent == 0 {
-										//	controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(0, 0), 0)
-										//	time.Sleep(time.Millisecond * 200)
-										//	controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(5, 0), 0)
-										//	time.Sleep(time.Millisecond * 100)
-										//	controlCl.MouseActionAbsolute(0, image.Pt(10, 0), 0)
-										//}
+										if playerStat.Target.HpPercent == 0 {
+											controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(1180, 733), 0)
+											time.Sleep(time.Millisecond * 200)
+											controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(1385, 733), 0)
+											time.Sleep(time.Millisecond * 100)
+											controlCl.MouseActionAbsolute(0, image.Pt(1180, 733), 0)
+										}
 									}
 									runAction.LastRun = time.Now()
 								}
@@ -253,7 +255,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									continue
 								}
 								if len(pidsStack[pid].allowedTargets) > 0 {
-									if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
+									if currentTarget, err := service.GetCurrentTarget(logger); err == nil {
 										logger.Info("target is " + currentTarget)
 										if !bestMatch(currentTarget, pidsStack[pid].allowedTargets, logger) {
 											i++

@@ -14,7 +14,7 @@ export const Running = (props) => {
     const isRunning = !!currentPid && !!runningMacrosState[currentPid];
     const isPaused = !!currentPid && !!pausedState[currentPid];
 
-    useWebSocket(`ws://${import.meta.env.VITE_SERVER_DOMAIN}:${import.meta.env.VITE_SERVER_PORT}/ws`, {
+    useWebSocket(`wss://${import.meta.env.VITE_SERVER_DOMAIN}/ws`, {
         onOpen: () => console.log('Connected!'),
         onClose: () => console.log('Disconnected!'),
         shouldReconnect: () => true,

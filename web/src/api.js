@@ -3,7 +3,7 @@ import axios from 'axios';
 axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 const api = axios.create({
-    baseURL: `http://${import.meta.env.VITE_SERVER_DOMAIN}:${import.meta.env.VITE_SERVER_PORT}/api`,
+    baseURL: `https://${import.meta.env.VITE_SERVER_DOMAIN}/api`,
 });
 
 export const saveProfile = (profileName, currentPid, formData) => {

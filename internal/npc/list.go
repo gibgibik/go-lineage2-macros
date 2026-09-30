@@ -1461,5 +1461,11 @@ var (
 		"Dre Vanul Scout":                 nil,
 		"Dre Vanul":                       nil,
 		"Dre Vanul Disposer":              nil,
+		"Blackbanner Witch":               nil,
+		"Blackbanner Vanguard":            nil,
+		"Blackbanner Poacher":             nil,
+		"Blackbanner Marshal":             nil,
+		"Blackbanner Marauder":            nil,
+		"Blackbanner Cutthroat":           nil,
 	}
 )
