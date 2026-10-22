@@ -1,20 +1,20 @@
 module github.com/gibgibik/go-lineage2-macros
 
-go 1.24.4
+go 1.26.0
 
 require (
-	github.com/gibgibik/go-ch9329 v0.0.0-20251105125443-e8d2f2e0f62a
+	github.com/gibgibik/go-ch9329 v0.0.0-20261022103142-e212d59aeb0f
 	github.com/gibgibik/go-lineage2-server v0.0.0-20250723071340-fef8a51351eb
 	github.com/gorilla/websocket v1.5.3
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
-	go.bug.st/serial v1.6.4
+	go.bug.st/serial v1.8.0
 	go.uber.org/zap v1.27.0
 )
 
 require (
 	github.com/agnivade/levenshtein v1.2.1 // indirect
-	github.com/creack/goselect v0.1.2 // indirect
+	github.com/creack/goselect v0.1.3 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -26,7 +26,7 @@ require (
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

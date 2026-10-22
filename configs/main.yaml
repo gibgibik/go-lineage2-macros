@@ -1,6 +1,6 @@
 web:
   port: 8088
-base_url: "http://192.168.1.60:2223/"
+base_url: "http://192.168.1.100:2223/"
 control:
   port: "/dev/serial0"
   baud_rate: 9600

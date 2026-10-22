@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"image"
+	"math/rand"
 	"net/http"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -113,21 +113,21 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 
 							if val, ok := service.PlayerStats.Player[pid]; ok {
 								playerStat = &val
-								if playerStat.CP.Percent < 90 {
-									service.PlayerStatsMutex.Unlock()
-									pidsStack[pid].stopCh <- struct{}{}
-									logger.Debug("macros stopped due to not full cp!!!")
-									botToken := "6181694377:AAGI5iIFTePIoR-oqGNYAi38ygEbKK6Zqfs"
-									cmd := exec.Command(
-										"curl",
-										"-X", "POST",
-										"-H", "Content-Type: application/json",
-										"-d", `{"chat_id": "451312638", "text": "STOPPED", "disable_notification": true}`,
-										"https://api.telegram.org/bot"+botToken+"/sendMessage",
-									)
-									_ = cmd.Run()
-									break
-								}
+								//if playerStat.CP.Percent < 90 {
+								//	service.PlayerStatsMutex.Unlock()
+								//	pidsStack[pid].stopCh <- struct{}{}
+								//	logger.Debug("macros stopped due to not full cp!!!")
+								//	botToken := "6181694377:AAGI5iIFTePIoR-oqGNYAi38ygEbKK6Zqfs"
+								//	cmd := exec.Command(
+								//		"curl",
+								//		"-X", "POST",
+								//		"-H", "Content-Type: application/json",
+								//		"-d", `{"chat_id": "451312638", "text": "STOPPED", "disable_notification": true}`,
+								//		"https://api.telegram.org/bot"+botToken+"/sendMessage",
+								//	)
+								//	_ = cmd.Run()
+								//	break
+								//}
 							}
 							service.PlayerStatsMutex.Unlock()
 							runAction := &profilePreset.item.Preset.Items[i]
@@ -173,7 +173,12 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									i++
 									continue
 								} else {
+									_, _ = controlCl.SendKey(0, "esc")
+									_, _ = controlCl.EndKey()
 									bounds, err := service.FindBounds(logger)
+									rand.Shuffle(len(bounds.Boxes), func(i, j int) {
+										bounds.Boxes[i], bounds.Boxes[j] = bounds.Boxes[j], bounds.Boxes[i]
+									})
 									logger.Info("find bounds ", bounds)
 									if err != nil {
 										logger.Error("find bounds error: " + err.Error())
@@ -186,41 +191,48 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										for _, bound := range bounds.Boxes {
 											_, _ = controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
 												X: int((bound[2]-bound[0])/2) + bound[0],
-												Y: bound[1] + 30,
+												Y: bound[1] + 80,
 											}, 0)
 											time.Sleep(time.Millisecond * 10)
 											_, _ = controlCl.MouseAbsoluteEnd()
 											time.Sleep(time.Millisecond * 300)
-											if val, ok := service.PlayerStats.Player[pid]; ok {
-												playerStat = &val
-											}
 											if len(pidsStack[pid].preferredTargets) > 0 {
 												if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 													if !bestMatch(currentTarget, pidsStack[pid].preferredTargets, logger) {
-														_, _ = controlCl.EndKey()
-														time.Sleep(time.Millisecond * 50)
-														_, _ = controlCl.SendKey(0, "esc")
-														time.Sleep(time.Millisecond * 50)
-														_, _ = controlCl.EndKey()
-														time.Sleep(time.Millisecond * 50)
-														_, _ = controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
+														//_, _ = controlCl.EndKey()
+														//time.Sleep(time.Millisecond * 50)
+														//_, _ = controlCl.SendKey(0, "f10")
+														//_, _ = controlCl.SendKey(0, "esc")
+														//_, _ = controlCl.EndKey()
+														//time.Sleep(time.Millisecond * 50)
+														//time.Sleep(time.Millisecond * 50)
+														//_, _ = controlCl.SendKey(ch9329.ModLeftShift, "z") //stay
+														//_, _ = controlCl.EndKey()
 														i++
 														continue
 													}
 													logger.Info("prefered target is " + currentTarget)
 												}
 											}
+											service.PlayerStatsMutex.Lock()
+											if val, ok := service.PlayerStats.Player[pid]; ok {
+												playerStat = &val
+											}
+											service.PlayerStatsMutex.Unlock()
 											if playerStat.Target.HpPercent > 0 {
 												break
 											}
 										}
 										_, _ = controlCl.EndKey()
+										time.Sleep(time.Millisecond * 100)
 										if playerStat.Target.HpPercent == 0 {
-											controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(1180, 733), 0)
-											time.Sleep(time.Millisecond * 200)
-											controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(1385, 733), 0)
-											time.Sleep(time.Millisecond * 100)
-											controlCl.MouseActionAbsolute(0, image.Pt(1180, 733), 0)
+											controlCl.SendKey(0, "end")
+											controlCl.EndKey()
+											//controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(1180, 733), 0)
+											//time.Sleep(time.Millisecond * 200)
+											//controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(1385, 733), 0)
+											//time.Sleep(time.Millisecond * 100)
+											//controlCl.MouseActionAbsolute(0, image.Pt(1180, 733), 0)
 										}
 									}
 									runAction.LastRun = time.Now()
@@ -258,6 +270,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									if currentTarget, err := service.GetCurrentTarget(logger); err == nil {
 										logger.Info("target is " + currentTarget)
 										if !bestMatch(currentTarget, pidsStack[pid].allowedTargets, logger) {
+											_, _ = controlCl.SendKey(0, "f10")
 											i++
 											continue
 										}
