@@ -18,7 +18,7 @@ func pauseHandler() func(writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 		if !pidsStack[pb.Pid].TryLock() {
-			pidsStack[pb.Pid].webWaitCh <- struct{}{}
+			trySignal(pidsStack[pb.Pid].webWaitCh)
 		} else {
 			pidsStack[pb.Pid].Unlock()
 		}

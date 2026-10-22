@@ -18,7 +18,7 @@ func stopHandler() func(writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 		if !pidsStack[pb.Pid].TryLock() {
-			pidsStack[pb.Pid].stopCh <- struct{}{}
+			trySignal(pidsStack[pb.Pid].stopCh)
 		} else {
 			pidsStack[pb.Pid].Unlock()
 		}

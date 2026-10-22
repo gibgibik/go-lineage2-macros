@@ -208,6 +208,40 @@ func httpServerStart(ctx context.Context, cnf *core.Config, logger *zap.SugaredL
 	return handle
 }
 
+// trySignal performs a non-blocking send on a signalling channel.
+// The pidStack channels are buffered with size 1 and are both sent to and
+// received from by the worker goroutine itself as well as by HTTP handlers.
+// A plain blocking send can deadlock the worker when the single buffer slot
+// is already full (e.g. a stop was already queued), which froze the whole
+// macro loop with no further log output. Dropping the duplicate signal is
+// safe here: the pending one already conveys the same intent.
+func trySignal(ch chan struct{}) bool {
+	select {
+	case ch <- struct{}{}:
+		return true
+	default:
+		return false
+	}
+}
+
+// waitSignalTimeout blocks until a signal arrives on ch or the timeout
+// elapses. It is used for the two-worker coordination handshake (poke the
+// other worker's waitCh, then wait to be woken). Bounding the wait means a
+// missed or dropped handshake signal degrades into a brief delay instead of
+// freezing the worker forever.
+func waitSignalTimeout(ch chan struct{}, timeout time.Duration) bool {
+	select {
+	case <-ch:
+		return true
+	case <-time.After(timeout):
+		return false
+	}
+}
+
+// handshakeTimeout bounds how long a worker will wait for the partner worker
+// to acknowledge a window-switch handshake.
+const handshakeTimeout = 10 * time.Second
+
 func sendMessage(messageType int, message any) {
 	messagesStackMutex.Lock()
 	b, _ := json.Marshal(map[int]any{

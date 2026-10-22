@@ -39,7 +39,7 @@ func postTemplateHandler(w http.ResponseWriter, r *http.Request, logger *zap.Sug
 		}
 		if !pidsStack[k].TryLock() {
 			logger.Info("reload ", k)
-			pidsStack[k].reloadCh <- struct{}{}
+			trySignal(pidsStack[k].reloadCh)
 		} else {
 			pidsStack[k].Unlock()
 		}

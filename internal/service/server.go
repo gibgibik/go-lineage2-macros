@@ -120,8 +120,7 @@ func Init() (InitData, error) {
 func GetForegroundWindowPid() (uint32, error) {
 	res, err := http.HttpCl.RawRequest("getForegroundWindowPid", http2.MethodPost, nil)
 	if err != nil {
-		fmt.Println("err", err)
-		return 0, err
+		return 0, fmt.Errorf("getForegroundWindowPid request error: %w", err)
 	}
 	var result ForeGroundWindowInfo
 	if err := json.Unmarshal(res, &result); err != nil {

@@ -3,6 +3,7 @@ package service
 import (
 	"image"
 	"sync"
+	"time"
 
 	"github.com/gibgibik/go-ch9329/pkg/ch9329"
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
@@ -52,6 +53,14 @@ func GetControl(cnf core.Control) (*Control, error) {
 	}
 	port, err := serial.Open(cnf.Port, mode)
 	if err != nil {
+		return nil, err
+	}
+	// Bound serial reads so a silent/unplugged CH9329 device causes the
+	// ch9329 client call to return an error instead of blocking forever
+	// while holding Control.Mutex (which would freeze every control call
+	// and stall the macro loop with no further log output).
+	if err := port.SetReadTimeout(2 * time.Second); err != nil {
+		_ = port.Close()
 		return nil, err
 	}
 	control = &Control{

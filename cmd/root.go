@@ -34,7 +34,16 @@ func Execute() error {
 	if err != nil {
 		panic(err)
 	}
-	w := zapcore.AddSync(f)
+	// Wrap the file sink in a buffered syncer with a periodic flush so log
+	// lines reach app.log even when the process is stuck or killed hard.
+	// Without this, zap's internal buffer can hold log output indefinitely,
+	// which is why the log appeared empty during hangs.
+	fileWS := &zapcore.BufferedWriteSyncer{
+		WS:            zapcore.AddSync(f),
+		FlushInterval: time.Second,
+	}
+	defer fileWS.Stop() // flushes any remaining buffered output on exit
+	w := zapcore.WriteSyncer(fileWS)
 	cZ := zapcore.NewTee(
 		zapcore.NewCore(
 			zapcore.NewJSONEncoder(pe),
@@ -45,6 +54,7 @@ func Execute() error {
 		zapcore.NewCore(zapcore.NewConsoleEncoder(webEncoder), zapcore.AddSync(web.BaseWsSender{}), zapcore.InfoLevel),
 	)
 	logger := zap.New(cZ)
+	defer logger.Sync() // ensure buffered log entries are flushed on shutdown
 	rootCmd := &cobra.Command{
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return nil
@@ -70,5 +80,6 @@ func Execute() error {
 	logger.Info("shutdown start")
 	time.Sleep(time.Second * 5)
 	logger.Info("shutdown end")
+	_ = logger.Sync()
 	return err
 }
