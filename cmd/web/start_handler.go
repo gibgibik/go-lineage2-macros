@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"image"
 	"net/http"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -128,21 +127,21 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 
 							if val, ok := service.PlayerStats.Player[pid]; ok {
 								playerStat = &val
-								if playerStat.CP.Percent < 90 {
-									service.PlayerStatsMutex.Unlock()
-									trySignal(pidsStack[pid].stopCh)
-									logger.Debug("macros stopped due to not full cp!!!")
-									botToken := "6181694377:AAGI5iIFTePIoR-oqGNYAi38ygEbKK6Zqfs"
-									cmd := exec.Command(
-										"curl",
-										"-X", "POST",
-										"-H", "Content-Type: application/json",
-										"-d", `{"chat_id": "451312638", "text": "STOPPED", "disable_notification": true}`,
-										"https://api.telegram.org/bot"+botToken+"/sendMessage",
-									)
-									_ = cmd.Run()
-									break
-								}
+								//if playerStat.CP.Percent < 90 {
+								//	service.PlayerStatsMutex.Unlock()
+								//	trySignal(pidsStack[pid].stopCh)
+								//	logger.Debug("macros stopped due to not full cp!!!")
+								//	botToken := "6181694377:AAGI5iIFTePIoR-oqGNYAi38ygEbKK6Zqfs"
+								//	cmd := exec.Command(
+								//		"curl",
+								//		"-X", "POST",
+								//		"-H", "Content-Type: application/json",
+								//		"-d", `{"chat_id": "451312638", "text": "STOPPED", "disable_notification": true}`,
+								//		"https://api.telegram.org/bot"+botToken+"/sendMessage",
+								//	)
+								//	_ = cmd.Run()
+								//	break
+								//}
 							}
 							service.PlayerStatsMutex.Unlock()
 							runAction := &profilePreset.item.Preset.Items[i]
@@ -187,6 +186,9 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									continue
 								} else {
 									bounds, err := service.FindBounds(logger)
+									//rand.Shuffle(len(arr), func(i, j int) {
+									//	arr[i], arr[j] = arr[j], arr[i]
+									//})
 									logger.Info("find bounds ", bounds)
 									if err != nil {
 										logger.Error("find bounds error: " + err.Error())
@@ -199,7 +201,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 										for _, bound := range bounds.Boxes {
 											_, _ = controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Point{
 												X: int((bound[2]-bound[0])/2) + bound[0],
-												Y: bound[1] + 30,
+												Y: bound[1] + 80,
 											}, 0)
 											time.Sleep(time.Millisecond * 40)
 											_, _ = controlCl.MouseAbsoluteEnd()
@@ -228,12 +230,14 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 											}
 										}
 										_, _ = controlCl.EndKey()
-										//if playerStat.Target.HpPercent == 0 {
-										//	controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(0, 0), 0)
-										//	time.Sleep(time.Millisecond * 200)
-										//	controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(5, 0), 0)
-										//	time.Sleep(time.Millisecond * 100)
-										//	controlCl.MouseActionAbsolute(0, image.Pt(10, 0), 0)
+										if runAction.Additional != "dont_move_screen" && (runAction.Additional == "move_screen" || playerStat.Target.HpPercent == 0) {
+											//if playerStat.Target.HpPercent == 0 {
+											controlCl.MouseActionAbsolute(ch9329.MousePressRight, image.Pt(1180, 733), 0)
+											time.Sleep(time.Millisecond * 200)
+											controlCl.MouseActionAbsolute(0, image.Pt(1190, 733), 0)
+											time.Sleep(time.Millisecond * 100)
+											controlCl.MouseAbsoluteEnd()
+										}
 										//}
 									}
 									runAction.LastRun = time.Now()
@@ -271,6 +275,9 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 									if currentTarget, _ := service.GetCurrentTarget(logger); currentTarget != "" {
 										logger.Info("target is " + currentTarget)
 										if !bestMatch(currentTarget, pidsStack[pid].allowedTargets, logger) {
+											_, _ = controlCl.SendKey(0, "esc")
+											_, _ = controlCl.EndKey()
+
 											i++
 											continue
 										}

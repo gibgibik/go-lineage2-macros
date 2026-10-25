@@ -1467,5 +1467,11 @@ var (
 		"Blackbanner Marshal":             nil,
 		"Blackbanner Marauder":            nil,
 		"Blackbanner Cutthroat":           nil,
+		"Ascetic Solina":                  nil,
+		"Guide Solina":                    nil,
+		"Savior Solina":                   nil,
+		"Seeker Solina":                   nil,
+		"Solina Knight Captain":           nil,
+		"Solina Knights":                  nil,
 	}
 )

@@ -340,6 +340,7 @@ func makeChecks(runStack map[uint32]*pidStack, pid uint32, checksPassed bool, co
 }
 
 func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLogger) bool {
+	return true
 	curPid, err := service.GetForegroundWindowPid()
 	if err != nil {
 		logger.Errorf("get foreground window failed: %v", err)
