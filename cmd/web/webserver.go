@@ -242,6 +242,62 @@ func waitSignalTimeout(ch chan struct{}, timeout time.Duration) bool {
 // to acknowledge a window-switch handshake.
 const handshakeTimeout = 10 * time.Second
 
+// innerControl is the decision returned by pollControlSignals telling the
+// inner preset loop how to react to a control signal that arrived while it
+// was busy.
+type innerControl int
+
+const (
+	innerContinue innerControl = iota // no signal pending, keep running
+	innerStop                         // stop/ctx-cancel: abort the whole run
+	innerReload                       // profile changed: restart the stack
+)
+
+// pollControlSignals performs non-blocking checks of the per-pid control
+// channels from *inside* the inner preset loop.
+//
+// Previously these channels were only drained at the top of the worker's
+// outer select loop. While the macro was actively running it spent nearly
+// all of its time inside the inner item loop, so pause/stop/reload/ctx-cancel
+// signals sat in their buffered channels unobserved until the current preset
+// stack finished. If the inner loop was stuck (foreground mismatch, no target,
+// conditions never passing) that could be effectively forever, which is why
+// "stop/pause didn't work and there were no press logs".
+//
+// Draining them here makes those controls take effect within one inner-loop
+// iteration regardless of what the loop is doing. For pause (webWaitCh) it
+// blocks until the matching resume signal arrives, mirroring the outer-loop
+// behaviour.
+func pollControlSignals(ctx context.Context, pid uint32, logger *zap.SugaredLogger) innerControl {
+	ps := pidsStack[pid]
+	select {
+	case <-ctx.Done():
+		return innerStop
+	case <-ps.stopCh:
+		logger.Info("macros stopped")
+		return innerStop
+	case <-ps.reloadCh:
+		logger.Info("reload requested")
+		return innerReload
+	case <-ps.webWaitCh:
+		logger.Info("pause from web context")
+		// Block until resumed (or torn down) so we do not keep pressing keys
+		// while paused.
+		select {
+		case <-ps.webWaitCh:
+			logger.Info("continue from web context")
+			return innerContinue
+		case <-ctx.Done():
+			return innerStop
+		case <-ps.stopCh:
+			logger.Info("macros stopped")
+			return innerStop
+		}
+	default:
+		return innerContinue
+	}
+}
+
 func sendMessage(messageType int, message any) {
 	messagesStackMutex.Lock()
 	b, _ := json.Marshal(map[int]any{

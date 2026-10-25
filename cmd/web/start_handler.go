@@ -97,6 +97,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						sendMessage(messageTypeError, "init stacks error: "+err.Error())
 						return
 					}
+					var reloadRequested bool
+				stackLoop:
 					for _, profilePreset := range pidsStack[pid].stack {
 						var i int
 						var checksPassed bool
@@ -105,6 +107,19 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 							_ = switchWindow(pid, controlCl, logger) //switching window
 						}
 						for {
+							// Honor pause/stop/reload/ctx-cancel from inside the
+							// inner loop so the controls respond promptly even
+							// when the loop is otherwise busy or stuck.
+							switch pollControlSignals(ctx, pid, logger) {
+							case innerStop:
+								cp := pidsStack[pid]
+								cp.stack = nil
+								pidsStack[pid] = cp
+								return
+							case innerReload:
+								reloadRequested = true
+								break stackLoop
+							}
 							if i >= len(profilePreset.item.Preset.Items) {
 								break
 							}
@@ -299,6 +314,14 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 								pidsStack[anotherPid].Unlock()
 							}
 						}
+					}
+					if reloadRequested {
+						// Profile changed mid-run: drop the cached stack so the
+						// next outer iteration rebuilds it via initStacks.
+						cp := pidsStack[pid]
+						cp.stack = nil
+						pidsStack[pid] = cp
+						logger.Info("reloaded")
 					}
 				}
 			}
