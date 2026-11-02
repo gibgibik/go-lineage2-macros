@@ -51,44 +51,58 @@ func (t *Telegram) handleUpdate(
 	}
 
 	msg := update.Message
-	if msg == nil {
-		fmt.Printf("[tg] update %d has no Message (type ignored)\n", update.ID)
+	if msg == nil || msg.Text == "" {
 		return
 	}
 
-	if msg.ReplyToMessage == nil {
-		fmt.Printf("[tg] message from chat %d has no ReplyToMessage, text=%q (not a reply)\n", msg.Chat.ID, msg.Text)
-		return
-	}
-
-	fmt.Printf("[tg] reply received: chat=%d replyTo=%d text=%q (want chat=%d)\n",
-		msg.Chat.ID, msg.ReplyToMessage.ID, msg.Text, t.chatID)
-
-	// Accept replies only from our chat.
+	// Accept messages only from our chat.
 	if msg.Chat.ID != t.chatID {
-		fmt.Printf("[tg] chat mismatch: got %d want %d, ignoring\n", msg.Chat.ID, t.chatID)
 		return
 	}
 
-	key := MessageKey{
-		ChatID:    msg.Chat.ID,
-		MessageID: msg.ReplyToMessage.ID,
+	// If the user used Telegram's "Reply" feature, route to that specific
+	// waiter. Otherwise fall back to delivering the text to any pending
+	// waiter in this chat (private 1-on-1 chat has at most one at a time).
+	if msg.ReplyToMessage != nil {
+		key := MessageKey{ChatID: msg.Chat.ID, MessageID: msg.ReplyToMessage.ID}
+		if t.deliver(key, msg.Text) {
+			return
+		}
 	}
 
+	t.deliverAny(msg.Chat.ID, msg.Text)
+}
+
+// deliver sends text to the waiter registered under key. Returns true if a
+// waiter was found.
+func (t *Telegram) deliver(key MessageKey, text string) bool {
 	value, ok := t.pending.Load(key)
 	if !ok {
-		fmt.Printf("[tg] no pending waiter for key %+v\n", key)
-		return
+		return false
 	}
 
 	ch := value.(chan string)
-
 	select {
-	case ch <- msg.Text:
-		fmt.Printf("[tg] delivered reply to waiter for message %d\n", key.MessageID)
+	case ch <- text:
 	default:
-		fmt.Printf("[tg] waiter channel full/closed for message %d\n", key.MessageID)
 	}
+	return true
+}
+
+// deliverAny sends text to any pending waiter in the given chat.
+func (t *Telegram) deliverAny(chatID int64, text string) {
+	t.pending.Range(func(k, value any) bool {
+		key := k.(MessageKey)
+		if key.ChatID != chatID {
+			return true
+		}
+		ch := value.(chan string)
+		select {
+		case ch <- text:
+		default:
+		}
+		return false // stop after delivering to the first match
+	})
 }
 
 // waitReply waits for a reply to a specific message.
