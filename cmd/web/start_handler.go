@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"image"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
 	"github.com/gibgibik/go-lineage2-macros/internal/preset"
 	"github.com/gibgibik/go-lineage2-macros/internal/service"
+	telegram2 "github.com/gibgibik/go-lineage2-macros/internal/telegram"
 	"github.com/gibgibik/go-lineage2-server/pkg/entity"
 	"go.uber.org/zap"
 )
@@ -58,6 +60,14 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 				break
 			}
 		}
+		var ticker *time.Ticker
+		var telegram *telegram2.Telegram
+		if cnf.ServerType == core.ServerTypeScryde {
+			telegram, _ = telegram2.NewTelegram(cnf.Telegram.ApiKey, cnf.Telegram.ChatID)
+			go telegram.Bot.Start(ctx)
+		} else {
+			ticker = nil
+		}
 		go func() {
 			defer pidsStack[pid].Unlock()
 			for {
@@ -89,6 +99,36 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					<-pidsStack[pid].waitCh
 					logger.Info("wait end")
 					continue
+				case <-tickerChan(ticker):
+					result, err := service.CheckScrydeCaptcha()
+					if err != nil {
+						logger.Error("scryde check failed: ", err)
+						continue
+					}
+					if result == nil {
+						continue
+					}
+					captcha, err := base64.StdEncoding.DecodeString(result.Image)
+					if err != nil {
+						logger.Error("base64 decode failed: ", err)
+						continue
+					}
+					logger.Info("scryde captcha start")
+					reply, _ := telegram.SendPhotoAndWaitReply(ctx, captcha, "New captcha")
+					//controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Pt(result.InputCoordinates[0], result.InputCoordinates[1]), 0)
+					//controlCl.MouseAbsoluteEnd()
+					//time.Sleep(time.Millisecond * 100)
+					//controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Pt(result.InputCoordinates[0], result.InputCoordinates[1]), 0)
+					//controlCl.MouseAbsoluteEnd()
+					time.Sleep(time.Millisecond * 100)
+					for _, l := range strings.Split(reply, "") {
+						controlCl.SendKey(0, l)
+						controlCl.EndKey()
+					}
+					//controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Pt(result.SubmitCoordinates[0], result.SubmitCoordinates[1]), 0)
+					//controlCl.MouseAbsoluteEnd()
+					//time.Sleep(time.Millisecond * 100)
+					logger.Info("scryde check end: ", reply)
 				default:
 					err := initStacks(body.Pid, r, logger)
 					if err != nil {
@@ -425,4 +465,11 @@ func bestMatch(input string, candidates []string, logger *zap.SugaredLogger) boo
 	logger.Info(input, " ", best, bestDistance)
 
 	return false
+}
+
+func tickerChan(t *time.Ticker) <-chan time.Time {
+	if t == nil {
+		return nil
+	}
+	return t.C
 }
