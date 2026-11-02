@@ -66,6 +66,8 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 		if cnf.ServerType == core.ServerTypeScryde {
 			telegram, _ = telegram2.NewTelegram(cnf.Telegram.ApiKey, cnf.Telegram.ChatID)
 			go telegram.Bot.Start(ctx)
+			ticker = time.NewTicker(time.Second * 3)
+			defer ticker.Stop()
 		} else {
 			ticker = nil
 		}
