@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"image"
 	"net/http"
 	"strings"
@@ -122,6 +123,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					//controlCl.MouseAbsoluteEnd()
 					time.Sleep(time.Millisecond * 100)
 					for _, l := range strings.Split(reply, "") {
+						fmt.Println("sending: ", l)
 						controlCl.SendKey(0, l)
 						controlCl.EndKey()
 					}
