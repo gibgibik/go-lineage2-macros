@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/gibgibik/go-ch9329 v0.0.0-20261022103142-e212d59aeb0f
-	github.com/gibgibik/go-lineage2-server v0.0.0-20250723071340-fef8a51351eb
+	github.com/gibgibik/go-lineage2-server v0.0.0-20261102132012-daefb3fe52f2
 	github.com/gorilla/websocket v1.5.3
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
@@ -16,6 +16,7 @@ require (
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/creack/goselect v0.1.3 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
+	github.com/go-telegram/bot v1.27.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect

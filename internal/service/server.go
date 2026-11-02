@@ -128,3 +128,14 @@ func GetForegroundWindowPid() (uint32, error) {
 	}
 	return result.Pid, nil
 }
+func CheckScrydeCaptcha() (*entity.ScrydeCaptchaResponse, error) {
+	res, err := http.HttpCl.RawRequest("scrydeCaptcha", http2.MethodGet, nil)
+	if err != nil {
+		return nil, fmt.Errorf("scryde captcha request error: %w", err)
+	}
+	var result entity.ScrydeCaptchaResponse
+	if err := json.Unmarshal(res, &result); err != nil {
+		return nil, fmt.Errorf("getForegroundWindowPid unmarshal error: %w", err)
+	}
+	return &result, nil
+}

@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
 	"github.com/gibgibik/go-lineage2-macros/internal/service"
+	telegram2 "github.com/gibgibik/go-lineage2-macros/internal/telegram"
 	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -137,6 +139,62 @@ func CreateWebServerCommand(logger *zap.SugaredLogger) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cnf := cmd.Context().Value(CtxKeyConfig).(*core.Config)
 			handle := httpServerStart(cmd.Context(), cnf, logger)
+			if cnf.ServerType == core.ServerTypeScryde {
+				go func() {
+					telegram, err := telegram2.NewTelegram(cnf.Telegram.ApiKey, cnf.Telegram.ChatID)
+					if err != nil {
+						logger.Fatal(err)
+					}
+					go telegram.Bot.Start(cmd.Context())
+					go func() {
+						replyCtx, cancel := context.WithTimeout(
+							cmd.Context(),
+							5*time.Minute,
+						)
+						defer cancel()
+
+						reply, err := telegram.SendMessageAndWaitReply(
+							replyCtx,
+							"Instance #1: Character stuck. What should I do?",
+						)
+						if err != nil {
+							if errors.Is(err, context.DeadlineExceeded) {
+								logger.Info("Reply timeout")
+							} else {
+								logger.Info("Error:", err)
+							}
+							return
+						}
+
+						logger.Info("Received reply:", reply)
+					}()
+					ticker := time.NewTicker(time.Second * 10)
+					for {
+						select {
+						case <-ticker.C:
+							result, err := service.CheckScrydeCaptcha()
+							if err != nil {
+								logger.Error("scryde check failed: ", err)
+								continue
+							}
+							if result == nil {
+								continue
+							}
+							captcha, err := base64.StdEncoding.DecodeString(result.Image)
+							if err != nil {
+								logger.Error("base64 decode failed: ", err)
+								continue
+							}
+							telegram.SendPhotoAndWaitReply(cmd.Context(), captcha, "New captcha")
+							logger.Info("scryde check end")
+						case <-cmd.Context().Done():
+							logger.Info("Bot stopped")
+						}
+					}
+					// Keep polling until canceled.
+
+				}()
+			}
 			for {
 				select {
 				case <-cmd.Context().Done():
@@ -340,7 +398,6 @@ func makeChecks(runStack map[uint32]*pidStack, pid uint32, checksPassed bool, co
 }
 
 func switchWindow(pid uint32, controlCl *service.Control, logger *zap.SugaredLogger) bool {
-	return true
 	curPid, err := service.GetForegroundWindowPid()
 	if err != nil {
 		logger.Errorf("get foreground window failed: %v", err)

@@ -7,6 +7,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	ServerTypeScryde string = "scryde"
+)
+
 type Web struct {
 	Port string
 }
@@ -15,12 +19,18 @@ type Control struct {
 	BaudRate   int   `mapstructure:"baud_rate"`
 	Resolution []int `mapstructure:"resolution"`
 }
+type Telegram struct {
+	ApiKey string `mapstructure:"api_key"`
+	ChatID int64  `mapstructure:"chat_id"`
+}
 type Config struct {
+	ServerType           string           `mapstructure:"server_type"`
 	WebServer            Web              `mapstructure:"web"`
 	InitUrl              string           `mapstructure:"init_url"`
 	BaseUrl              string           `mapstructure:"base_url"`
 	AssistPartyMemberMap map[string][]int `mapstructure:"assist_party_member_map"`
 	Control
+	Telegram
 }
 
 func InitConfig() (*Config, error) {

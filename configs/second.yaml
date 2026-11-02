@@ -1,3 +1,4 @@
+server_type: scryde
 web:
   port: 8089
 base_url: "http://192.168.1.129:2223/"
@@ -14,3 +15,6 @@ assist_party_member_map:
   "6": [40, 417]
   "7": [40, 472]
   "8": [40, 525]
+telegram:
+  api_key: "8174633883:AAEkrjPWxxt8NSLLpmSbpXsfGA3IE4R6Wwc"
+  chat_id: 451312638
