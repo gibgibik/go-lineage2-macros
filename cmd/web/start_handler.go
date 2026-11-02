@@ -109,8 +109,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						logger.Error("scryde check failed: ", err)
 						continue
 					}
-					logger.Info("scryde captcha result: ", result)
-					if result == nil {
+					if result == nil || len(result.TemplateCoordinates) == 0 {
 						continue
 					}
 					captcha, err := base64.StdEncoding.DecodeString(result.Image)
