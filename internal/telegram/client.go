@@ -47,7 +47,7 @@ func (t *Telegram) handleUpdate(
 	update *models.Update,
 ) {
 	msg := update.Message
-	fmt.Println(update.Message.Text)
+	fmt.Println(update.Message.Text, update.Message.ReplyToMessage)
 	if msg == nil || msg.ReplyToMessage == nil {
 		return
 	}
