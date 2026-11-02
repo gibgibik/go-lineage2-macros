@@ -185,6 +185,7 @@ func CreateWebServerCommand(logger *zap.SugaredLogger) *cobra.Command {
 								logger.Error("base64 decode failed: ", err)
 								continue
 							}
+							logger.Info("scryde captcha start")
 							telegram.SendPhotoAndWaitReply(cmd.Context(), captcha, "New captcha")
 							logger.Info("scryde check end")
 						case <-cmd.Context().Done():
