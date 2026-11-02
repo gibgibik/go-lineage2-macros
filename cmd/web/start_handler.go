@@ -61,17 +61,17 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 				break
 			}
 		}
-		var ticker *time.Ticker
-		var telegram *telegram2.Telegram
-		if cnf.ServerType == core.ServerTypeScryde {
-			telegram, _ = telegram2.NewTelegram(cnf.Telegram.ApiKey, cnf.Telegram.ChatID)
-			go telegram.Bot.Start(ctx)
-			ticker = time.NewTicker(time.Second * 3)
-			defer ticker.Stop()
-		} else {
-			ticker = nil
-		}
 		go func() {
+			var ticker *time.Ticker
+			var telegram *telegram2.Telegram
+			if cnf.ServerType == core.ServerTypeScryde {
+				telegram, _ = telegram2.NewTelegram(cnf.Telegram.ApiKey, cnf.Telegram.ChatID)
+				go telegram.Bot.Start(ctx)
+				ticker = time.NewTicker(time.Second * 3)
+				defer ticker.Stop()
+			} else {
+				ticker = nil
+			}
 			defer pidsStack[pid].Unlock()
 			for {
 				select {
@@ -103,6 +103,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					logger.Info("wait end")
 					continue
 				case <-tickerChan(ticker):
+					logger.Info("TICK")
 					result, err := service.CheckScrydeCaptcha()
 					if err != nil {
 						logger.Error("scryde check failed: ", err)
@@ -118,20 +119,20 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					}
 					logger.Info("scryde captcha start")
 					reply, _ := telegram.SendPhotoAndWaitReply(ctx, captcha, "New captcha")
-					//controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Pt(result.InputCoordinates[0], result.InputCoordinates[1]), 0)
-					//controlCl.MouseAbsoluteEnd()
-					//time.Sleep(time.Millisecond * 100)
-					//controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Pt(result.InputCoordinates[0], result.InputCoordinates[1]), 0)
-					//controlCl.MouseAbsoluteEnd()
+					controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Pt(result.InputCoordinates[0], result.InputCoordinates[1]), 0)
+					controlCl.MouseAbsoluteEnd()
+					time.Sleep(time.Millisecond * 100)
+					controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Pt(result.InputCoordinates[0], result.InputCoordinates[1]), 0)
+					controlCl.MouseAbsoluteEnd()
 					time.Sleep(time.Millisecond * 100)
 					for _, l := range strings.Split(strings.TrimSpace(reply), "") {
 						fmt.Println("sending: ", l)
 						controlCl.SendKey(0, l)
 						controlCl.EndKey()
 					}
-					//controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Pt(result.SubmitCoordinates[0], result.SubmitCoordinates[1]), 0)
-					//controlCl.MouseAbsoluteEnd()
-					//time.Sleep(time.Millisecond * 100)
+					controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Pt(result.SubmitCoordinates[0], result.SubmitCoordinates[1]), 0)
+					controlCl.MouseAbsoluteEnd()
+					time.Sleep(time.Millisecond * 100)
 					logger.Info("scryde check end: ", strings.Split(reply, ""))
 				default:
 					err := initStacks(body.Pid, r, logger)
