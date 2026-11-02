@@ -146,28 +146,6 @@ func CreateWebServerCommand(logger *zap.SugaredLogger) *cobra.Command {
 						logger.Fatal(err)
 					}
 					go telegram.Bot.Start(cmd.Context())
-					//go func() {
-					//	replyCtx, cancel := context.WithTimeout(
-					//		cmd.Context(),
-					//		time.Minute,
-					//	)
-					//	defer cancel()
-					//
-					//	reply, err := telegram.SendMessageAndWaitReply(
-					//		replyCtx,
-					//		"Instance #1: Character stuck. What should I do?",
-					//	)
-					//	if err != nil {
-					//		if errors.Is(err, context.DeadlineExceeded) {
-					//			logger.Info("Reply timeout")
-					//		} else {
-					//			logger.Info("Error:", err)
-					//		}
-					//		return
-					//	}
-					//
-					//	logger.Info("Received reply:", reply)
-					//}()
 					ticker := time.NewTicker(time.Second * 3)
 					for {
 						select {
@@ -186,8 +164,9 @@ func CreateWebServerCommand(logger *zap.SugaredLogger) *cobra.Command {
 								continue
 							}
 							logger.Info("scryde captcha start")
-							telegram.SendPhotoAndWaitReply(cmd.Context(), captcha, "New captcha")
-							logger.Info("scryde check end")
+							reply, _ := telegram.SendPhotoAndWaitReply(cmd.Context(), captcha, "New captcha")
+							logger.Info("scryde check end: ", reply)
+
 						case <-cmd.Context().Done():
 							logger.Info("Bot stopped")
 							return
