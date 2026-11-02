@@ -130,7 +130,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					//controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Pt(result.SubmitCoordinates[0], result.SubmitCoordinates[1]), 0)
 					//controlCl.MouseAbsoluteEnd()
 					//time.Sleep(time.Millisecond * 100)
-					logger.Info("scryde check end: ", reply)
+					logger.Info("scryde check end: ", strings.Split(reply, ""))
 				default:
 					err := initStacks(body.Pid, r, logger)
 					if err != nil {
