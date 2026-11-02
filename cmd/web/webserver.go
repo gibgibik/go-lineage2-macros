@@ -2,7 +2,6 @@ package web
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,7 +16,6 @@ import (
 
 	"github.com/gibgibik/go-lineage2-macros/internal/core"
 	"github.com/gibgibik/go-lineage2-macros/internal/service"
-	telegram2 "github.com/gibgibik/go-lineage2-macros/internal/telegram"
 	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -139,43 +137,6 @@ func CreateWebServerCommand(logger *zap.SugaredLogger) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cnf := cmd.Context().Value(CtxKeyConfig).(*core.Config)
 			handle := httpServerStart(cmd.Context(), cnf, logger)
-			if cnf.ServerType == core.ServerTypeScryde {
-				go func() {
-					telegram, err := telegram2.NewTelegram(cnf.Telegram.ApiKey, cnf.Telegram.ChatID)
-					if err != nil {
-						logger.Fatal(err)
-					}
-					go telegram.Bot.Start(cmd.Context())
-					ticker := time.NewTicker(time.Second * 3)
-					for {
-						select {
-						case <-ticker.C:
-							result, err := service.CheckScrydeCaptcha()
-							if err != nil {
-								logger.Error("scryde check failed: ", err)
-								continue
-							}
-							if result == nil {
-								continue
-							}
-							captcha, err := base64.StdEncoding.DecodeString(result.Image)
-							if err != nil {
-								logger.Error("base64 decode failed: ", err)
-								continue
-							}
-							logger.Info("scryde captcha start")
-							reply, _ := telegram.SendPhotoAndWaitReply(cmd.Context(), captcha, "New captcha")
-							logger.Info("scryde check end: ", reply)
-
-						case <-cmd.Context().Done():
-							logger.Info("Bot stopped")
-							return
-						}
-					}
-					// Keep polling until canceled.
-
-				}()
-			}
 			for {
 				select {
 				case <-cmd.Context().Done():
