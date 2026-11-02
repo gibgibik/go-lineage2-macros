@@ -122,7 +122,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					//controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Pt(result.InputCoordinates[0], result.InputCoordinates[1]), 0)
 					//controlCl.MouseAbsoluteEnd()
 					time.Sleep(time.Millisecond * 100)
-					for _, l := range strings.Split(reply, "") {
+					for _, l := range strings.Split(strings.TrimSpace(reply), "") {
 						fmt.Println("sending: ", l)
 						controlCl.SendKey(0, l)
 						controlCl.EndKey()
