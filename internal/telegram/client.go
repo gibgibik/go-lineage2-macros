@@ -46,11 +46,16 @@ func (t *Telegram) handleUpdate(
 	b *bot.Bot,
 	update *models.Update,
 ) {
+	if update == nil {
+		return
+	}
+
 	msg := update.Message
-	fmt.Println(update.Message.Text, update.Message.ReplyToMessage)
 	if msg == nil || msg.ReplyToMessage == nil {
 		return
 	}
+
+	fmt.Println(msg.Text, msg.ReplyToMessage)
 
 	// Accept replies only from our chat.
 	if msg.Chat.ID != t.chatID {
