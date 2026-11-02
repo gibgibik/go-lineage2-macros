@@ -51,14 +51,22 @@ func (t *Telegram) handleUpdate(
 	}
 
 	msg := update.Message
-	if msg == nil || msg.ReplyToMessage == nil {
+	if msg == nil {
+		fmt.Printf("[tg] update %d has no Message (type ignored)\n", update.ID)
 		return
 	}
 
-	fmt.Println(msg.Text, msg.ReplyToMessage)
+	if msg.ReplyToMessage == nil {
+		fmt.Printf("[tg] message from chat %d has no ReplyToMessage, text=%q (not a reply)\n", msg.Chat.ID, msg.Text)
+		return
+	}
+
+	fmt.Printf("[tg] reply received: chat=%d replyTo=%d text=%q (want chat=%d)\n",
+		msg.Chat.ID, msg.ReplyToMessage.ID, msg.Text, t.chatID)
 
 	// Accept replies only from our chat.
 	if msg.Chat.ID != t.chatID {
+		fmt.Printf("[tg] chat mismatch: got %d want %d, ignoring\n", msg.Chat.ID, t.chatID)
 		return
 	}
 
@@ -69,6 +77,7 @@ func (t *Telegram) handleUpdate(
 
 	value, ok := t.pending.Load(key)
 	if !ok {
+		fmt.Printf("[tg] no pending waiter for key %+v\n", key)
 		return
 	}
 
@@ -76,7 +85,9 @@ func (t *Telegram) handleUpdate(
 
 	select {
 	case ch <- msg.Text:
+		fmt.Printf("[tg] delivered reply to waiter for message %d\n", key.MessageID)
 	default:
+		fmt.Printf("[tg] waiter channel full/closed for message %d\n", key.MessageID)
 	}
 }
 
@@ -137,6 +148,8 @@ func (t *Telegram) SendPhotoAndWaitReply(
 	if err != nil {
 		return "", err
 	}
+
+	fmt.Printf("[tg] sent photo, message id=%d, waiting for reply...\n", msg.ID)
 
 	return t.waitReply(ctx, msg.ID)
 }
