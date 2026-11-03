@@ -92,7 +92,7 @@ export const Preset = ({value, index, ...other}) => {
                 </Grid>
                 <Grid size={9}>
                     {presetId &&
-                        <Macros presetId={presetId} onSave={macrosSave} presetName={presetsList[presetId].name} data={presetsList[presetId]} />}
+                        <Macros key={presetId} presetId={presetId} onSave={macrosSave} presetName={presetsList[presetId].name} data={presetsList[presetId]} />}
                 </Grid>
             </Grid>
         </Box>

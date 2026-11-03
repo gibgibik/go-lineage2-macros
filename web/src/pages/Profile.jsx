@@ -151,7 +151,7 @@ export const Profile = ({value, index, profileName, setProfileName, currentPid, 
                 </Grid>
                 <Grid size={7}>
                     {activePreset > 0 &&
-                        <ProfileMacros presetId={activePreset} profiles={profiles} setProfiles={setProfiles}
+                        <ProfileMacros key={`${profileName}:${activePreset}`} presetId={activePreset} profiles={profiles} setProfiles={setProfiles}
                                        profileName={profileName} onSave={save}
                                        presetName={presetsList[activePreset].name}
                                        data={profiles[profileName]?.items.find(item => item.preset.id == activePreset)?.preset}

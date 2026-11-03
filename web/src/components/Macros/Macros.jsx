@@ -21,7 +21,7 @@ const onChangeBinding = (event) => {
     return false;
 }
 
-const renderItems = ({id, items = []}, conditionsRef) => {
+const renderItems = ({id, items = []}, conditionsRef, token = '') => {
     const result = []
     for (let i = 0; i < INPUT_COUNT; i++) {
         let preparedConditions = {rules: []};
@@ -30,29 +30,31 @@ const renderItems = ({id, items = []}, conditionsRef) => {
         } else {
             preparedConditions.rules = !items.length ? [] : items[i]?.Conditions || []
         }
-        result.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={i}>
-            <MacrosAction name={'actions[]'} initValue={!items.length ? '' : items[i]?.Action || ''}/>
+        const rowKey = `${id}_${token}_${i}`;
+        result.push(<Box sx={{display: 'flex', gap: 2, m: 2}} key={rowKey}>
+            <MacrosAction name={'actions[]'} key={'action_' + rowKey} initValue={!items.length ? '' : items[i]?.Action || ''}/>
             <TextField variant={"outlined"} name={'bindings[]'} label="Binding"
                        slotProps={{inputLabel: {shrink: true}}}
-                       key={'binding_' + id}
+                       key={'binding_' + rowKey}
                        onKeyDown={onChangeBinding} defaultValue={!items.length ? '' : items[i]?.Binding || ''}
             />
             <TextField variant={"outlined"} name={'period_milliseconds[]'} label={"Period"}
-                       key={'period_' + id}
+                       key={'period_' + rowKey}
                        slotProps={{inputLabel: {shrink: true}}}
                        defaultValue={!items.length ? '' : items[i]?.period_milliseconds}
             />
             <TextField variant={"outlined"} name={'delay_milliseconds[]'} label={"Delay"}
-                       key={'delay_' + id}
+                       key={'delay_' + rowKey}
                        slotProps={{inputLabel: {shrink: true}}}
                        defaultValue={!items.length ? '' : items[i]?.delay_milliseconds}
             />
             <TextField variant={"outlined"} name={'additional[]'} label={"Additional"}
                        slotProps={{inputLabel: {shrink: true}}}
-                       key={'additional_' + id}
+                       key={'additional_' + rowKey}
                        defaultValue={!items.length ? '' : items[i]?.Additional}
             />
             <Condition conditions={preparedConditions} fullWidth={true}
+                       key={'condition_' + rowKey}
                        onQueryChange={(data) => {
                            conditionsRef.current[i] = data;
                        }} idx={i}/>
@@ -68,8 +70,8 @@ export const Macros = ({presetId, onSave, presetName, data = []}) => {
     const conditionsRef = useRef([]);
     useEffect(() => {
         conditionsRef.current = [];
-        setFormItems(renderItems(data, conditionsRef));
-    }, [presetId]);
+        setFormItems(renderItems(data, conditionsRef, String(Date.now())));
+    }, [presetId, data]);
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
