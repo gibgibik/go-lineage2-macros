@@ -119,10 +119,10 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 					}
 					logger.Info("scryde captcha start")
 					reply, _ := telegram.SendPhotoAndWaitReply(ctx, captcha, "New captcha")
-					controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Pt(result.InputCoordinates[0], result.InputCoordinates[1]), 0)
+					controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Pt(result.TemplateCoordinates[0]+result.InputCoordinates[0], result.TemplateCoordinates[1]+result.InputCoordinates[1]), 0)
 					controlCl.MouseAbsoluteEnd()
 					time.Sleep(time.Millisecond * 100)
-					controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Pt(result.InputCoordinates[0], result.InputCoordinates[1]), 0)
+					controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Pt(result.TemplateCoordinates[0]+result.InputCoordinates[0], result.TemplateCoordinates[1]+result.InputCoordinates[1]), 0)
 					controlCl.MouseAbsoluteEnd()
 					time.Sleep(time.Millisecond * 100)
 					for _, l := range strings.Split(strings.TrimSpace(reply), "") {
@@ -130,7 +130,7 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 						controlCl.SendKey(0, l)
 						controlCl.EndKey()
 					}
-					controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Pt(result.SubmitCoordinates[0], result.SubmitCoordinates[1]), 0)
+					controlCl.MouseActionAbsolute(ch9329.MousePressLeft, image.Pt(result.TemplateCoordinates[0]+result.SubmitCoordinates[0], result.TemplateCoordinates[1]+result.SubmitCoordinates[1]), 0)
 					controlCl.MouseAbsoluteEnd()
 					time.Sleep(time.Millisecond * 100)
 					logger.Info("scryde check end: ", strings.Split(reply, ""))
