@@ -1477,5 +1477,8 @@ var (
 		"Seeker Solina":                   nil,
 		"Solina Knight Captain":           nil,
 		"Solina Knights":                  nil,
+		"Drakos":                          nil,
+		"Necromancer of the Valley":       nil,
+		"Wrathful Orc Ghost":              nil,
 	}
 )
