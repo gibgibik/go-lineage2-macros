@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"image"
 	"net/http"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -172,21 +173,21 @@ func startHandler(ctx context.Context, cnf *core.Config) func(w http.ResponseWri
 
 							if val, ok := service.PlayerStats.Player[pid]; ok {
 								playerStat = &val
-								//if playerStat.CP.Percent < 90 {
-								//	service.PlayerStatsMutex.Unlock()
-								//	trySignal(pidsStack[pid].stopCh)
-								//	logger.Debug("macros stopped due to not full cp!!!")
-								//	botToken := "6181694377:AAGI5iIFTePIoR-oqGNYAi38ygEbKK6Zqfs"
-								//	cmd := exec.Command(
-								//		"curl",
-								//		"-X", "POST",
-								//		"-H", "Content-Type: application/json",
-								//		"-d", `{"chat_id": "451312638", "text": "STOPPED", "disable_notification": true}`,
-								//		"https://api.telegram.org/bot"+botToken+"/sendMessage",
-								//	)
-								//	_ = cmd.Run()
-								//	break
-								//}
+								if playerStat.HP.Percent < 5 {
+									//service.PlayerStatsMutex.Unlock()
+									//trySignal(pidsStack[pid].stopCh)
+									logger.Debug("macros stopped due to not full hp!!!")
+									botToken := "6181694377:AAGI5iIFTePIoR-oqGNYAi38ygEbKK6Zqfs"
+									cmd := exec.Command(
+										"curl",
+										"-X", "POST",
+										"-H", "Content-Type: application/json",
+										"-d", `{"chat_id": "451312638", "text": "STOPPED", "disable_notification": true}`,
+										"https://api.telegram.org/bot"+botToken+"/sendMessage",
+									)
+									_ = cmd.Run()
+									break
+								}
 							}
 							service.PlayerStatsMutex.Unlock()
 							runAction := &profilePreset.item.Preset.Items[i]
